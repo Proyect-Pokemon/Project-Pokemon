@@ -1,10 +1,12 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { Endpoint } from './services/endpoint';
+import { Prueba } from './services/prueba';
+import { Navbar } from "./shared/navbar/navbar";
+import { Footer } from "./shared/footer/footer";
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, Navbar, Footer],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -16,5 +18,5 @@ export class App implements OnInit {
   }
 
   protected readonly title = signal('project-pokemon');
-  private apiService = inject(Endpoint);
+  private apiService = inject(Prueba);
 }

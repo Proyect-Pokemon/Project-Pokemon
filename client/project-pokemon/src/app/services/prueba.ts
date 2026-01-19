@@ -5,7 +5,7 @@ import { lastValueFrom, Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root',
 })
-export class Endpoint {
+export class Prueba {
   private readonly BASE_URL = 'https://localhost:7277/';
   private http = inject(HttpClient);
 
@@ -17,4 +17,3 @@ export class Endpoint {
   return data;
   }
 }
-
