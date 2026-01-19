@@ -9,7 +9,7 @@ import { TeamBuilder } from './pages/team-builder/team-builder';
 import { Battle } from './pages/battle/battle';
 
 export const routes: Routes = [
-    { path: 'about', component: About},
+    { path: 'about', component: About },
     { path: 'admin-panel', component: AdminPanel },
     { path: 'battle', component: Battle },
     { path: 'friends', component: Friends },
