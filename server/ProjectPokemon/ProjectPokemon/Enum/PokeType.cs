@@ -1,6 +1,6 @@
 ﻿namespace ProjectPokemon.Enum {
     // Aquí se almacenan los tipos de los pokemon y los movimientos
-    public enum PokemonType {
+    public enum PokeType {
         Grass,
         Water,
         Fire,

@@ -1,4 +1,6 @@
-﻿namespace ProjectPokemon.Models.Database.Entities; 
+﻿using ProjectPokemon.Enum;
+
+namespace ProjectPokemon.Models.Database.Entities; 
 public class PokemonBattle {
     public int Id { get; set; }
     public required int Team { get; set; }
@@ -9,7 +11,7 @@ public class PokemonBattle {
     public int MovementId2 { get; set; }
     public int MovementId3 { get; set; }
     public int MovementId4 { get; set; }
-    public Status Status { get; set; }
+    public PokeStatus Status { get; set; } = PokeStatus.None;
     public Movement Movement1 { get; set; } = null!;
     public Movement Movement2 { get; set; } = null!;
     public Movement Movement3 { get; set; } = null!;

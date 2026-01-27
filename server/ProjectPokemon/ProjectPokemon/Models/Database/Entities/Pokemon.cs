@@ -23,7 +23,7 @@ public class Pokemon {
     public string? Cry { get; set; } // <-- Será required
 
     // Relaciones
-    public required PokemonType Type1 { get; set; }
-    public PokemonType? Type2 { get; set; }
+    public required PokeType Type1 { get; set; }
+    public PokeType? Type2 { get; set; }
     public ICollection<Movement> Movevements { get; set; } = new List<Movement>();
 }
