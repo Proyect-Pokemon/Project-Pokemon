@@ -1,4 +1,6 @@
-﻿namespace ProjectPokemon.Models.Database.Entities; 
+﻿using ProjectPokemon.Enum;
+
+namespace ProjectPokemon.Models.Database.Entities; 
 public class Pokemon {
     public int Id { get; set; }
     // Estadísticas
@@ -8,18 +10,20 @@ public class Pokemon {
     public required int SpAtk { get; set; }
     public required int SpDef { get; set; }
     public required int Spe {  get; set; }
-    public required string? SpriteFront { get; set; }
-    public required string? SpriteBack { get; set; }
-    // TO DO: Añadir más adelante los sprites shiny, la forma hembra y el grito del pokemon
-    //
-    //public required string? SpriteFrontShiny { get; set; }
-    //public required string? SpriteBackShiny { get; set; }
-    //public string? SpriteFrontFem { get; set; }
-    //public string? SpriteBackFem { get; set; }
-    //public string? SpriteFrontFemShiny { get; set; }
-    //public string? SpriteBackFemShiny { get; set; }
-    //public required string? Cry { get; set; }
-    public required Type Type1 { get; set; }
-    public Type? Type2 { get; set; }
-    public ICollection<Move> Moves { get; set; } = new List<Move>();
+    public required float Weight { get; set; }
+    // Sprites y Sonidos
+    public required string SpriteFront { get; set; }
+    public required string SpriteBack { get; set; }
+    public string? SpriteFrontShiny { get; set; } // <-- Será required
+    public string? SpriteBackShiny { get; set; } // <-- Será required
+    public string? SpriteFrontFem { get; set; }
+    public string? SpriteBackFem { get; set; }
+    public string? SpriteFrontFemShiny { get; set; }
+    public string? SpriteBackFemShiny { get; set; }
+    public string? Cry { get; set; } // <-- Será required
+
+    // Relaciones
+    public required PokemonType Type1 { get; set; }
+    public PokemonType? Type2 { get; set; }
+    public ICollection<Movement> Movevements { get; set; } = new List<Movement>();
 }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ProjectPokemon.Controllers
@@ -21,6 +22,12 @@ namespace ProjectPokemon.Controllers
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })
             .ToArray();
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpPost("loadGeneration")]
+        public void LoadGeneration(int generation) {
+
         }
     }
 }
