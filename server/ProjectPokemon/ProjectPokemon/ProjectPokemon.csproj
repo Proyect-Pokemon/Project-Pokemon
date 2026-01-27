@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <Folder Include="Models\Database\Repositories\" />
+    <Folder Include="Services\Internal\" />
   </ItemGroup>
 
 </Project>

@@ -24,6 +24,7 @@ namespace ProjectPokemon.Controllers
             .ToArray();
         }
 
+        // Ejemplo
         [Authorize(Roles = "admin")]
         [HttpPost("loadGeneration")]
         public void LoadGeneration(int generation) {
