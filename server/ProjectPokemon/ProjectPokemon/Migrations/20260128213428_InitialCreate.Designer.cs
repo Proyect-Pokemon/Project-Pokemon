@@ -10,7 +10,7 @@ using ProjectPokemon.Models.Database;
 namespace ProjectPokemon.Migrations
 {
     [DbContext(typeof(PokemonDbContext))]
-    [Migration("20260128203732_InitialCreate")]
+    [Migration("20260128213428_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
