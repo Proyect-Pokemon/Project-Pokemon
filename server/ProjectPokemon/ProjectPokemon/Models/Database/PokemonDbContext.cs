@@ -2,16 +2,15 @@
 using ProjectPokemon.Enum;
 using ProjectPokemon.Models.Database.Entities;
 
-namespace ProjectPokemon.Models.Database; 
+namespace ProjectPokemon.Models.Database;
 public class PokemonDbContext : DbContext {
-    public DbSet<Pokemon> Pokemons => Set<Pokemon>();
-    public DbSet<Movement> Movements => Set<Movement>();
-    public DbSet<Nature> Natures => Set<Nature>();
-    public DbSet<PokemonMovement> PokemonMovements => Set<PokemonMovement>();
-    public DbSet<PokemonBattle> PokemonBattles => Set<PokemonBattle>();
+    public DbSet<Pokemon> Pokemons { get; set; }
+    public DbSet<Movement> Movements { get; set; }
+    public DbSet<Nature> Natures { get; set; }
+    public DbSet<PokemonMovement> PokemonMovements { get; set; }
+    public DbSet<PokemonBattle> PokemonBattles { get; set; }
 
     public PokemonDbContext(DbContextOptions<PokemonDbContext> options) : base(options) {
-
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);
@@ -27,13 +26,6 @@ public class PokemonDbContext : DbContext {
         modelBuilder.Entity<Pokemon>(entity =>
         {
             entity.Property(p => p.Name).IsRequired();
-            entity.Property(p => p.Hp).IsRequired();
-            entity.Property(p => p.Attack).IsRequired();
-            entity.Property(p => p.Defense).IsRequired();
-            entity.Property(p => p.SpecialAttack).IsRequired();
-            entity.Property(p => p.SpecialDefense).IsRequired();
-            entity.Property(p => p.Speed).IsRequired();
-            entity.Property(p => p.Weight).IsRequired();
             entity.Property(p => p.SpriteFront).IsRequired();
             entity.Property(p => p.SpriteBack).IsRequired();
             entity.Property(p => p.SpriteFrontShiny).IsRequired();
@@ -54,10 +46,7 @@ public class PokemonDbContext : DbContext {
         {
             entity.Property(m => m.Name).IsRequired();
             entity.Property(m => m.Description).IsRequired();
-            entity.Property(m => m.Pp);
             entity.Property(m => m.Accuracy).HasDefaultValue(100);
-            entity.Property(m => m.Power).HasDefaultValue(0);
-            entity.Property(m => m.Priority).HasDefaultValue(0);
             entity.Property(m => m.Contact);
 
             entity.Property(m => m.MovementClass)
@@ -94,7 +83,7 @@ public class PokemonDbContext : DbContext {
             entity.HasKey(pm => new { pm.PokemonId, pm.MovementId });
             // Relación con Pokemon
             entity.HasOne(pm => pm.Pokemon)
-                    .WithMany(p => p.PokemonMovevements)
+                    .WithMany(p => p.PokemonMovements)
                     .HasForeignKey(pm => pm.PokemonId)
                     .OnDelete(DeleteBehavior.Cascade);
                     // Si el Pokemon se elimina, se elimina la fila
