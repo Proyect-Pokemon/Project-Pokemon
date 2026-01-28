@@ -102,7 +102,7 @@ public class PokemonDbContext : DbContext {
             // Relación con Movement
             entity.HasOne(pm => pm.Movement)
                     .WithMany(m => m.PokemonMovements)
-                    .HasForeignKey(pm => pm.PokemonId)
+                    .HasForeignKey(pm => pm.MovementId)
                     .OnDelete(DeleteBehavior.Cascade);
                     // Si el Movimiento se elimina, se elimina la fila
         });
