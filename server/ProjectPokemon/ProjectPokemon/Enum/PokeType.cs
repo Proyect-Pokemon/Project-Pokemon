@@ -17,6 +17,7 @@
         Ground,
         Dark,
         Flying,
-        Poison
+        Poison,
+        Fairy
     }
 }

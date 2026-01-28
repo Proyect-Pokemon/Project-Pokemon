@@ -11,7 +11,7 @@ public class Pokemon {
     public int SpecialAttack { get; set; }
     public int SpecialDefense { get; set; }
     public int Speed {  get; set; }
-    public float Weight { get; set; }
+    public int Weight { get; set; }
     // Sprites y Sonidos
     public required string SpriteFront { get; set; }
     public required string SpriteBack { get; set; }

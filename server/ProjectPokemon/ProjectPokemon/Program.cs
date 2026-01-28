@@ -1,39 +1,47 @@
-namespace ProjectPokemon
+using Microsoft.EntityFrameworkCore;
+using ProjectPokemon.Models.Database;
+using ProjectPokemon.Services.Internal;
+
+namespace ProjectPokemon;
+
+public class Program
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
+    public async static Task Main(string[] args) {
+        var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+        // DbContext
+        builder.Services.AddDbContext<PokemonDbContext>(options => {
+            options.UseSqlite("Data Source=pokemon.db");
+        });
 
-            builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
+        // Services
+        builder.Services.AddControllers();
+        builder.Services.AddOpenApi();
+        builder.Services.AddScoped<DataLoader>();
+        builder.Services.AddScoped<PokemonDataService>();
 
-            var app = builder.Build();
+        var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.MapOpenApi();
-
-                app.UseCors(policy =>
-                    policy.AllowAnyOrigin()
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                );
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.Run();
+        // Inicializar la base de datos
+        using (IServiceScope scope = app.Services.CreateScope()) {
+            PokemonDbContext dbContext = scope.ServiceProvider.GetRequiredService<PokemonDbContext>();
+            DataLoader dataLoader = scope.ServiceProvider.GetRequiredService<DataLoader>();
+            dbContext.Database.Migrate();
+            await dataLoader.LoadAllDataAsync();
         }
+
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment()) {
+            app.MapOpenApi();
+            app.UseCors(policy =>
+                policy.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod());
+        }
+
+        app.UseHttpsRedirection();
+        app.UseAuthorization();
+        app.MapControllers();
+        app.Run();
     }
 }

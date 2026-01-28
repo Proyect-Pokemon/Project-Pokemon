@@ -28,9 +28,9 @@ public class PokemonDbContext : DbContext {
             entity.Property(p => p.Name).IsRequired();
             entity.Property(p => p.SpriteFront).IsRequired();
             entity.Property(p => p.SpriteBack).IsRequired();
-            entity.Property(p => p.SpriteFrontShiny).IsRequired();
-            entity.Property(p => p.SpriteBackShiny).IsRequired();
-            entity.Property(p => p.Cry).IsRequired();
+            entity.Property(p => p.SpriteFrontShiny);           // .IsRequired();
+            entity.Property(p => p.SpriteBackShiny);            // .IsRequired();
+            entity.Property(p => p.Cry);                        // .IsRequired();
 
             //Para guardar los enum como string, no como int
             entity.Property(p => p.Type1)
