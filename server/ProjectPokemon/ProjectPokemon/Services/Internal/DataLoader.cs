@@ -16,7 +16,8 @@ public class DataLoader {
         _pokemonLoader = pokemonLoader;
     }
     public async Task LoadAllDataAsync() {
-        await _db.Database.MigrateAsync();
+
+        await _pokemonLoader.LoadGenerationAsync(1);
 
         await LoadPokemons();
     }

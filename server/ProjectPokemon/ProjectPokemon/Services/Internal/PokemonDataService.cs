@@ -12,6 +12,10 @@ public class PokemonDataService {
         _dbContext = dbContext;
     }
 
+    public async Task LoadGenerationAsync(int generation) {
+        Generation gen = await client.GetResourceAsync<Generation>(generation);
+    }
+
     public async Task<PokemonEntity> LoadPokemon(int id) {
         var pokemon = await client.GetResourceAsync<Pokemon>(id);
 

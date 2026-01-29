@@ -7,6 +7,9 @@ namespace ProjectPokemon;
 public class Program
 {
     public async static Task Main(string[] args) {
+        // El directorio de trabajo será donde está el ejecutable del programa
+        Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+
         var builder = WebApplication.CreateBuilder(args);
 
         // DbContext
@@ -26,8 +29,9 @@ public class Program
         using (IServiceScope scope = app.Services.CreateScope()) {
             PokemonDbContext dbContext = scope.ServiceProvider.GetRequiredService<PokemonDbContext>();
             DataLoader dataLoader = scope.ServiceProvider.GetRequiredService<DataLoader>();
-            dbContext.Database.Migrate();
-            await dataLoader.LoadAllDataAsync();
+            if (dbContext.Database.EnsureCreated()) {
+                await dataLoader.LoadAllDataAsync();
+            }
         }
 
         // Configure the HTTP request pipeline.
