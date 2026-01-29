@@ -10,8 +10,7 @@ public class PokemonDbContext : DbContext {
     public DbSet<PokemonMovement> PokemonMovements { get; set; }
     public DbSet<PokemonBattle> PokemonBattles { get; set; }
 
-    public PokemonDbContext(DbContextOptions<PokemonDbContext> options) : base(options) {
-    }
+    public PokemonDbContext(DbContextOptions<PokemonDbContext> options) : base(options) { }
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);
 
@@ -25,13 +24,6 @@ public class PokemonDbContext : DbContext {
     private static void ConfigurePokemon(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Pokemon>(entity =>
         {
-            entity.Property(p => p.Name).IsRequired();
-            entity.Property(p => p.SpriteFront).IsRequired();
-            entity.Property(p => p.SpriteBack).IsRequired();
-            entity.Property(p => p.SpriteFrontShiny);           // .IsRequired();
-            entity.Property(p => p.SpriteBackShiny);            // .IsRequired();
-            entity.Property(p => p.Cry);                        // .IsRequired();
-
             //Para guardar los enum como string, no como int
             entity.Property(p => p.Type1)
                     .HasConversion<string>()
@@ -44,11 +36,7 @@ public class PokemonDbContext : DbContext {
     private static void ConfigureMovement(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Movement>(entity =>
         {
-            entity.Property(m => m.Name).IsRequired();
-            entity.Property(m => m.Description).IsRequired();
             entity.Property(m => m.Accuracy).HasDefaultValue(100);
-            entity.Property(m => m.Contact);
-
             entity.Property(m => m.MovementClass)
                     .HasConversion<string>()
                     .IsRequired();
@@ -99,7 +87,6 @@ public class PokemonDbContext : DbContext {
     private static void ConfigurePokemonBattle(ModelBuilder modelBuilder) {
         modelBuilder.Entity<PokemonBattle>(entity =>
         {
-            entity.Property(pb => pb.Shiny).HasDefaultValue(false);
             entity.Property(pb => pb.Status)
                     .HasConversion<string>()
                     .HasDefaultValue(PokeStatus.None)

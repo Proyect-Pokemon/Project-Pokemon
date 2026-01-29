@@ -18,7 +18,13 @@ public class Program
         });
 
         // Services
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+                    // Esto es para que en el Swagger se muestre el texto del valor de los enum en vez de el número
+                    .AddJsonOptions(options => {
+                        options.JsonSerializerOptions.Converters.Add(
+                            new System.Text.Json.Serialization.JsonStringEnumConverter()
+                        );
+                    });
         builder.Services.AddOpenApi();
         builder.Services.AddScoped<DataLoader>();
         builder.Services.AddScoped<PokemonDataService>();
@@ -37,6 +43,7 @@ public class Program
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment()) {
             app.MapOpenApi();
+            app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "v1"));
             app.UseCors(policy =>
                 policy.AllowAnyOrigin()
                     .AllowAnyHeader()
