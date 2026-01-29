@@ -15,6 +15,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="PokeApiNet" Version="4.1.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.0" />
   </ItemGroup>
 
   <ItemGroup>
