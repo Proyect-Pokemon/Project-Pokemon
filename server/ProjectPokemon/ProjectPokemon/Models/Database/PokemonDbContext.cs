@@ -36,7 +36,6 @@ public class PokemonDbContext : DbContext {
     private static void ConfigureMovement(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Movement>(entity =>
         {
-            entity.Property(m => m.Accuracy).HasDefaultValue(100);
             entity.Property(m => m.MovementClass)
                     .HasConversion<string>()
                     .IsRequired();

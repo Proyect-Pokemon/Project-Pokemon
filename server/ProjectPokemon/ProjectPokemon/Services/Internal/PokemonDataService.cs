@@ -1,9 +1,9 @@
 ﻿using PokeApiNet;
 using ProjectPokemon.Enum;
-using ProjectPokemon.Models.Database;
 using PokemonEntity = ProjectPokemon.Models.Database.Entities.Pokemon;
 
 namespace ProjectPokemon.Services.Internal;
+
 public class PokemonDataService {
     private readonly PokeApiClient client = new PokeApiClient();
 

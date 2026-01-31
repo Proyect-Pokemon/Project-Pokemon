@@ -28,6 +28,7 @@ public class Program
         builder.Services.AddOpenApi();
         builder.Services.AddScoped<DataLoader>();
         builder.Services.AddScoped<PokemonDataService>();
+        builder.Services.AddScoped<MovementDataService>();
 
         var app = builder.Build();
 
