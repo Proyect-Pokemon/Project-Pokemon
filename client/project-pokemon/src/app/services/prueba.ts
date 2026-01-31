@@ -12,7 +12,7 @@ export class Prueba {
   async getData(): Promise<any> {
   const request: Observable<Object> = this.http.get(`${this.BASE_URL}WeatherForecast`);
 
-  const data: any = await lastValueFrom(request); // Es como un request fetch pero usando RxJS
+  const data = await lastValueFrom(request); // Es como un request fetch pero usando RxJS
 
   return data;
   }

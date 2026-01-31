@@ -1,1 +1,23 @@
-<p>Battle works!</p>
+<div *ngIf = "battle">
+    <div class="pokemon">
+        <h2>{{ battle.PokemonA.name }}</h2>
+        <img [src]="battle.PokemonA.sprite" alt="{{ battle.PokemonA.name }}">
+        <p>HP: {{ battle.PokemonA.currentHp }} / {{ battle.PokemonA.maxHp }}</p>
+        <ul>
+            <li *ngFor="let move of battle.PokemonA.moves" title="{{ move.description }}">
+                {{ move.name }} (PP: {{ move.pp }})
+            </li>
+        </ul>
+    </div>
+
+    <div class="pokemon">
+        <h2>{{ battle.PokemonB.name }}</h2>
+        <img [src]="battle.PokemonB.sprite" alt="{{ battle.PokemonB.name }}">
+        <p>HP: {{ battle.PokemonB.currentHp }} / {{ battle.PokemonB.maxHp }}</p>
+        <ul>
+            <li *ngFor="let move of battle.PokemonB.moves" title="{{ move.description }}">
+                {{ move.name }} (PP: {{ move.pp }})
+            </li>
+        </ul>
+    </div>
+</div>
