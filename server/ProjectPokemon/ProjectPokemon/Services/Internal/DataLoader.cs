@@ -1,15 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProjectPokemon.Models.Database;
-using System;
 
-namespace ProjectPokemon.Services.Internal; 
+namespace ProjectPokemon.Services.Internal;
 // Este servicio va a llamar a los servicios que recogen los datos de la PokeApi
 // y se va a encargar de insertar esos datos en la BD
 public class DataLoader {
 
     private readonly PokemonDbContext _db;
     private readonly PokemonDataService _pokemonLoader;
-    public DataLoader (
+    public DataLoader(
     PokemonDbContext db,
     PokemonDataService pokemonLoader) {
         _db = db;

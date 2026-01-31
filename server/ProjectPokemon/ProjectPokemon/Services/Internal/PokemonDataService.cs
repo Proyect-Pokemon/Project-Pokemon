@@ -6,11 +6,6 @@ using PokemonEntity = ProjectPokemon.Models.Database.Entities.Pokemon;
 namespace ProjectPokemon.Services.Internal;
 public class PokemonDataService {
     private readonly PokeApiClient client = new PokeApiClient();
-    private readonly PokemonDbContext _dbContext;
-
-    public PokemonDataService(PokemonDbContext dbContext) {
-        _dbContext = dbContext;
-    }
 
     public async Task LoadGenerationAsync(int generation) {
         Generation gen = await client.GetResourceAsync<Generation>(generation);
