@@ -21,8 +21,6 @@ Este documento describe el procedimiento para descargar, configurar y ejecutar e
 | Git                | latest                   |
 | ???                | ???                      |
 
----
-
 ### 1.2 Comprobación de versiones
 
 ```powershell
@@ -30,3 +28,29 @@ dotnet --version
 node --version
 ng version
 git --version
+```
+---
+
+## 2. Descarga del repositorio
+```powershell
+git clone https://github.com/Proyect-Pokemon/Project-Pokemon.git
+cd project-pokemon
+```
+---
+
+## 3. Ejecución del Backend (ASP.NET)
+### 3.1 Abrir la solución
+Abrir el fichero:
+```powershell
+backend/ProjectPokemon.slnx
+```
+con Visual Studio 2026
+
+---
+
+## 4. Ejecución del Frontend (Angular)
+```powershell
+cd frontend
+npm install
+ng serve
+```
