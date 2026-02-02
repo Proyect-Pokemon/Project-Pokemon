@@ -1,3 +1,5 @@
+import { Signal } from "@angular/core";
+
 export interface Move {
     name: string;
     description: string;
@@ -5,5 +7,6 @@ export interface Move {
     //accuracy: number;
     moveClass: string;
     pp: number;
+    currentPP: Signal<number>;
     type: string;
 }

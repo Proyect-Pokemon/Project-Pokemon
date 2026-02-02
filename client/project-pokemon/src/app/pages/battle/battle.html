@@ -1,42 +1,31 @@
-<div id="canvas">
-    <div class="enemy">
-        <div class="life-bar">
-            <div class="health"></div>
+@if (pokemonA && pokemonB) {
+    <div id="canvas">
+        <div class="enemy">
+            <div class="life-bar">
+                <div class="health"></div>
+            </div>
+            <img [src]="pokemonB.sprite">
         </div>
-        <img [src]="pokemonBSprite">
+        <div class="ally">
+            <img [src]="pokemonA.sprite">
+            <div class="life-bar">
+                <div class="health"></div>
+            </div>
+        </div>
+            <div id="moves">
+                @for (move of pokemonA.moves; track $index) {
+                <button [class]="'move type-' + move.type.toLowerCase()">
+                    <img [src]="'assets/icons/types/' + move.type.toLowerCase() + '.svg'" [alt]="move.type">
+                    <span class="move-name">{{move.name}}</span>
+                    <span class="move-pp">{{move.currentPP()}}/{{move.pp}}</span>
+                </button>
+                }
+            </div>
     </div>
-    <div class="ally">
-        <img [src]="pokemonASprite">
-        <div class="life-bar">
-            <div class="health"></div>
-        </div>
-    </div>
-    <div id="moves">
-        <div class="move type-rock">
-            <img src="icons/rock.svg">
-            <span class="move-name">{{pokemonAMoves[0].name}}</span>
-            <span class="move-pp">??/{{pokemonAMove1PP}}</span>
-        </div>
-        <div class="move type-leaf">
-            <img src="icons/leaf.svg">
-            <span class="move-name">{{pokemonAMoves[1].name}}</span>
-            <span class="move-pp">??/{{pokemonAMove2PP}}</span>
-        </div>
-        <div class="move type-normal">
-            <img src="icons/normal-01.svg">
-            <span class="move-name">{{pokemonAMoves[2].name}}</span>
-            <span class="move-pp">40/{{pokemonAMove3PP}}</span>
-        </div>
-        <div class="move type-ground">
-            <img src="icons/ground.svg">
-            <span class="move-name">{{pokemonAMoves[3].name}}</span>
-            <span class="move-pp">10/{{pokemonAMove4PP}}</span>
-        </div>
-    </div>
-</div>
 
-@if(turno() == 0) {
-    <button (click)="ataca(1)">Ataca</button>
-} @else {
-    <div>Contrincante</div>
+    @if(turno() == 0) {
+        <button (click)="ataca(1)">Ataca</button>
+    } @else {
+        <div>Contrincante</div>
+    }
 }

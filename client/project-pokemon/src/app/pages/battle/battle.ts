@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { BattleService } from '../../services/battle-service';
+import { PokemonTeam } from '../../models/pokemon-team';
 
 @Component({
   selector: 'app-battle',
@@ -11,26 +12,8 @@ export class Battle {
 
   turno = signal(0);
 
-    pokemonAName = '';
-    pokemonASprite = '';
-    pokemonAHP = 0;
-    pokemonACurrentHP = signal(0);
-    pokemonAMoves: any[] = [];
-    pokemonAMove1 = '';
-    pokemonAMove2 = '';
-    pokemonAMove3 = '';
-    pokemonAMove4 = '';
-
-    pokemonAMove1PP = 0;
-    pokemonAMove2PP = 0;
-    pokemonAMove3PP = 0;
-    pokemonAMove4PP = 0;
-
-    pokemonBName = '';
-    pokemonBSprite = '';
-    pokemonBHP = 0;
-    pokemonBCurrentHP = signal(0);
-    pokemonBMoves: any[] = [];
+  pokemonA!: PokemonTeam;
+  pokemonB!: PokemonTeam;
 
   private apiService = inject(BattleService);
 
@@ -38,32 +21,45 @@ export class Battle {
     const data = await this.apiService.getBattle();
     console.log(data);
 
-    this.pokemonAName = data.pokemonA.name;
-    this.pokemonBName = data.pokemonB.name;
-    this.pokemonASprite = data.pokemonA.sprite;
-    this.pokemonBSprite = data.pokemonB.sprite;
+    this.pokemonA = {
+      name: data.pokemonA.name,
+      sprite: data.pokemonA.sprite,
+      hp: data.pokemonA.hp,
+      currentHP: signal(data.pokemonA.hp),
+      atk: data.pokemonA.atk,
+      def: data.pokemonA.def,
+      spa: data.pokemonA.spa,
+      spd: data.pokemonA.spd,
+      spe: data.pokemonA.spe,
+      type1: data.pokemonA.type1,
+      type2: data.pokemonA.type2,
+      moves: this.mapMoves(data.pokemonA.moves)
+    };
 
-    this.pokemonAHP = data.pokemonA.hp;
-    this.pokemonBHP = data.pokemonB.hp;
-    
-    this.pokemonACurrentHP.set(this.pokemonAHP);
-    this.pokemonBCurrentHP.set(this.pokemonBHP);
-
-    this.pokemonAMoves = data.pokemonA.moves;
-    this.pokemonBMoves = data.pokemonB.moves;
-
-    this.pokemonAMove1 = this.pokemonAMoves[0].name;
-    this.pokemonAMove2 = this.pokemonAMoves[1].name;
-    this.pokemonAMove3 = this.pokemonAMoves[2].name;
-    this.pokemonAMove4 = this.pokemonAMoves[3].name;
-
-    this.pokemonAMove1PP = this.pokemonAMoves[0].pp;
-    this.pokemonAMove2PP = this.pokemonAMoves[1].pp;
-    this.pokemonAMove3PP = this.pokemonAMoves[2].pp;
-    this.pokemonAMove4PP = this.pokemonAMoves[3].pp;
+    this.pokemonB = {
+      name: data.pokemonB.name,
+      sprite: data.pokemonB.sprite,
+      hp: data.pokemonB.hp,
+      currentHP: signal(data.pokemonB.hp),
+      atk: data.pokemonB.atk,
+      def: data.pokemonB.def,
+      spa: data.pokemonB.spa,
+      spd: data.pokemonB.spd,
+      spe: data.pokemonB.spe,
+      type1: data.pokemonB.type1,
+      type2: data.pokemonB.type2,
+      moves: this.mapMoves(data.pokemonB.moves)
+    };
   }
 
   ataca(movimiento: number): void {
 
+  }
+
+  private mapMoves(moves: any[]) {
+    return moves.map(m => ({
+      ...m,
+      currentPP: signal(m.pp)
+    }));
   }
 }
