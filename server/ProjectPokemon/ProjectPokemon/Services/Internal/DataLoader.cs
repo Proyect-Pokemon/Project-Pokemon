@@ -19,7 +19,7 @@ public class DataLoader {
     }
     public async Task LoadAllDataAsync() {
 
-        await _pokemonLoader.LoadGenerationAsync(1);
+        // await _pokemonLoader.LoadGenerationAsync(1);
 
         await LoadPokemons();
 
