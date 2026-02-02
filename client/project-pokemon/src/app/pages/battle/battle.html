@@ -1,23 +1,42 @@
-<div *ngIf = "battle">
-    <div class="pokemon">
-        <h2>{{ battle.PokemonA.name }}</h2>
-        <img [src]="battle.PokemonA.sprite" alt="{{ battle.PokemonA.name }}">
-        <p>HP: {{ battle.PokemonA.currentHp }} / {{ battle.PokemonA.maxHp }}</p>
-        <ul>
-            <li *ngFor="let move of battle.PokemonA.moves" title="{{ move.description }}">
-                {{ move.name }} (PP: {{ move.pp }})
-            </li>
-        </ul>
+<div id="canvas">
+    <div class="enemy">
+        <div class="life-bar">
+            <div class="health"></div>
+        </div>
+        <img [src]="pokemonBSprite">
     </div>
-
-    <div class="pokemon">
-        <h2>{{ battle.PokemonB.name }}</h2>
-        <img [src]="battle.PokemonB.sprite" alt="{{ battle.PokemonB.name }}">
-        <p>HP: {{ battle.PokemonB.currentHp }} / {{ battle.PokemonB.maxHp }}</p>
-        <ul>
-            <li *ngFor="let move of battle.PokemonB.moves" title="{{ move.description }}">
-                {{ move.name }} (PP: {{ move.pp }})
-            </li>
-        </ul>
+    <div class="ally">
+        <img [src]="pokemonASprite">
+        <div class="life-bar">
+            <div class="health"></div>
+        </div>
+    </div>
+    <div id="moves">
+        <div class="move type-rock">
+            <img src="icons/rock.svg">
+            <span class="move-name">{{pokemonAMoves[0].name}}</span>
+            <span class="move-pp">??/{{pokemonAMove1PP}}</span>
+        </div>
+        <div class="move type-leaf">
+            <img src="icons/leaf.svg">
+            <span class="move-name">{{pokemonAMoves[1].name}}</span>
+            <span class="move-pp">??/{{pokemonAMove2PP}}</span>
+        </div>
+        <div class="move type-normal">
+            <img src="icons/normal-01.svg">
+            <span class="move-name">{{pokemonAMoves[2].name}}</span>
+            <span class="move-pp">40/{{pokemonAMove3PP}}</span>
+        </div>
+        <div class="move type-ground">
+            <img src="icons/ground.svg">
+            <span class="move-name">{{pokemonAMoves[3].name}}</span>
+            <span class="move-pp">10/{{pokemonAMove4PP}}</span>
+        </div>
     </div>
 </div>
+
+@if(turno() == 0) {
+    <button (click)="ataca(1)">Ataca</button>
+} @else {
+    <div>Contrincante</div>
+}

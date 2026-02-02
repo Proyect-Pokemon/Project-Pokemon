@@ -1,14 +1,136 @@
-.pokemon {
-    display: inline-block;
-    width: 45%;
-    margin: 1%;
-    padding: 1%;
-    border: 1px solid #cccccc;
-    border-radius: 8px;
-    text-align: center;
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&display=swap');
+
+:root {
+    --leaf: #76C850;
+    --ground: #E0C069;
+    --rock: #B7A038;
+    --web-black: #1B1227;
+    --web-white: #F0F0F8;
+    --web-blue: ;
 }
 
-.pokemon img {
-    width: 120px;
-    height: auto;
+html {
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+body {
+    margin: 0;
+}
+
+#canvas {
+    background-color: rgb(175, 135, 64);
+    width: 70%;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    padding: 10px;
+}
+
+.enemy {
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+}
+
+.ally {
+    display: flex;
+    flex-direction: row;
+    justify-content: left;
+}
+
+.enemy img {
+    width: 25%;
+    image-rendering: pixelated;
+}
+
+.ally img {
+    width: 40%;
+    image-rendering: pixelated;
+}
+
+.life-bar {
+    background-color: var(--web-black);
+    width: 20vw;
+    height: 1.5vw;
+    border-radius: 10px;
+}
+
+.enemy .health {
+    background-color: rgb(253, 211, 42);
+    border-radius: 10px;
+    height: 100%;
+    width: 50%;
+}
+
+.ally .health {
+    background-color: green;
+    border-radius: 10px;
+    height: 100%;
+    width: 75%;
+}
+
+.move.type-ground { background-color: var(--ground); }
+.move.type-normal { background-color: var(--web-white); }
+.move.type-leaf { background-color: var(--leaf); }
+.move.type-rock { background-color: var(--rock); }
+
+#moves {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.move {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    padding-right: 20px;
+    gap: 5px;
+    height: max-content;
+    background-color: var(--web-white);
+    margin: 2px;
+    border-radius: 50px;
+    position: relative;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.move::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 38%;
+    height: 100%;
+    background: #1a1a1a;
+    clip-path: polygon(20% 0, 100% 0, 100% 100%, 0% 100%);
+    z-index: 1;
+}
+
+.move:hover {
+    transform: scale(1.03);
+    filter: brightness(1.05);
+}
+
+.move img {
+    width: 12%;
+    height: fit-content;
+}
+
+.move-name {
+    align-content: center;
+    color: var(--web-black);
+    flex: 1;
+    font-size: 2vw;
+}
+
+.move-pp {
+    align-content: center;
+    color: var(--web-white);
+    font-size: 2vw;
+    z-index: 2;
 }

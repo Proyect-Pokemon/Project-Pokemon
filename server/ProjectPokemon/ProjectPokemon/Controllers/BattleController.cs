@@ -44,7 +44,7 @@ namespace ProjectPokemon.Controllers {
 
             var opponent = new {
                 name = opponentsPokemon.Name,
-                sprite = opponentsPokemon.SpriteBack,
+                sprite = opponentsPokemon.SpriteFront,
                 maxHp = CalculateHp(opponentsPokemon.Hp),
                 currentHp = CalculateHp(opponentsPokemon.Hp),
                 moves = opponentsMoves.Select(m => new {
