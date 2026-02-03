@@ -17,5 +17,5 @@ export const routes: Routes = [
     { path: 'profile', component: Profile },
     { path: 'register', component: Register },
     { path: 'team-builder', component: TeamBuilder },
-    { path: '**', redirectTo: 'login' }
+    { path: '**', redirectTo: 'login', pathMatch: 'full' }
 ];

@@ -1,31 +1,37 @@
-@if (pokemonA && pokemonB) {
+@if (combate()) {
     <div id="canvas">
         <div class="enemy">
             <div class="life-bar">
                 <div class="health"></div>
             </div>
-            <img [src]="pokemonB.sprite">
+            <img [src]="battleInfo()!.pokemonB.sprite">
         </div>
         <div class="ally">
-            <img [src]="pokemonA.sprite">
+            <img [src]="battleInfo()!.pokemonA.sprite">
             <div class="life-bar">
                 <div class="health"></div>
             </div>
         </div>
             <div id="moves">
-                @for (move of pokemonA.moves; track $index) {
-                <button [class]="'move type-' + move.type.toLowerCase()">
-                    <img [src]="'assets/icons/types/' + move.type.toLowerCase() + '.svg'" [alt]="move.type">
-                    <span class="move-name">{{move.name}}</span>
-                    <span class="move-pp">{{move.currentPP()}}/{{move.pp}}</span>
-                </button>
+                @if (turno() == true) {
+                    @for (move of battleInfo()!.pokemonA.moves; track $index) {
+                        <button (click)="ataca(move)" [class]="'move type-' + move.type.toLowerCase()">
+                            <img [src]="'assets/icons/types/' + move.type.toLowerCase() + '.svg'" [alt]="move.type">
+                            <span class="move-name">{{move.name}}</span>
+                            <span class="move-pp">{{move.currentPp}}/{{move.pp}}</span>
+                        </button>
+                    }
+                } @else {
+                    @for (move of battleInfo()!.pokemonA.moves; track $index) {
+                        <button (click)="ataca(move)" [class]="'move type-' + move.type.toLowerCase()" disabled>
+                            <img [src]="'assets/icons/types/' + move.type.toLowerCase() + '.svg'" [alt]="move.type">
+                            <span class="move-name">{{move.name}}</span>
+                            <span class="move-pp">{{move.currentPp}}/{{move.pp}}</span>
+                        </button>
+                    }
                 }
             </div>
     </div>
-
-    @if(turno() == 0) {
-        <button (click)="ataca(1)">Ataca</button>
-    } @else {
-        <div>Contrincante</div>
-    }
+} @else {
+    <div>Cargando combate...</div>
 }

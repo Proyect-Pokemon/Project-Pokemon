@@ -1,8 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { lastValueFrom, Observable } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 import { BattleResponse } from '../models/pokemon-api';
 
+// Este servicio se encarga de gestionar las llamadas a la API relacionadas con
+// los Pokemon que participan en un combate
 @Injectable({
   providedIn: 'root',
 })

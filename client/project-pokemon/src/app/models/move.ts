@@ -1,12 +1,10 @@
-import { Signal } from "@angular/core";
-
 export interface Move {
     name: string;
     description: string;
-    power?: number;
-    //accuracy: number;
+    power: number | null;
+    accuracy: number | null;
     moveClass: string;
     pp: number;
-    currentPP: Signal<number>;
+    currentPp: number;
     type: string;
 }

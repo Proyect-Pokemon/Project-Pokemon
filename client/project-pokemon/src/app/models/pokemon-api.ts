@@ -10,7 +10,7 @@ export interface PokemonApi {
     spd: number;
     spe: number;
     type1: string;
-    type2?: string;
+    type2: string | null;
     moves: Move[];
 }
 
