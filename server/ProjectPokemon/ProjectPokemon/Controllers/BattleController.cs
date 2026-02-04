@@ -1,9 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProjectPokemon.Models.Database;
-using System.Buffers.Text;
-using System.Reflection.Emit;
 
 // Este controlador devolverá Pokemon A y Pokemon B, con sus respectivos movimientos para el combate
 namespace ProjectPokemon.Controllers {
@@ -14,12 +11,12 @@ namespace ProjectPokemon.Controllers {
         // Inyectar la BD
         private readonly PokemonDbContext _context;
         public BattleController(PokemonDbContext context) {
-            _context = context; 
+            _context = context;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetBattle() {
-            // Pokemon A, el pokemon del usuario
+            // PokemonA, el pokemon del usuario
             var usersPokemon = await _context.Pokemons.FirstAsync(p => p.Id == 1);
             var opponentsPokemon = await _context.Pokemons.FirstAsync(p => p.Id == 23);
 

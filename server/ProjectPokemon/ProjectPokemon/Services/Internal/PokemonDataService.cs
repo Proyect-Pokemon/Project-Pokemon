@@ -51,9 +51,9 @@ public class PokemonDataService {
             SpecialAttack = spa,
             SpecialDefense = spd,
             Speed = spe,
-            Weight = pokemon.Weight,
-            SpriteFront = pokemon.Sprites.FrontDefault, // TO DO --> Esto recoge una url de la PokeApi
-            SpriteBack = pokemon.Sprites.BackDefault, // Necesitamos que sea una url a nuestro wwwroot
+            Weight = pokemon.Weight / 10,
+            SpriteFront = pokemon.Sprites.Versions.GenerationV.BlackWhite.Animated.FrontDefault, // TO DO --> Esto recoge una url de la PokeApi
+            SpriteBack = pokemon.Sprites.Versions.GenerationV.BlackWhite.Animated.BackDefault, // Necesitamos que sea una url a nuestro wwwroot
             Type1 = type1,
             Type2 = type2
             //

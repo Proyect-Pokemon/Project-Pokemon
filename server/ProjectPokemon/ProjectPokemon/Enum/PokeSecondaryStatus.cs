@@ -10,5 +10,5 @@ public enum PokeSecondaryStatus {
     Seeded = 1 << 5,        // 0010 0000
     CountingDown = 1 << 6   // 0100 0000
 
-    // Por ejemplo: Cursed e Infatuation --> 0000 1100
+    // Por ejemplo: Cursed e Infatuation --> 0000 0110
 }
