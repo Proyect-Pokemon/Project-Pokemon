@@ -1,0 +1,5 @@
+<button (click)="onClickMove()" [class]="'move type-' + move.type.toLowerCase()" [disabled]="disabled">
+    <img [src]="'assets/icons/types/' + move.type.toLowerCase() + '.svg'" [alt]="move.type">
+    <span class="move-name">{{move.name}}</span>
+    <span class="move-pp">{{move.currentPp}}/{{move.pp}}</span>
+</button>

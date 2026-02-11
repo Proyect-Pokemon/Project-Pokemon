@@ -15,19 +15,19 @@
             <div id="moves">
                 @if (turno() == true) {
                     @for (move of battleInfo()!.pokemonA.moves; track $index) {
-                        <button (click)="ataca(move)" [class]="'move type-' + move.type.toLowerCase()">
-                            <img [src]="'assets/icons/types/' + move.type.toLowerCase() + '.svg'" [alt]="move.type">
-                            <span class="move-name">{{move.name}}</span>
-                            <span class="move-pp">{{move.currentPp}}/{{move.pp}}</span>
-                        </button>
+                        <app-movement-button 
+                            [move]="move" 
+                            [disabled]="false"
+                            (moveClicked)="ataca($event)">
+                        </app-movement-button>
                     }
                 } @else {
                     @for (move of battleInfo()!.pokemonA.moves; track $index) {
-                        <button (click)="ataca(move)" [class]="'move type-' + move.type.toLowerCase()" disabled>
-                            <img [src]="'assets/icons/types/' + move.type.toLowerCase() + '.svg'" [alt]="move.type">
-                            <span class="move-name">{{move.name}}</span>
-                            <span class="move-pp">{{move.currentPp}}/{{move.pp}}</span>
-                        </button>
+                        <app-movement-button 
+                            [move]="move" 
+                            [disabled]="true"
+                            (moveClicked)="ataca($event)">
+                        </app-movement-button>
                     }
                 }
             </div>

@@ -1,10 +1,12 @@
 #canvas {
     background-color: rgb(175, 135, 64);
     width: 70%;
+    max-height: 80vh;
     display: flex;
     flex-direction: column;
     margin: auto;
     padding: 10px;
+    gap: 10px;
 }
 
 .enemy {
@@ -12,6 +14,9 @@
     flex-direction: row;
     justify-content: right;
     align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
 }
 
 .ally {
@@ -19,22 +24,27 @@
     flex-direction: row;
     justify-content: left;
     align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
 }
 
 .enemy img {
-    width: 25%;
+    width: 15%;
     image-rendering: pixelated;
+    height: auto;
 }
 
 .ally img {
-    width: 40%;
+    width: 20%;
     image-rendering: pixelated;
+    height: auto;
 }
 
 .life-bar {
     background-color: var(--secondary-color);
-    width: 20vw;
-    height: 1.5vw;
+    width: 15vw;
+    height: 1vh;
     border-radius: 10px;
 }
 
@@ -52,23 +62,6 @@
     width: 75%;
 }
 
-.type-normal { background-color: var(--primary-color); }
-.type-fire { background-color: var(--fire-color); }
-.type-water { background-color: var(--water-color); }
-.type-electric { background-color: var(--electric-color); }
-.type-grass { background-color: var(--grass-color); }
-.type-ice { background-color: var(--ice-color); }
-.type-fighting { background-color: var(--fighting-color); }
-.type-poison { background-color: var(--poison-color); }
-.type-ground { background-color: var(--ground-color); }
-.type-flying { background-color: var(--flying-color); }
-.type-psychic { background-color: var(--psychic-color); }
-.type-bug { background-color: var(--bug-color); }
-.type-rock { background-color: var(--rock-color); }
-.type-ghost { background-color: var(--ghost-color); }
-.type-steel { background-color: var(--steel-color); }
-.type-dragon { background-color: var(--dragon-color); }
-
 #moves {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -76,60 +69,4 @@
     margin-bottom: 10px;
     margin-left: 10px;
     margin-right: 10px;
-}
-
-.move {
-    display: flex;
-    cursor: pointer;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    padding-right: 20px;
-    gap: 5px;
-    height: max-content;
-    margin: 2px;
-    border: none;
-    border-radius: 50px;
-    position: relative;
-    overflow: hidden;
-    z-index: 0;
-}
-
-.move::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 38%;
-    height: 100%;
-    background: var(--secondary-color);
-    clip-path: polygon(20% 0, 100% 0, 100% 100%, 0% 100%);
-    z-index: 1;
-}
-
-.move:hover {
-    transform: scale(1.03);
-    filter: brightness(1.05);
-}
-
-.move:disabled {
-    opacity: 0.7;
-}
-
-.move img {
-    width: 12%;
-    height: fit-content;
-}
-
-.move-name {
-    color: var(--secondary-color);
-    font-size: 2vw;
-}
-
-.move-pp {
-    align-content: center;
-    color: var(--primary-color);
-    font-size: 2vw;
-    margin-left: 20px;
-    z-index: 2;
 }

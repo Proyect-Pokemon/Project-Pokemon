@@ -30,10 +30,11 @@ h3 { font-size: 20px; }
 h4 { font-size: 16px; }
 h5 { font-size: 14px; }
 
-html {
+body {
+    margin: 0;
     font-family: 'Space Grotesk', sans-serif;
 }
 
-body {
-    margin: 0;
+button {
+    font-family: inherit;
 }

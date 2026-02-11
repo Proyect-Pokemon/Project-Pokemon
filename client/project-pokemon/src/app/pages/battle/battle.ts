@@ -2,10 +2,11 @@ import { Component, inject, signal } from '@angular/core';
 import { BattleService } from '../../services/battle-service';
 import { BattleResponse } from '../../models/pokemon-api';
 import { Move } from '../../models/move';
+import { MovementButton } from '../../components/movement-button/movement-button';
 
 @Component({
   selector: 'app-battle',
-  imports: [],
+  imports: [MovementButton],
   templateUrl: './battle.html',
   styleUrl: './battle.css',
 })
