@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using ProjectPokemon.Models.Database;
+using ProjectPokemon.Models.Database.Repositories;
+using ProjectPokemon.Services;
 using ProjectPokemon.Services.Internal;
 using Swashbuckle.AspNetCore.Filters;
 using System.Security.Claims;
@@ -18,6 +20,12 @@ public class Program
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
         var builder = WebApplication.CreateBuilder(args);
+
+        // Add services to the container.
+        // builder.Services.AddControllers();
+
+        // Repositorios
+        builder.Services.AddScoped<UserRepository>();
 
         // DbContext
         builder.Services.AddDbContext<PokemonDbContext>(options =>
@@ -40,6 +48,8 @@ public class Program
         builder.Services.AddScoped<UnitOfWork>();
 
         // Autenticacion JWT
+        builder.Services.AddScoped<TokenService>();
+        builder.Services.AddScoped<AuthService>();
         builder.Services.AddAuthentication()
         .AddJwtBearer(options =>
         {
