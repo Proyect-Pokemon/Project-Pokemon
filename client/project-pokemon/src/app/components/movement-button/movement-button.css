@@ -1,0 +1,73 @@
+.type-normal { background-color: var(--primary-color); }
+.type-fire { background-color: var(--fire-color); }
+.type-water { background-color: var(--water-color); }
+.type-electric { background-color: var(--electric-color); }
+.type-grass { background-color: var(--grass-color); }
+.type-ice { background-color: var(--ice-color); }
+.type-fighting { background-color: var(--fighting-color); }
+.type-poison { background-color: var(--poison-color); }
+.type-ground { background-color: var(--ground-color); }
+.type-flying { background-color: var(--flying-color); }
+.type-psychic { background-color: var(--psychic-color); }
+.type-bug { background-color: var(--bug-color); }
+.type-rock { background-color: var(--rock-color); }
+.type-ghost { background-color: var(--ghost-color); }
+.type-steel { background-color: var(--steel-color); }
+.type-dragon { background-color: var(--dragon-color); }
+
+.move {
+    display: flex;
+    width: 100%;
+    cursor: pointer;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    padding-right: 15px;
+    gap: 5px;
+    height: max-content;
+    margin: 2px;
+    border: none;
+    border-radius: 50px;
+    position: relative;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.move::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 38%;
+    height: 100%;
+    background: var(--secondary-color);
+    clip-path: polygon(20% 0, 100% 0, 100% 100%, 0% 100%);
+    z-index: 1;
+}
+
+.move:hover {
+    transform: scale(1.03);
+    filter: brightness(1.05);
+}
+
+.move:disabled {
+    opacity: 0.7;
+}
+
+.move img {
+    width: 12%;
+    height: fit-content;
+}
+
+.move-name {
+    color: var(--secondary-color);
+    font-size: 1.2vw;
+}
+
+.move-pp {
+    align-content: center;
+    color: var(--primary-color);
+    font-size: 1.2vw;
+    margin-left: 15px;
+    z-index: 2;
+}
