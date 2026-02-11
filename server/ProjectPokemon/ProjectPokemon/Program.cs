@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using ProjectPokemon.Models.Database;
+using ProjectPokemon.Models.Database.Repositories;
 using ProjectPokemon.Services.Internal;
 using Swashbuckle.AspNetCore.Filters;
 using System.Security.Claims;
@@ -34,6 +35,8 @@ public class Program
                             new System.Text.Json.Serialization.JsonStringEnumConverter()
                         );
                     });
+
+        builder.Services.AddScoped<UserRepository>();
         builder.Services.AddScoped<DataLoader>();
         builder.Services.AddScoped<PokemonDataService>();
         builder.Services.AddScoped<MovementDataService>();
@@ -96,21 +99,17 @@ public class Program
         app.UseAuthorization();      // middleware de autorizacion
         app.MapControllers();        // mapea los endpoints de los controladores
 
-        // Llamar al método antes de ejecutar la app
-        SeedDatabase(app.Services);
-        app.Run();
+        using (IServiceScope scope = app.Services.CreateScope()) {
+            PokemonDbContext dbContext = scope.ServiceProvider.GetRequiredService<PokemonDbContext>();
+            DataLoader dataLoader = scope.ServiceProvider.GetRequiredService<DataLoader>();
 
-        // Método del seeder y creación de la base de datos
-        static void SeedDatabase(IServiceProvider serviceProvider)
-        {
-            using IServiceScope scope = serviceProvider.CreateScope();
-            using PokemonDbContext dbContext = scope.ServiceProvider.GetRequiredService<PokemonDbContext>();
-
-            if (dbContext.Database.EnsureCreated()) // Esto crea la DB si no existe
-            {
+            if (dbContext.Database.EnsureCreated()) {  // Esto crea la DB si no existe
+                await dataLoader.LoadAllDataAsync();
                 Seeder seeder = new Seeder(dbContext);
                 seeder.Seed();
             }
         }
+
+        app.Run();
     }
 }
