@@ -12,6 +12,7 @@
                 <div class="health"></div>
             </div>
         </div>
+        <div style="position: relative;">
             <div id="moves">
                 @for (move of battleInfo()!.pokemonA.moves; track $index) {
                     <app-movement-button 
@@ -20,6 +21,8 @@
                     </app-movement-button>
                 }
             </div>
+            <app-battle-log-overlay [log]="battleLog()" [visible]="showLogOverlay()"></app-battle-log-overlay>
+        </div>
     </div>
 } @else {
     <div>Cargando combate...</div>

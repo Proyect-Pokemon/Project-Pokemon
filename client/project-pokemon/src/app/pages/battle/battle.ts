@@ -4,10 +4,12 @@ import { BattleResponse } from '../../models/pokemon-api';
 import { Move } from '../../models/move';
 import { MovementButton } from '../../components/movement-button/movement-button';
 import { simulateBattle } from '../../services/battle-simulator';
+import { CommonModule } from '@angular/common';
+import { BattleLogOverlay } from '../../components/battle-log-overlay/battle-log-overlay';
 
 @Component({
   selector: 'app-battle',
-  imports: [MovementButton],
+  imports: [MovementButton, BattleLogOverlay, CommonModule],
   templateUrl: './battle.html',
   styleUrl: './battle.css',
 })
@@ -17,6 +19,10 @@ export class Battle {
   battleInfo = signal<BattleResponse | null>(null);
   hpA = signal<number | null>(null);
   hpB = signal<number | null>(null);
+
+  // Estado para el log y visibilidad del overlay
+  battleLog = signal<string[]>([]);
+  showLogOverlay = signal(false);
 
   private apiService = inject(BattleService);
 
@@ -39,6 +45,25 @@ export class Battle {
       const result = simulateBattle(battle.pokemonA, battle.pokemonB, move, hpA, hpB);
       this.hpA.set(result.hpA);
       this.hpB.set(result.hpB);
+
+      // Construir log del combate
+      const log: string[] = [];
+      log.push(`Turno del usuario: ${battle.pokemonA.name} usa ${result.userMovement.name} y hace ${result.userMovement.power ?? 0} daño.`);
+      log.push(`Turno de la máquina: ${battle.pokemonB.name} usa ${result.opponentMovement.name} y hace ${result.opponentMovement.power ?? 0} daño.`);
+      log.push(`Vida restante de ${battle.pokemonA.name}: ${result.hpA}`);
+      log.push(`Vida restante de ${battle.pokemonB.name}: ${result.hpB}`);
+      if (result.winner) {
+        if (result.winner === "Empate") {
+          log.push("¡Empate! Ambos Pokémon han caído.");
+        } else {
+          log.push(`¡${result.winner} gana el combate!`);
+        }
+      }
+      this.battleLog.set(log);
+      this.showLogOverlay.set(true);
+      setTimeout(() => {
+        this.showLogOverlay.set(false);
+      }, 3500);
       return battle;
     });
   }

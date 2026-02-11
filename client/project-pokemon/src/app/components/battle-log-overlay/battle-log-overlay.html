@@ -1,0 +1,9 @@
+@if (visible) {
+  <div id="battle-log-overlay">
+    <div>
+      @for (line of log; track $index) {
+        <div>{{ line }}</div>
+      }
+    </div>
+  </div>
+}
