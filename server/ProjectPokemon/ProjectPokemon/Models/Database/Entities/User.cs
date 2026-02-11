@@ -11,7 +11,7 @@ public class User {
     public required string Password { get; set; }
     public string Role { get; set; } = "user";
     public string? AvatarPath { get; set; } = null;
-    public string? Description { get; set; }
+    public string? Biography { get; set; }
     public DateTime CreationDate { get; set; } = DateTime.UtcNow;
     //public int VictoryCount { get; set; } = 0;
     //TO DO: Shiny token

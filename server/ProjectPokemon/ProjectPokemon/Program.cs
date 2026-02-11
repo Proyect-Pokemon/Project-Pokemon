@@ -29,6 +29,7 @@ public class Program
         builder.Services.AddScoped<DataLoader>();
         builder.Services.AddScoped<PokemonDataService>();
         builder.Services.AddScoped<MovementDataService>();
+        builder.Services.AddScoped<UnitOfWork>();
 
         var app = builder.Build();
 
@@ -38,6 +39,8 @@ public class Program
             DataLoader dataLoader = scope.ServiceProvider.GetRequiredService<DataLoader>();
             if (dbContext.Database.EnsureCreated()) {
                 await dataLoader.LoadAllDataAsync();
+                Seeder seeder = new Seeder(dbContext);
+                seeder.Seed();
             }
         }
 
