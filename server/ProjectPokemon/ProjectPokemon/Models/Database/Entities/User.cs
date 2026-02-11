@@ -15,4 +15,6 @@ public class User {
     public DateTime CreationDate { get; set; } = DateTime.UtcNow;
     //public int VictoryCount { get; set; } = 0;
     //TO DO: Shiny token
+
+    ICollection<Team> Team { get; set; } = [];
 }
