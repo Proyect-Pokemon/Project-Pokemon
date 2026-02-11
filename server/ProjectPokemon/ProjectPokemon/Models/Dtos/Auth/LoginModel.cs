@@ -1,4 +1,4 @@
-﻿namespace SocialNetwork.Models.Dtos.Auth;
+﻿namespace ProjectPokemon.Models.Dtos.Auth;
 
 public class LoginModel
 {

@@ -4,7 +4,7 @@ using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Database.Entities;
 using ProjectPokemon.Models.Dtos.User;
 
-namespace SocialNetwork.Controllers;
+namespace ProjectPokemon.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
