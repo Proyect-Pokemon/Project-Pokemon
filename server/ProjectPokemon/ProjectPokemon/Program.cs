@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Database.Repositories;
+using ProjectPokemon.Services;
 using ProjectPokemon.Services.Internal;
 using Swashbuckle.AspNetCore.Filters;
 using System.Security.Claims;
@@ -15,10 +16,16 @@ public class Program
 {
     public async static Task Main(string[] args)
     {
-        // El directorio de trabajo ser· donde est· el ejecutable del programa
+        // El directorio de trabajo ser√° donde est√° el ejecutable del programa
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
         var builder = WebApplication.CreateBuilder(args);
+
+        // Add services to the container.
+        // builder.Services.AddControllers();
+
+        // Repositorios
+        builder.Services.AddScoped<UserRepository>();
 
         // DbContext
         builder.Services.AddDbContext<PokemonDbContext>(options =>
@@ -28,7 +35,7 @@ public class Program
 
         // Services
         builder.Services.AddControllers()
-                    // Esto es para que en el Swagger se muestre el texto del valor de los enum en vez de el n˙mero
+                    // Esto es para que en el Swagger se muestre el texto del valor de los enum en vez de el n√∫mero
                     .AddJsonOptions(options =>
                     {
                         options.JsonSerializerOptions.Converters.Add(
@@ -43,22 +50,24 @@ public class Program
         builder.Services.AddScoped<UnitOfWork>();
 
         // Autenticacion JWT
+        builder.Services.AddScoped<TokenService>();
+        builder.Services.AddScoped<AuthService>();
         builder.Services.AddAuthentication()
         .AddJwtBearer(options =>
         {
             // Por seguridad guardamos la clave privada en variables de entorno
-            // La clave debe tener m·s de 256 bits
+            // La clave debe tener m√°s de 256 bits
             string? key = Environment.GetEnvironmentVariable("JWT_KEY");
 
             if (key is null)
-                throw new InvalidOperationException("La variable de entorno JWT_KEY no est· definida.");
+                throw new InvalidOperationException("La variable de entorno JWT_KEY no est√° definida.");
 
             options.TokenValidationParameters = new TokenValidationParameters()
             {
                 // Si no nos importa que se valide el emisor del token, lo desactivamos
                 ValidateIssuer = false,
-                // Si no nos importa que se valide para quiÈn o
-                // para quÈ propÛsito est· destinado el token, lo desactivamos
+                // Si no nos importa que se valide para qui√©n o
+                // para qu√© prop√≥sito est√° destinado el token, lo desactivamos
                 ValidateAudience = false,
                 // Indicamos la clave
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
