@@ -16,7 +16,7 @@ public class Program
 {
     public async static Task Main(string[] args)
     {
-        // El directorio de trabajo ser· donde est· el ejecutable del programa
+        // El directorio de trabajo ser√° donde est√° el ejecutable del programa
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
         var builder = WebApplication.CreateBuilder(args);
@@ -35,13 +35,15 @@ public class Program
 
         // Services
         builder.Services.AddControllers()
-                    // Esto es para que en el Swagger se muestre el texto del valor de los enum en vez de el n˙mero
+                    // Esto es para que en el Swagger se muestre el texto del valor de los enum en vez de el n√∫mero
                     .AddJsonOptions(options =>
                     {
                         options.JsonSerializerOptions.Converters.Add(
                             new System.Text.Json.Serialization.JsonStringEnumConverter()
                         );
                     });
+
+        builder.Services.AddScoped<UserRepository>();
         builder.Services.AddScoped<DataLoader>();
         builder.Services.AddScoped<PokemonDataService>();
         builder.Services.AddScoped<MovementDataService>();
@@ -54,18 +56,18 @@ public class Program
         .AddJwtBearer(options =>
         {
             // Por seguridad guardamos la clave privada en variables de entorno
-            // La clave debe tener m·s de 256 bits
+            // La clave debe tener m√°s de 256 bits
             string? key = Environment.GetEnvironmentVariable("JWT_KEY");
 
             if (key is null)
-                throw new InvalidOperationException("La variable de entorno JWT_KEY no est· definida.");
+                throw new InvalidOperationException("La variable de entorno JWT_KEY no est√° definida.");
 
             options.TokenValidationParameters = new TokenValidationParameters()
             {
                 // Si no nos importa que se valide el emisor del token, lo desactivamos
                 ValidateIssuer = false,
-                // Si no nos importa que se valide para quiÈn o
-                // para quÈ propÛsito est· destinado el token, lo desactivamos
+                // Si no nos importa que se valide para qui√©n o
+                // para qu√© prop√≥sito est√° destinado el token, lo desactivamos
                 ValidateAudience = false,
                 // Indicamos la clave
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
@@ -106,21 +108,17 @@ public class Program
         app.UseAuthorization();      // middleware de autorizacion
         app.MapControllers();        // mapea los endpoints de los controladores
 
-        // Llamar al mÈtodo antes de ejecutar la app
-        SeedDatabase(app.Services);
-        app.Run();
+        using (IServiceScope scope = app.Services.CreateScope()) {
+            PokemonDbContext dbContext = scope.ServiceProvider.GetRequiredService<PokemonDbContext>();
+            DataLoader dataLoader = scope.ServiceProvider.GetRequiredService<DataLoader>();
 
-        // MÈtodo del seeder y creaciÛn de la base de datos
-        static void SeedDatabase(IServiceProvider serviceProvider)
-        {
-            using IServiceScope scope = serviceProvider.CreateScope();
-            using PokemonDbContext dbContext = scope.ServiceProvider.GetRequiredService<PokemonDbContext>();
-
-            if (dbContext.Database.EnsureCreated()) // Esto crea la DB si no existe
-            {
+            if (dbContext.Database.EnsureCreated()) {  // Esto crea la DB si no existe
+                await dataLoader.LoadAllDataAsync();
                 Seeder seeder = new Seeder(dbContext);
                 seeder.Seed();
             }
         }
+
+        app.Run();
     }
 }
