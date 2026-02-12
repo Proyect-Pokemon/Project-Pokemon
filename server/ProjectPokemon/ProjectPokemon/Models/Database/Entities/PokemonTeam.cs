@@ -5,16 +5,16 @@ namespace ProjectPokemon.Models.Database.Entities {
     public class PokemonTeam {
         public long Id { get; set; }
         public bool Shiny { get; set; } = false;
-        public string? Nickname { get; set; } = null; //si es nulu usa el nombre del pokemon
-        public int Slot { get; set; } // 1 a 6
+        public string? Nickname { get; set; } = null; //si es nulo usa el nombre del pokemon
+        public required int Slot { get; set; } // 1 a 6
         public long TeamId { get; set; } 
         public Team Team { get; set; } = null!;
         public long PokemonId { get; set; }
         public Pokemon Pokemon { get; set; } = null!;
-        public required long MovementId1 { get; set; }
-        public long? MovementId2 { get; set; } = null;
-        public long? MovementId3 { get; set; } = null;
-        public long? MovementId4 { get; set; } = null;
+        public required int MovementId1 { get; set; }
+        public int? MovementId2 { get; set; } = null;
+        public int? MovementId3 { get; set; } = null;
+        public int? MovementId4 { get; set; } = null;
         public long NatureId { get; set; }
         public Nature Nature { get; set; } = null!;
 
