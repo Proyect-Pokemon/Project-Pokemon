@@ -24,9 +24,6 @@ public class Program
         // Add services to the container.
         // builder.Services.AddControllers();
 
-        // Repositorios
-        builder.Services.AddScoped<UserRepository>();
-
         // DbContext
         builder.Services.AddDbContext<PokemonDbContext>(options =>
         {
