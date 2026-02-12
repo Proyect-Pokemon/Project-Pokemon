@@ -3,7 +3,7 @@
         public long Id { get; set; }
         public required string Name { get; set; }
         public string? Description { get; set; } = null;
-        public long IdUser { get; set; }
+        public long UserId { get; set; }
         public User User { get; set; } = null!;
     }
 }
