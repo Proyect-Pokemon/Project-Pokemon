@@ -132,7 +132,6 @@ export class Battle {
           log.push(`¡${this.titleCasePipe.transform(result.winner)} ha ganado el combate!`);
           lineActions.push('none');
         }
-        this.showFinishDialog.set(true);
       }
       
       this.battleLog.set(log);
@@ -141,6 +140,10 @@ export class Battle {
       // Ocultar overlay después de mostrar todas las líneas (cada línea dura 3 segundos)
       setTimeout(() => {
         this.showLogOverlay.set(false);
+        // Mostrar el diálogo de fin de batalla después de que el overlay desaparezca
+        if (result.winner) {
+          this.showFinishDialog.set(true);
+        }
       }, log.length * 3000);
       return battle;
     });
