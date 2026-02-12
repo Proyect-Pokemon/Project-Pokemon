@@ -3,7 +3,7 @@ import { BattleService } from '../../services/battle-service';
 import { BattleResponse } from '../../models/pokemon-api';
 import { Move } from '../../models/move';
 import { MovementButton } from '../../components/movement-button/movement-button';
-import { simulateBattle } from '../../services/battle-simulator';
+import { BattleSimulatorService } from '../../services/battle-simulator';
 import { CommonModule } from '@angular/common';
 import { BattleLogOverlay } from '../../components/battle-log-overlay/battle-log-overlay';
 import { FinishBattleDialog } from '../../components/finish-battle-dialog/finish-battle-dialog';
@@ -27,6 +27,7 @@ export class Battle {
   showFinishDialog = signal(false);
 
   private apiService = inject(BattleService);
+  private battleSimulator = inject(BattleSimulatorService);
 
   async ngOnInit(): Promise<void> {
     const data = await this.apiService.getBattle();
@@ -46,7 +47,7 @@ export class Battle {
       // Usa current HP
       const hpA = this.hpA() ?? battle.pokemonA.hp;
       const hpB = this.hpB() ?? battle.pokemonB.hp;
-      const result = simulateBattle(battle.pokemonA, battle.pokemonB, move, hpA, hpB);
+      const result = this.battleSimulator.simulateBattle(battle.pokemonA, battle.pokemonB, move, hpA, hpB);
       this.hpA.set(result.hpA);
       this.hpB.set(result.hpB);
 
