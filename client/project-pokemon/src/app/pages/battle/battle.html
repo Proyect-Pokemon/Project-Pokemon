@@ -24,6 +24,15 @@
             </div>
             <app-battle-log-overlay [log]="battleLog()" [visible]="showLogOverlay()"></app-battle-log-overlay>
         </div>
+        @if (showFinishDialog()) {
+            <app-finish-battle-dialog
+                [hpA]="hpA()"
+                [hpB]="hpB()"
+                [pokemonAName]="battleInfo()!.pokemonA.name"
+                [pokemonBName]="battleInfo()!.pokemonB.name"
+                (retry)="onRetryBattle()"
+            ></app-finish-battle-dialog>
+        }
     </div>
 } @else {
     <div>Cargando combate...</div>

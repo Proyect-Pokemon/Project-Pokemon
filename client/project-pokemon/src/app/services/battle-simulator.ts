@@ -1,61 +1,39 @@
 import { PokemonApi } from "../models/pokemon-api";
 import { Move as Movement } from "../models/move";
+
+import { Injectable } from "@angular/core";
 import { CalculateDamageService } from "./calculate-damage";
+import { MoveSelection } from "./move-selection";
+import { TurnOrder } from "./turn-order";
 
-// Simula el combate por consola
-export function simulateBattle(
-    pokemonA: PokemonApi,
-    pokemonB: PokemonApi,
-    movementA: Movement,
-    hpA: number,
-    hpB: number
-) {
-    // Movimiento del usuario (pokemonA)
-    const userMovement = movementA;
-    // Movimiento del oponente (pokemonB)
-    const opponentMovement = pokemonB.moves[Math.floor(Math.random() * pokemonB.moves.length)];
+@Injectable({
+    providedIn: 'root',
+})
+export class BattleSimulatorService {
+    constructor(private moveSelector: MoveSelection, private turnOrder: TurnOrder) {}
 
-    // Determinar el orden de ataque según la velocidad (spe)
-    let firstAttacker, secondAttacker;
-    let firstMovement, secondMovement;
-    let firstHp, secondHp;
-    let firstIsA = true;
-    if (pokemonA.spe > pokemonB.spe) {
-        firstAttacker = pokemonA;
-        firstMovement = userMovement;
-        firstHp = hpA;
-        secondAttacker = pokemonB;
-        secondMovement = opponentMovement;
-        secondHp = hpB;
-        firstIsA = true;
-    } else if (pokemonB.spe > pokemonA.spe) {
-        firstAttacker = pokemonB;
-        firstMovement = opponentMovement;
-        firstHp = hpB;
-        secondAttacker = pokemonA;
-        secondMovement = userMovement;
-        secondHp = hpA;
-        firstIsA = false;
-    } else {
-        // Si la velocidad es igual, elegir al azar
-        if (Math.random() < 0.5) {
-            firstAttacker = pokemonA;
-            firstMovement = userMovement;
-            firstHp = hpA;
-            secondAttacker = pokemonB;
-            secondMovement = opponentMovement;
-            secondHp = hpB;
-            firstIsA = true;
-        } else {
-            firstAttacker = pokemonB;
-            firstMovement = opponentMovement;
-            firstHp = hpB;
-            secondAttacker = pokemonA;
-            secondMovement = userMovement;
-            secondHp = hpA;
-            firstIsA = false;
-        }
-    }
+    simulateBattle(
+        pokemonA: PokemonApi,
+        pokemonB: PokemonApi,
+        movementA: Movement,
+        hpA: number,
+        hpB: number
+    ) {
+        // Movimiento del usuario (pokemonA)
+        const userMovement = movementA;
+        // Movimiento del oponente (pokemonB)
+        const opponentMovement = this.moveSelector.getRandomOpponentMove(pokemonB);
+
+        // Delegar el cálculo del orden de turno
+        const order = this.turnOrder.getTurnOrder(
+            pokemonA,
+            pokemonB,
+            userMovement,
+            opponentMovement,
+            hpA,
+            hpB
+        );
+        const { firstAttacker, secondAttacker, firstMovement, secondMovement, firstHp, secondHp, firstIsA } = order;
 
     // Variables para calcular el daño:
     // USUARIO
@@ -76,15 +54,15 @@ export function simulateBattle(
     const defenseB = userMovement.moveClass === "Physical" ? pokemonA.def : pokemonA.spd;
 
     // Se llama al servicio calculateDamage
-    const damageService = new CalculateDamageService();
-    let damageFirst, damageSecond;
-    if (firstIsA) {
-        damageFirst = damageService.calculateDamage(stabA, effectiveA, variationA, attackA, powerA ?? 0, defenseA);
-        damageSecond = damageService.calculateDamage(stabB, effectiveB, variationB, attackB, powerB ?? 0, defenseB);
-    } else {
-        damageFirst = damageService.calculateDamage(stabB, effectiveB, variationB, attackB, powerB ?? 0, defenseB);
-        damageSecond = damageService.calculateDamage(stabA, effectiveA, variationA, attackA, powerA ?? 0, defenseA);
-    }
+        const damageService = new CalculateDamageService();
+        let damageFirst, damageSecond;
+        if (firstIsA) {
+            damageFirst = damageService.calculateDamage(stabA, effectiveA, variationA, attackA, powerA ?? 0, defenseA);
+            damageSecond = damageService.calculateDamage(stabB, effectiveB, variationB, attackB, powerB ?? 0, defenseB);
+        } else {
+            damageFirst = damageService.calculateDamage(stabB, effectiveB, variationB, attackB, powerB ?? 0, defenseB);
+            damageSecond = damageService.calculateDamage(stabA, effectiveA, variationA, attackA, powerA ?? 0, defenseA);
+        }
 
     // Restar el daño a la vida del defensor
     let firstTargetHp = secondHp - damageFirst;
@@ -126,13 +104,14 @@ export function simulateBattle(
         }
     }
     
-    return {
-        hpA: newHpA,
-        hpB: newHpB,
-        userMovement,
-        opponentMovement,
-        damageFirst, // Daño infligido por el primer atacante
-        damageSecond, // Daño infligido por el segundo atacante (si ataca)
-        winner
-    };
+        return {
+            hpA: newHpA,
+            hpB: newHpB,
+            userMovement,
+            opponentMovement,
+            damageFirst, // Daño infligido por el primer atacante
+            damageSecond, // Daño infligido por el segundo atacante (si ataca)
+            winner
+        };
+    }
 }
