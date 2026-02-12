@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 @Injectable({
   providedIn: 'root',
 })
-export class CalculateDamage {
+export class CalculateDamageService {
   calculateDamage(stab: number, effective: number, variation: number, attackersLevel: number, attack: number, power: number, defense: number) {
     // Fórmula para calcular el daño
 

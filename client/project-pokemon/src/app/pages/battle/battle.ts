@@ -50,8 +50,8 @@ export class Battle {
 
       // Log del combate
       const log: string[] = [];
-      log.push(`Turno del usuario: ${battle.pokemonA.name} usa ${result.userMovement.name} y hace ${result.userMovement.power ?? 0} daño.`);
-      log.push(`Turno de la máquina: ${battle.pokemonB.name} usa ${result.opponentMovement.name} y hace ${result.opponentMovement.power ?? 0} daño.`);
+      log.push(`Turno del usuario: ${battle.pokemonA.name} usa ${result.userMovement.name} y hace ${result.damageA ?? 0} daño.`);
+      log.push(`Turno de la máquina: ${battle.pokemonB.name} usa ${result.opponentMovement.name} y hace ${result.damageB ?? 0} daño.`);
       log.push(`Vida restante de ${battle.pokemonA.name}: ${result.hpA}`);
       log.push(`Vida restante de ${battle.pokemonB.name}: ${result.hpB}`);
       if (result.winner) {
