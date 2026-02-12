@@ -72,6 +72,15 @@ export class BattleSimulatorService {
         secondTargetHp = firstHp - damageSecond;
     }
 
+    // Mostrar el orden de ataque y resultados
+    console.log(`Turno 1: ${firstAttacker.name} usa ${firstMovement.name} y hace ${damageFirst} daño.`);
+    console.log(`Vida restante de ${secondAttacker.name}: ${firstTargetHp}`);
+    // Si el primer defensor sobrevive, el segundo ataca
+    if (firstTargetHp > 0) {
+        console.log(`Turno 2: ${secondAttacker.name} usa ${secondMovement.name} y hace ${damageSecond} daño.`);
+        console.log(`Vida restante de ${firstAttacker.name}: ${secondTargetHp}`);
+    }
+
     // Asignar los nuevos HP a A y B según el orden
     let newHpA, newHpB;
     if (firstIsA) {
@@ -87,6 +96,10 @@ export class BattleSimulatorService {
         winner = pokemonB.name;
     } else if (newHpB <= 0 && newHpA > 0) {
         winner = pokemonA.name;
+    }
+
+    if (winner) {
+        console.log(`${winner} ha ganado el combate`);
     }
     
         return {

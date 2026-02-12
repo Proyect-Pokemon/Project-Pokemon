@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, OnDestroy, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-battle-log-overlay',
@@ -9,6 +9,7 @@ import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ChangeDetectorRe
 export class BattleLogOverlay implements OnChanges, OnDestroy {
   @Input() log: string[] = [];
   @Input() visible = false;
+  @Output() lineChanged = new EventEmitter<number>();
   
   currentLineIndex = 0;
   currentLine = '';
@@ -35,12 +36,14 @@ export class BattleLogOverlay implements OnChanges, OnDestroy {
     this.currentLineIndex = 0;
     this.currentLine = this.log[0] || '';
     this.cdr.markForCheck();
+    this.lineChanged.emit(0);
     
     this.intervalId = window.setInterval(() => {
       this.currentLineIndex++;
       if (this.currentLineIndex < this.log.length) {
         this.currentLine = this.log[this.currentLineIndex];
         this.cdr.markForCheck();
+        this.lineChanged.emit(this.currentLineIndex);
       } else {
         this.stopDisplaying();
       }

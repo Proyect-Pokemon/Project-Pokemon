@@ -27,6 +27,12 @@ export class Battle {
   battleLog = signal<string[]>([]);
   showLogOverlay = signal(false);
   showFinishDialog = signal(false);
+  
+  // Variables temporales para actualizar HP de forma sincronizada
+  private pendingHpA: number | null = null;
+  private pendingHpB: number | null = null;
+  private firstIsUser: boolean = false;
+  private logLineActions: ('update-hpA' | 'update-hpB' | 'none')[] = [];
 
   private apiService = inject(BattleService);
   private battleSimulator = inject(BattleSimulatorService);
@@ -51,13 +57,15 @@ export class Battle {
       const hpA = this.hpA() ?? battle.pokemonA.hp;
       const hpB = this.hpB() ?? battle.pokemonB.hp;
       const result = this.battleSimulator.simulateBattle(battle.pokemonA, battle.pokemonB, move, hpA, hpB);
-      this.hpA.set(result.hpA);
-      this.hpB.set(result.hpB);
+      
+      // Guardar los HP finales pero no actualizar inmediatamente
+      this.pendingHpA = result.hpA;
+      this.pendingHpB = result.hpB;
 
       // LOG DE COMBATE
       const log: string[] = [];
+      const lineActions: ('update-hpA' | 'update-hpB' | 'none')[] = [];
       // Determinar quién atacó primero y segundo
-      let firstIsUser = false;
       let firstName, secondName, firstMove, secondMove;
       if (
         (battle.pokemonA.spe > battle.pokemonB.spe) || (battle.pokemonA.spe === battle.pokemonB.spe && result.userMovement === move)
@@ -67,58 +75,68 @@ export class Battle {
         firstMove = result.userMovement.name;
         secondName = this.titleCasePipe.transform(battle.pokemonB.name);
         secondMove = result.opponentMovement.name;
-        firstIsUser = true;
+        this.firstIsUser = true;
       } else {
         // PokemonB ataca primero
         firstName = this.titleCasePipe.transform(battle.pokemonB.name);
         firstMove = result.opponentMovement.name;
         secondName = this.titleCasePipe.transform(battle.pokemonA.name);
         secondMove = result.userMovement.name;
-        firstIsUser = false;
+        this.firstIsUser = false;
       }
 
       // Mensaje del primer ataque
-      if (firstIsUser) {
+      if (this.firstIsUser) {
         log.push(`¡${firstName} ha usado ${firstMove}!`);
+        lineActions.push('update-hpB'); // Usuario ataca, actualizar HP enemigo
       } else {
         log.push(`¡El ${firstName} enemigo ha usado ${firstMove}!`);
+        lineActions.push('update-hpA'); // Enemigo ataca, actualizar HP usuario
       }
       
       // Verificar si el segundo pokemon se debilitó
       const secondHp = firstName === battle.pokemonA.name ? result.hpB : result.hpA;
       if (secondHp <= 0) {
-        if (!firstIsUser) {
+        if (!this.firstIsUser) {
           log.push(`¡${secondName} se ha debilitado!`);
+          lineActions.push('none');
         } else {
           log.push(`¡El ${secondName} enemigo se ha debilitado!`);
+          lineActions.push('none');
         }
       } else {
         // Solo se muestra el segundo ataque si el defensor sobrevive
-        if (!firstIsUser) {
+        if (!this.firstIsUser) {
           log.push(`¡${secondName} ha usado ${secondMove}!`);
+          lineActions.push('update-hpB'); // Usuario contraataca, actualizar HP enemigo
         } else {
           log.push(`¡El ${secondName} enemigo ha usado ${secondMove}!`);
+          lineActions.push('update-hpA'); // Enemigo contraataca, actualizar HP usuario
         }
         
         // Verificar si el primer pokemon se debilitó tras el contraataque
         const firstHp = firstName === battle.pokemonA.name ? result.hpA : result.hpB;
         if (firstHp <= 0) {
-          if (firstIsUser) {
+          if (this.firstIsUser) {
             log.push(`¡${firstName} se ha debilitado!`);
+            lineActions.push('none');
           } else {
             log.push(`¡El ${firstName} enemigo se ha debilitado!`);
+            lineActions.push('none');
           }
         }
       }
 
       if (result.winner) {
         if (result.winner !== "Empate") {
-          log.push(`¡${result.winner} ha ganado el combate!`);
+          log.push(`¡${this.titleCasePipe.transform(result.winner)} ha ganado el combate!`);
+          lineActions.push('none');
         }
         this.showFinishDialog.set(true);
       }
       
       this.battleLog.set(log);
+      this.logLineActions = lineActions;
       this.showLogOverlay.set(true);
       // Ocultar overlay después de mostrar todas las líneas (cada línea dura 3 segundos)
       setTimeout(() => {
@@ -127,6 +145,18 @@ export class Battle {
       return battle;
     });
   }
+
+  onLineChanged(lineIndex: number): void {
+    const action = this.logLineActions[lineIndex];
+    
+    if (action === 'update-hpA') {
+      this.hpA.set(this.pendingHpA!);
+    } else if (action === 'update-hpB') {
+      this.hpB.set(this.pendingHpB!);
+    }
+    // Si action === 'none', no se actualiza nada
+  }
+
   onRetryBattle() {
     // Reiniciar el combate: recargar datos y ocultar el diálogo
     this.ngOnInit();
