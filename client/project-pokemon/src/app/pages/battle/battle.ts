@@ -7,10 +7,11 @@ import { BattleSimulatorService } from '../../services/battle-simulator';
 import { CommonModule } from '@angular/common';
 import { BattleLogOverlay } from '../../components/battle-log-overlay/battle-log-overlay';
 import { FinishBattleDialog } from '../../components/finish-battle-dialog/finish-battle-dialog';
+import { LifeBar } from '../../components/life-bar/life-bar';
 
 @Component({
   selector: 'app-battle',
-  imports: [MovementButton, BattleLogOverlay, FinishBattleDialog, CommonModule],
+  imports: [MovementButton, BattleLogOverlay, FinishBattleDialog, LifeBar, CommonModule],
   templateUrl: './battle.html',
   styleUrl: './battle.css',
 })

@@ -7,7 +7,7 @@ import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { TeamBuilder } from './pages/team-builder/team-builder';
 import { Battle } from './pages/battle/battle';
-import { redirectionGuard } from './guards/redirection-guard-guard';
+import { redirectionGuard } from './guards/redirection-guard';
 
 export const routes: Routes = [
     { path: 'about', component: About },
