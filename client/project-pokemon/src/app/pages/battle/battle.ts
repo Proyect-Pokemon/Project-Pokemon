@@ -41,19 +41,43 @@ export class Battle {
     this.battleInfo.update(battle => {
       if (!battle) return battle;
       move.currentPp = move.currentPp - 1;
-      // Use current HP
+      // Usa current HP
       const hpA = this.hpA() ?? battle.pokemonA.hp;
       const hpB = this.hpB() ?? battle.pokemonB.hp;
       const result = simulateBattle(battle.pokemonA, battle.pokemonB, move, hpA, hpB);
       this.hpA.set(result.hpA);
       this.hpB.set(result.hpB);
 
-      // Log del combate
+      // LOG DE COMBATE
       const log: string[] = [];
-      log.push(`Turno del usuario: ${battle.pokemonA.name} usa ${result.userMovement.name} y hace ${result.damageA ?? 0} daño.`);
-      log.push(`Turno de la máquina: ${battle.pokemonB.name} usa ${result.opponentMovement.name} y hace ${result.damageB ?? 0} daño.`);
-      log.push(`Vida restante de ${battle.pokemonA.name}: ${result.hpA}`);
-      log.push(`Vida restante de ${battle.pokemonB.name}: ${result.hpB}`);
+      // Determinar quién atacó primero y segundo
+      let firstName, secondName, firstMove, secondMove;
+      if (
+        (battle.pokemonA.spe > battle.pokemonB.spe) || (battle.pokemonA.spe === battle.pokemonB.spe && result.userMovement === move)
+      ) {
+        // PokemonA ataca primero
+        firstName = battle.pokemonA.name;
+        firstMove = result.userMovement.name;
+        secondName = battle.pokemonB.name;
+        secondMove = result.opponentMovement.name;
+      } else {
+        // PokemonB ataca primero
+        firstName = battle.pokemonB.name;
+        firstMove = result.opponentMovement.name;
+        secondName = battle.pokemonA.name;
+        secondMove = result.userMovement.name;
+      }
+
+      log.push(`Turno 1: ${firstName} usa ${firstMove} y hace ${result.damageFirst ?? 0} daño.`);
+      log.push(`Vida restante de ${secondName}: ${firstName === battle.pokemonA.name ? result.hpB : result.hpA}`);
+      
+      // Solo se muestra el segundo ataque si el defensor sobrevive
+      const secondTargetHp = firstName === battle.pokemonA.name ? result.hpA : result.hpB;
+      if ((firstName === battle.pokemonA.name ? result.hpB : result.hpA) > 0) {
+        log.push(`Turno 2: ${secondName} usa ${secondMove} y hace ${result.damageSecond ?? 0} daño.`);
+        log.push(`Vida restante de ${firstName}: ${secondTargetHp}`);
+      }
+
       if (result.winner) {
         if (result.winner === "Empate") {
           log.push("Empate. Los dos Pokemon han quedado fuera de combate.");
@@ -61,6 +85,7 @@ export class Battle {
           log.push(`${result.winner} ha ganado el combate`);
         }
       }
+      
       this.battleLog.set(log);
       this.showLogOverlay.set(true);
       setTimeout(() => {
