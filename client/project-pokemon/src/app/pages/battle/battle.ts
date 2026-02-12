@@ -93,9 +93,10 @@ export class Battle {
       
       this.battleLog.set(log);
       this.showLogOverlay.set(true);
+      // Ocultar overlay después de mostrar todas las líneas (cada línea dura 3 segundos)
       setTimeout(() => {
         this.showLogOverlay.set(false);
-      }, 3500);
+      }, log.length * 3000);
       return battle;
     });
   }
