@@ -4,6 +4,8 @@ namespace ProjectPokemon.Models.Database {
     public class UnitOfWork {
         private readonly PokemonDbContext? _context;
         public UserRepository UserRepository => field ??= new UserRepository(_context!);
+        public TeamRepository TeamRepository => field ??= new TeamRepository(_context!);
+        public PokemonTeamRepository PokemonTeamRepository => field ??= new PokemonTeamRepository(_context!);
 
         public UnitOfWork(PokemonDbContext context) {
             _context = context;
