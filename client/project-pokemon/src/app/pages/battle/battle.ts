@@ -6,10 +6,11 @@ import { MovementButton } from '../../components/movement-button/movement-button
 import { simulateBattle } from '../../services/battle-simulator';
 import { CommonModule } from '@angular/common';
 import { BattleLogOverlay } from '../../components/battle-log-overlay/battle-log-overlay';
+import { FinishBattleDialog } from '../../components/finish-battle-dialog/finish-battle-dialog';
 
 @Component({
   selector: 'app-battle',
-  imports: [MovementButton, BattleLogOverlay, CommonModule],
+  imports: [MovementButton, BattleLogOverlay, FinishBattleDialog, CommonModule],
   templateUrl: './battle.html',
   styleUrl: './battle.css',
 })
@@ -23,6 +24,7 @@ export class Battle {
   // Estado para el log y visibilidad del overlay
   battleLog = signal<string[]>([]);
   showLogOverlay = signal(false);
+  showFinishDialog = signal(false);
 
   private apiService = inject(BattleService);
 
@@ -84,6 +86,7 @@ export class Battle {
         } else {
           log.push(`${result.winner} ha ganado el combate`);
         }
+        this.showFinishDialog.set(true);
       }
       
       this.battleLog.set(log);
@@ -93,5 +96,10 @@ export class Battle {
       }, 3500);
       return battle;
     });
+  }
+  onRetryBattle() {
+    // Reiniciar el combate: recargar datos y ocultar el diálogo
+    this.ngOnInit();
+    this.showFinishDialog.set(false);
   }
 }
