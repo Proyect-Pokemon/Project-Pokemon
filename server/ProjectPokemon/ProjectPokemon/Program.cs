@@ -24,6 +24,11 @@ public class Program
         // Add services to the container.
         // builder.Services.AddControllers();
 
+        // Repositorios
+        builder.Services.AddScoped<UserRepository>();
+        builder.Services.AddScoped<TeamRepository>();
+        builder.Services.AddScoped<PokemonTeamRepository>();
+
         // DbContext
         builder.Services.AddDbContext<PokemonDbContext>(options =>
         {
@@ -40,7 +45,6 @@ public class Program
                         );
                     });
 
-        builder.Services.AddScoped<UserRepository>();
         builder.Services.AddScoped<DataLoader>();
         builder.Services.AddScoped<PokemonDataService>();
         builder.Services.AddScoped<MovementDataService>();
