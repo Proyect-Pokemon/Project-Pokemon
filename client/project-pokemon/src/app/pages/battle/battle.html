@@ -2,6 +2,7 @@
     <div id="canvas">
         <div class="enemy">
             <app-life-bar
+                [pokemonName]="battleInfo()!.pokemonB.name"
                 [currentHp]="hpB()"
                 [maxHp]="battleInfo()!.pokemonB.hp">
             </app-life-bar>
@@ -10,8 +11,10 @@
         <div class="ally">
             <img [src]="battleInfo()!.pokemonA.sprite">
             <app-life-bar
+                [pokemonName]="battleInfo()!.pokemonA.name"
                 [currentHp]="hpA()"
-                [maxHp]="battleInfo()!.pokemonA.hp">
+                [maxHp]="battleInfo()!.pokemonA.hp"
+                [showHp]="true">
             </app-life-bar>
         </div>
         <div style="position: relative;">

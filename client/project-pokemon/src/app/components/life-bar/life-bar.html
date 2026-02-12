@@ -1,3 +1,11 @@
-<div class="life-bar">
-	<div class="health" [style.width.%]="hpPercent" [class]="healthColor"></div>
+<div class="pokemon-info">
+    <div class="info-header">
+        <span>{{ pokemonName | titlecase }}</span>
+        <div class="life-bar">
+            <div class="health" [style.width.%]="hpPercent" [class]="healthColor"></div>
+        </div>
+    </div>
+    @if (showHp) {
+        <span class="hp-display">{{ displayHp }}/{{ maxHp }}</span>
+    }
 </div>

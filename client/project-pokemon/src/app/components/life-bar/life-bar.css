@@ -1,22 +1,45 @@
+.pokemon-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: linear-gradient(to bottom, var(--primary-color), grey);
+    padding: 10px;
+    border: solid 5px var(--secondary-color);
+    border-radius: 10px;
+}
+
+.info-header {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.hp-display {
+    align-self: flex-end;
+}
+
 .life-bar {
-	background-color: var(--secondary-color);
+	background: linear-gradient(to bottom, var(--secondary-color), grey);
 	width: 15vw;
 	height: 2.5vh;
+    border: solid 3px var(--secondary-color);
+    border-radius: 5px;
 }
 
 .health {
 	height: 100%;
 	transition: background-color 0.3s ease, width 0.3s ease;
+    border-radius: 3px;
 }
 
 .health.green {
-	background-color: var(--grass-color);
+	background: linear-gradient(to bottom, var(--grass-color), green);
 }
 
 .health.yellow {
-	background-color: var(--electric-color);
+	background: linear-gradient(to bottom, var(--electric-color), var(--fire-color));
 }
 
 .health.red {
-	background-color: red;
+	background: linear-gradient(to bottom, var(--fire-color), red);
 }
