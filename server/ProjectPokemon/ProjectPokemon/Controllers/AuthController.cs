@@ -18,12 +18,15 @@ namespace ProjectPokemon.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login([FromBody] LoginModel model)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var token = await _authService.LoginAsync(model);
 
             if (token is null)
                 return Unauthorized("Credenciales invalidas");
 
-            return Ok(new { accessToken = token });
+            return Ok(new AuthResponseDto { AccessToken = token });
         }
     }
 }
