@@ -17,18 +17,20 @@
                 [showHp]="true">
             </app-life-bar>
         </div>
-        <div style="position: relative;">
-            <div id="moves">
-                @for (move of battleInfo()!.pokemonA.moves; track $index) {
-                    <app-movement-button 
-                        [move]="move" 
-                        [disabled]="move.currentPp === 0"
-                        (moveClicked)="attack($event)">
-                    </app-movement-button>
-                }
-            </div>
-            <app-battle-log-overlay [log]="battleLog()" [visible]="showLogOverlay()"></app-battle-log-overlay>
+        <div id="moves">
+            @for (move of battleInfo()!.pokemonA.moves; track $index) {
+                <app-movement-button 
+                    [move]="move" 
+                    [disabled]="move.currentPp === 0 || showLogOverlay()"
+                    (moveClicked)="attack($event)">
+                </app-movement-button>
+            }
         </div>
+        <app-battle-log-overlay 
+            [log]="battleLog()" 
+            [visible]="showLogOverlay()"
+            (lineChanged)="onLineChanged($event)">
+        </app-battle-log-overlay>
         @if (showFinishDialog()) {
             <app-finish-battle-dialog
                 [hpA]="hpA()"

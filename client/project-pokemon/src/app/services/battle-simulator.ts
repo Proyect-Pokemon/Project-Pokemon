@@ -96,16 +96,10 @@ export class BattleSimulatorService {
         winner = pokemonB.name;
     } else if (newHpB <= 0 && newHpA > 0) {
         winner = pokemonA.name;
-    } else if (newHpA <= 0 && newHpB <= 0) {
-        winner = "Empate";
     }
 
     if (winner) {
-        if (winner === "Empate") {
-            console.log("Los dos Pokémon han quedado fuera de combate.");
-        } else {
-            console.log(`${winner} ha ganado el combate`);
-        }
+        console.log(`${winner} ha ganado el combate`);
     }
     
         return {

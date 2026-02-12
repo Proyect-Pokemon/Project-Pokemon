@@ -1,9 +1,5 @@
-@if (visible) {
+@if (visible && currentLine) {
   <div id="battle-log-overlay">
-    <div>
-      @for (line of log; track $index) {
-        <div>{{ line }}</div>
-      }
-    </div>
+    <div>{{ currentLine }}</div>
   </div>
 }
