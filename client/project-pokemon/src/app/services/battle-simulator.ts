@@ -1,5 +1,6 @@
 import { PokemonApi } from "../models/pokemon-api";
 import { Move as Movement } from "../models/move";
+import { CalculateDamage } from "./calculate-damage";
 
 // Simula el combate por consola
 export function simulateBattle(

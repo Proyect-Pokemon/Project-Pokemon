@@ -28,6 +28,8 @@ export class Battle {
 
   async ngOnInit(): Promise<void> {
     const data = await this.apiService.getBattle();
+    if (!data) return;
+    
     this.battleInfo.set(data);
     this.hpA.set(data.pokemonA.hp);
     this.hpB.set(data.pokemonB.hp);
