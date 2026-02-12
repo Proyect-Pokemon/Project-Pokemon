@@ -21,7 +21,7 @@
             @for (move of battleInfo()!.pokemonA.moves; track $index) {
                 <app-movement-button 
                     [move]="move" 
-                    [disabled]="move.currentPp === 0"
+                    [disabled]="move.currentPp === 0 || showLogOverlay()"
                     (moveClicked)="attack($event)">
                 </app-movement-button>
             }
