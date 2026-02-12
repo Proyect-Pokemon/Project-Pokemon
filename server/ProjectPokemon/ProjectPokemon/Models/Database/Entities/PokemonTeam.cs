@@ -9,13 +9,13 @@ namespace ProjectPokemon.Models.Database.Entities {
         public required int Slot { get; set; } // 1 a 6
         public long TeamId { get; set; } 
         public Team Team { get; set; } = null!;
-        public long PokemonId { get; set; }
+        public int PokemonId { get; set; }
         public Pokemon Pokemon { get; set; } = null!;
         public required int MovementId1 { get; set; }
         public int? MovementId2 { get; set; } = null;
         public int? MovementId3 { get; set; } = null;
         public int? MovementId4 { get; set; } = null;
-        public long NatureId { get; set; }
+        public int NatureId { get; set; }
         public Nature Nature { get; set; } = null!;
 
         [ForeignKey(nameof(MovementId1))]
