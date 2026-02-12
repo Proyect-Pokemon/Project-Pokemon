@@ -1,0 +1,22 @@
+.life-bar {
+	background-color: var(--secondary-color);
+	width: 15vw;
+	height: 2.5vh;
+}
+
+.health {
+	height: 100%;
+	transition: background-color 0.3s ease, width 0.3s ease;
+}
+
+.health.green {
+	background-color: var(--grass-color);
+}
+
+.health.yellow {
+	background-color: var(--electric-color);
+}
+
+.health.red {
+	background-color: red;
+}

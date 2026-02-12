@@ -1,16 +1,18 @@
 @if (battle()) {
     <div id="canvas">
         <div class="enemy">
-            <div class="life-bar">
-                <div class="health"></div>
-            </div>
+            <app-life-bar
+                [currentHp]="hpB()"
+                [maxHp]="battleInfo()!.pokemonB.hp">
+            </app-life-bar>
             <img [src]="battleInfo()!.pokemonB.sprite">
         </div>
         <div class="ally">
             <img [src]="battleInfo()!.pokemonA.sprite">
-            <div class="life-bar">
-                <div class="health"></div>
-            </div>
+            <app-life-bar
+                [currentHp]="hpA()"
+                [maxHp]="battleInfo()!.pokemonA.hp">
+            </app-life-bar>
         </div>
         <div style="position: relative;">
             <div id="moves">

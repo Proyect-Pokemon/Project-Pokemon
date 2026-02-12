@@ -66,7 +66,11 @@ export class BattleSimulatorService {
 
     // Restar el daño a la vida del defensor
     let firstTargetHp = secondHp - damageFirst;
-    let secondTargetHp = firstHp - damageSecond;
+    // Si el defensor sobrevive al primer ataque, el segundo atacante contraataca
+    let secondTargetHp = firstHp;
+    if (firstTargetHp > 0) {
+        secondTargetHp = firstHp - damageSecond;
+    }
 
     // Mostrar el orden de ataque y resultados
     console.log(`Turno 1: ${firstAttacker.name} usa ${firstMovement.name} y hace ${damageFirst} daño.`);
