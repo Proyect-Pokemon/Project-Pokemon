@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using ProjectPokemon.Enum;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ProjectPokemon.Models.Database.Entities {
     public class PokemonTeam {
@@ -11,7 +12,7 @@ namespace ProjectPokemon.Models.Database.Entities {
         public long? IdMovement3 { get; set; } = null;
         public long? IdMovement4 { get; set; } = null;
         public long IdNature { get; set; }
-        public Nature? Nature { get; set; }
+        public Nature Nature { get; set; } = null!;
 
         [ForeignKey(nameof(IdMovement1))]
         public Movement Movement1 { get; set; } = null!;
