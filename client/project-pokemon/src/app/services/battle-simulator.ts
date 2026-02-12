@@ -1,5 +1,6 @@
 import { PokemonApi } from "../models/pokemon-api";
 import { Move as Movement } from "../models/move";
+import { CalculateDamageService } from "./calculate-damage";
 
 // Simula el combate por consola
 export function simulateBattle(
@@ -14,9 +15,28 @@ export function simulateBattle(
     // Movimiento del oponente (pokemonB)
     const opponentMovement = pokemonB.moves[Math.floor(Math.random() * pokemonB.moves.length)];
 
-    // La potencia del movimiento es el daño que causa
-    const damageA = userMovement.power ?? 0;
-    const damageB = opponentMovement.power ?? 0;
+    // Variables para calcular el daño:
+    // USUARIO
+    const stabA = userMovement.type === pokemonA.type1 || userMovement.type === pokemonA.type2 ? 1.5 : 1;
+    const effectiveA = 1;
+    const variationA = Math.floor(Math.random() * (100 - 85 + 1)) + 85; // Valor máximo de 100 y mínimo de 85, +1 para incluir ambos
+    const attackersLevel = 50;
+    const attackA = userMovement.moveClass === "Physical" ? pokemonA.atk : pokemonA.spa;
+    const powerA = userMovement.power;
+    const defenseA = opponentMovement.moveClass === "Physical" ? pokemonB.def : pokemonB.spd;
+
+    // OPONENTE
+    const stabB = opponentMovement.type === pokemonB.type1 || opponentMovement.type === pokemonB.type2 ? 1.5 : 1;
+    const effectiveB = 1;
+    const variationB = Math.floor(Math.random() * (100 - 85 + 1)) + 85;
+    const attackB = opponentMovement.moveClass === "Physical" ? pokemonB.atk : pokemonB.spa;
+    const powerB = opponentMovement.power;
+    const defenseB = userMovement.moveClass === "Physical" ? pokemonA.def : pokemonA.spd;
+
+    // Se llama al servicio calculateDamage
+    const damageService = new CalculateDamageService();
+    const damageA = damageService.calculateDamage(stabA, effectiveA, variationA, attackA, powerA ?? 0, defenseA);
+    const damageB = damageService.calculateDamage(stabB, effectiveB, variationB, attackB, powerB ?? 0, defenseB);
 
     // Restar el daño a la vida del pokemon
     let newHpA = hpA - damageB;
@@ -50,6 +70,8 @@ export function simulateBattle(
         hpB: newHpB,
         userMovement,
         opponentMovement,
+        damageA,
+        damageB,
         winner
     };
 }
