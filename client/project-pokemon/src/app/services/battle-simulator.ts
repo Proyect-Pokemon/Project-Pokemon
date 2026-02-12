@@ -35,8 +35,8 @@ export function simulateBattle(
 
     // Se llama al servicio calculateDamage
     const damageService = new CalculateDamageService();
-    const damageA = damageService.calculateDamage(stabA, effectiveA, variationA, attackersLevel, attackA, powerA ?? 0, defenseA);
-    const damageB = damageService.calculateDamage(stabB, effectiveB, variationB, attackersLevel, attackB, powerB ?? 0, defenseB);
+    const damageA = damageService.calculateDamage(stabA, effectiveA, variationA, attackA, powerA ?? 0, defenseA);
+    const damageB = damageService.calculateDamage(stabB, effectiveB, variationB, attackB, powerB ?? 0, defenseB);
 
     // Restar el daño a la vida del pokemon
     let newHpA = hpA - damageB;
