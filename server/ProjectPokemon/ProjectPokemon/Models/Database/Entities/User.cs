@@ -16,5 +16,5 @@ public class User {
     //public int VictoryCount { get; set; } = 0;
     //TO DO: Shiny token
 
-    ICollection<Team> Team { get; set; } = [];
+    public ICollection<Team> Teams { get; set; } = [];
 }
