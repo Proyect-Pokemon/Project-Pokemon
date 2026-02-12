@@ -9,7 +9,7 @@ namespace ProjectPokemon.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class UsersController : ControllerBase {
-    // InyecciÃ³n de UserRepository 
+    // Inyeccion de UserRepository 
     private readonly UnitOfWork _unitOfWork;
 
     public UsersController(UnitOfWork unitOfWork) {

@@ -10,6 +10,8 @@ public class PokemonDbContext : DbContext {
     public DbSet<PokemonMovement> PokemonMovements { get; set; }
     public DbSet<PokemonBattle> PokemonBattles { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Team> Teams { get; set; } 
+    public DbSet<PokemonTeam> PokemonTeams { get; set; }
 
     public PokemonDbContext(DbContextOptions<PokemonDbContext> options) : base(options) { }
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
