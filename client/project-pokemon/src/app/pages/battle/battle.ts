@@ -46,7 +46,7 @@ export class Battle {
       this.hpA.set(result.hpA);
       this.hpB.set(result.hpB);
 
-      // Construir log del combate
+      // Log del combate
       const log: string[] = [];
       log.push(`Turno del usuario: ${battle.pokemonA.name} usa ${result.userMovement.name} y hace ${result.userMovement.power ?? 0} daño.`);
       log.push(`Turno de la máquina: ${battle.pokemonB.name} usa ${result.opponentMovement.name} y hace ${result.opponentMovement.power ?? 0} daño.`);
@@ -54,9 +54,9 @@ export class Battle {
       log.push(`Vida restante de ${battle.pokemonB.name}: ${result.hpB}`);
       if (result.winner) {
         if (result.winner === "Empate") {
-          log.push("¡Empate! Ambos Pokémon han caído.");
+          log.push("Empate. Los dos Pokemon han quedado fuera de combate.");
         } else {
-          log.push(`¡${result.winner} gana el combate!`);
+          log.push(`${result.winner} ha ganado el combate`);
         }
       }
       this.battleLog.set(log);
