@@ -1,9 +1,6 @@
 ﻿using ProjectPokemon.Enum;
 using ProjectPokemon.Helpers;
 using ProjectPokemon.Models.Database.Entities;
-using System.Diagnostics;
-using System.Timers;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ProjectPokemon.Models.Database;
 
@@ -24,10 +21,10 @@ public class Seeder {
         _dbContext.SaveChanges();
 
         // Crear equipos
-        Team adminTeam = new Team { Name = "Admin Team", Description = "Equipo del administrador", User = admin}; 
-        Team ashTeam = new Team { Name = "Ash's Team", Description = "Pikachu, impactrueno", User = Ash}; 
-        Team mistyTeam = new Team { Name = "Misty's Team", Description = "Equipo de Misty", User = Misty}; 
-        Team redTeam = new Team { Name = "Red's Team", Description = "Equipo de Red", User = Red};
+        Team adminTeam = new Team { Name = "Admin Team", Description = "Equipo del administrador", User = admin };
+        Team ashTeam = new Team { Name = "Ash's Team", Description = "Pikachu, impactrueno", User = Ash };
+        Team mistyTeam = new Team { Name = "Misty's Team", Description = "Equipo de Misty", User = Misty };
+        Team redTeam = new Team { Name = "Red's Team", Description = "Equipo de Red", User = Red };
         _dbContext.Teams.AddRange(adminTeam, ashTeam, mistyTeam, redTeam);
         _dbContext.SaveChanges();
 
@@ -61,10 +58,10 @@ public class Seeder {
         _dbContext.SaveChanges();
 
         // PokemonTeams
-        PokemonTeam admin1PokemonTeam = new PokemonTeam { TeamId = adminTeam.Id, PokemonId = 150, NatureId = 1, Slot = 1, MovementId1 = 85, MovementId2 = 60, MovementId3 = 59, MovementId4 = 100};
-        PokemonTeam ash1PokemonTeam = new PokemonTeam { TeamId = ashTeam.Id, PokemonId = 25, NatureId = 1, Slot = 1, MovementId1 = 85}; 
-        PokemonTeam misty1PokemonTeam = new PokemonTeam { TeamId = mistyTeam.Id, PokemonId = 120, NatureId = 2, Slot = 1, MovementId1 = 55}; 
-        PokemonTeam red1PokemonTeam = new PokemonTeam { TeamId = redTeam.Id, PokemonId = 6, NatureId = 3, Slot = 1, MovementId1 = 150};
+        PokemonTeam admin1PokemonTeam = new PokemonTeam { TeamId = adminTeam.Id, PokemonId = 150, NatureId = 1, Slot = 1, MovementId1 = 85, MovementId2 = 60, MovementId3 = 59, MovementId4 = 100, Nickname = "MewTwooSSJ100" };
+        PokemonTeam ash1PokemonTeam = new PokemonTeam { TeamId = ashTeam.Id, PokemonId = 25, NatureId = 1, Slot = 1, MovementId1 = 85 };
+        PokemonTeam misty1PokemonTeam = new PokemonTeam { TeamId = mistyTeam.Id, PokemonId = 120, NatureId = 2, Slot = 1, MovementId1 = 55 };
+        PokemonTeam red1PokemonTeam = new PokemonTeam { TeamId = redTeam.Id, PokemonId = 6, NatureId = 3, Slot = 1, MovementId1 = 150 };
         _dbContext.PokemonTeams.AddRange(admin1PokemonTeam, ash1PokemonTeam, misty1PokemonTeam, red1PokemonTeam);
         _dbContext.SaveChanges();
     }
