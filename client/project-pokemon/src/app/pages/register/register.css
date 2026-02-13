@@ -1,0 +1,120 @@
+.big-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-image: url('/assets/login-background.jpg');
+    background-size: contain;
+    padding: 20px;
+}
+
+.container {
+    background: var(--primary-color);
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.container-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.container-header h1 {
+    margin: 0 0 10px 0;
+    color: var(--secondary-color);
+    font-size: 24px;
+}
+
+.container-header span {
+    color: grey;
+    font-size: 14px;
+}
+
+.div-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.div-input {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.div-input > span {
+    color: var(--secondary-color);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.required {
+    color: var(--fighting-color);
+}
+
+input[type="text"],
+input[type="password"] {
+    padding: 12px;
+    border: 1px solid var(--primary-color);
+    border-radius: 5px;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    outline: none;
+    border-color: var(--action-color);
+}
+
+.div-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.div-checkbox input[type="checkbox"] {
+    width: auto;
+    cursor: pointer;
+}
+
+.small-text {
+    font-size: 12px;
+    color: #666;
+}
+
+.small-text a {
+    color: var(--action-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.small-text a:hover {
+    text-decoration: underline;
+}
+
+.btn {
+    background: linear-gradient(135deg, var(--action-color) 0%, #39757e 100%);
+    color: var(--primary-color);
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-bottom: 10px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
