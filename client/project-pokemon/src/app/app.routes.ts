@@ -12,7 +12,7 @@ import { redirectionGuard } from './guards/redirection-guard';
 export const routes: Routes = [
     { path: 'about', component: About },
     { path: 'admin-panel', component: AdminPanel, canActivate: [redirectionGuard] },
-    { path: 'battle', component: Battle, canActivate: [redirectionGuard] },
+    { path: 'battle', component: Battle },
     { path: 'friends', component: Friends, canActivate: [redirectionGuard] },
     { path: 'login', component: Login },
     { path: 'profile', component: Profile, canActivate: [redirectionGuard] },
