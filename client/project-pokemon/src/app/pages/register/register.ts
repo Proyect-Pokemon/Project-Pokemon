@@ -1,18 +1,11 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-register',
-  imports: [RouterLink],
+  imports: [],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
-export class Register implements OnInit, OnDestroy {
-  ngOnInit() {
-    document.body.classList.add('login-background-2');
-  }
+export class Register {
 
-  ngOnDestroy() {
-    document.body.classList.remove('login-background-2');
-  }
 }
