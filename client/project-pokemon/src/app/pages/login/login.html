@@ -5,6 +5,9 @@
                 <h1>¡Hola de nuevo!</h1>
                 <span>¡Nos alegramos mucho de volver a verte!</span>
             </div>
+            @if (wrongCredentials()) {
+                <span class="required">Usuario o contraseña incorrectos</span>
+            }
             <div class="div-form">
                 <div class="div-input">
                     <span>Nombre de usuario <span class="required">*</span></span>

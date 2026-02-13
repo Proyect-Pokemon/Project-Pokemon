@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { RouterLink, Router, ActivatedRoute } from "@angular/router";
 import { AuthService } from '../../services/auth';
 import { FormsModule } from '@angular/forms';
@@ -17,6 +17,7 @@ export class Login {
   nickname: string = '';
   password: string = '';
   rememberMeChecked: boolean = false;
+  wrongCredentials = signal(false);
 
   // Inyectamos los servicios necesarios
   constructor(
@@ -36,11 +37,11 @@ export class Login {
 
     // Si el login es correcto, redirige al feed
     if (result.success) {
-      // Obtenemos el parámetro redirectTo si existe, si no vamos a feed
+      // Obtenemos el parámetro redirectTo si existe, si no vamos a battle
       const redirectTo = this.route.snapshot.queryParams['redirectTo'] || '/battle';
       this.router.navigateByUrl(redirectTo);
     } else {
-      alert('El usuario o la contraseña son incorrectos');
+      this.wrongCredentials.set(true);
     }
   }
 }
