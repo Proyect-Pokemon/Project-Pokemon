@@ -40,7 +40,6 @@ export class BattleSimulatorService {
     const stabA = userMovement.type === pokemonA.type1 || userMovement.type === pokemonA.type2 ? 1.5 : 1;
     const effectiveA = 1;
     const variationA = Math.floor(Math.random() * (100 - 85 + 1)) + 85; // Valor máximo de 100 y mínimo de 85, +1 para incluir ambos
-    const attackersLevel = 50;
     const attackA = userMovement.moveClass === "Physical" ? pokemonA.atk : pokemonA.spa;
     const powerA = userMovement.power;
     const defenseA = opponentMovement.moveClass === "Physical" ? pokemonB.def : pokemonB.spd;

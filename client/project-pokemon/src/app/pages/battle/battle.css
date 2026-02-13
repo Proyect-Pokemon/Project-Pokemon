@@ -1,6 +1,10 @@
 #canvas {
     position: relative;
-    background-color: rgb(175, 135, 64);
+    background-image: url(/assets/battlegrounds/battleground-grass.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    image-rendering: pixelated;
+    background-size: contain;
     width: 70%;
     max-height: 80vh;
     display: flex;
