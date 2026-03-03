@@ -26,4 +26,24 @@ public class TeamController : ControllerBase {
         });
         return getTeamsDto;
     }
+
+
+    // POST
+    [HttpPost]
+    public async Task<ActionResult<PostTeamDto>> AddTeam([FromBody] PostTeamDto dto) {
+        Team team = new Team {
+            Name = dto.Name,
+            Description = dto.Description,
+            UserId = dto.UserId
+        };
+
+        await _unitOfWork.TeamRepository.InsertAsync(team);
+        bool success = await _unitOfWork.SaveAsync();
+
+        if (!success) {
+            return BadRequest();
+        }
+
+        return Ok(dto);
+    }
 }
