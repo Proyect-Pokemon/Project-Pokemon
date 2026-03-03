@@ -10,4 +10,11 @@ public class UserRepository : BaseRepository<User, long> {
             .Where(u => u.Nickname == nickname)
             .FirstOrDefaultAsync();
     }
+
+    public async Task<User?> GetUserByEmailAsync(string email)
+    {
+        return await GetQueryable()
+            .Where(u => u.Email == email)
+            .FirstOrDefaultAsync();
+    }
 }
