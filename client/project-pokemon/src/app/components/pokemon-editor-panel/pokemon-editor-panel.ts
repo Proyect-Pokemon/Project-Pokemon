@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
     standalone: true,
     imports: [CommonModule],
     templateUrl: './pokemon-editor-panel.html',
-    styleUrl: './pokemon-editor-panel.css',
+    styleUrls: ['./pokemon-editor-panel.css'],
 })
 export class PokemonEditorPanel {
     @Input() isOpen = false;

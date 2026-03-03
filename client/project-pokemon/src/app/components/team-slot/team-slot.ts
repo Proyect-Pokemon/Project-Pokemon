@@ -8,7 +8,7 @@ import { PokemonTeam } from '../../models/pokemon-team';
     standalone: true,
     imports: [CommonModule],
     templateUrl: './team-slot.html',
-    styleUrl: './team-slot.css',
+    styleUrls: ['./team-slot.css'],
 })
 export class TeamSlot {
     @Input() team!: Team;

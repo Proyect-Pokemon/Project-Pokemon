@@ -1,19 +1,22 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Team, GetTeamDto } from '../../models/team';
-import { TeamSlot } from '../../components/team-slot/team-slot';
-import { PokemonEditorPanel } from '../../components/pokemon-editor-panel/pokemon-editor-panel';
 import { TeamService } from '../../services/team-service';
 import { AuthService } from '../../services/auth';
+import { TeamSlot } from '../../components/team-slot/team-slot';
+import { PokemonEditorPanel } from '../../components/pokemon-editor-panel/pokemon-editor-panel';
 
 @Component({
   selector: 'app-team-builder',
   standalone: true,
   imports: [CommonModule, TeamSlot, PokemonEditorPanel],
   templateUrl: './team-builder.html',
-  styleUrl: './team-builder.css',
+  styleUrls: ['./team-builder.css'],
 })
 export class TeamBuilder {
+  private teamService = inject(TeamService);
+  private authService = inject(AuthService);
+
   teams: Team[] = [];
   readonly MAX_TEAMS = 5;
   isLoadingTeams = false;
@@ -24,11 +27,6 @@ export class TeamBuilder {
   isPanelOpen = false;
   selectedTeamId = 0;
   selectedSlot = 1;
-
-  constructor(
-    private teamService: TeamService,
-    private authService: AuthService
-  ) {}
 
   async ngOnInit() {
     this.currentUserId = this.authService.getUserIdFromJwt();
