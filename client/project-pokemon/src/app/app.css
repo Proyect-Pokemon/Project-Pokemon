@@ -1,6 +1,6 @@
 header {
     background-color: var(--secondary-color);
-    padding: 20px;
+    padding: 10px 30px;
     text-align: right;
 }
 
@@ -13,5 +13,21 @@ a {
     text-decoration: none;
     padding: 5px;
     color: var(--primary-color);
+    transition: 0.3s;
 }
 
+a:hover {
+    color: var(--secondary-color);
+    background-color: var(--action-color);
+    border-radius: 5px;
+}
+
+footer {
+    text-align: center;
+    background-color: var(--fighting-color);
+    color: var(--primary-color);
+    padding: 20px 0;
+    bottom: 0;
+    width: 100%;
+    margin: 0;
+}
