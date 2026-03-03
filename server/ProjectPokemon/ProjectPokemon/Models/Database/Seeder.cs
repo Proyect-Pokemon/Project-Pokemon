@@ -1,6 +1,7 @@
 ﻿using ProjectPokemon.Enum;
 using ProjectPokemon.Helpers;
 using ProjectPokemon.Models.Database.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace ProjectPokemon.Models.Database;
 
@@ -11,22 +12,26 @@ public class Seeder {
         _dbContext = dbContext;
     }
 
-    public void Seed() {
+    public async Task SeedAsync()
+    {
+        // Evitar duplicados
+        if (await _dbContext.Users.AnyAsync()) return;
+
         // Crear usuarios
         User admin = new User { Email = "admin@example.com", Nickname = "admin", Password = PasswordHelper.Hash("admin123"), Role = "admin", AvatarPath = "/defaultAvatar.png" };
         User Ash = new User { Email = "Ash@example.com", Nickname = "Ash", Password = PasswordHelper.Hash("pikachu"), Role = "user", AvatarPath = "/defaultAvatar.png", Biography = "Sere Maestro pokemon" };
         User Misty = new User { Email = "Misty@example.com", Nickname = "Misty", Password = PasswordHelper.Hash("1111"), Role = "user", AvatarPath = "/defaultAvatar.png" };
         User Red = new User { Email = "Red@example.com", Nickname = "Red", Password = PasswordHelper.Hash("Red"), Role = "user", AvatarPath = "/defaultAvatar.png" };
-        _dbContext.Users.AddRange(admin, Ash, Misty, Red);
-        _dbContext.SaveChanges();
+        await _dbContext.Users.AddRangeAsync(admin, Ash, Misty, Red);
+        await _dbContext.SaveChangesAsync();
 
         // Crear equipos
         Team adminTeam = new Team { Name = "Admin Team", Description = "Equipo del administrador", User = admin };
         Team ashTeam = new Team { Name = "Ash's Team", Description = "Pikachu, impactrueno", User = Ash };
         Team mistyTeam = new Team { Name = "Misty's Team", Description = "Equipo de Misty", User = Misty };
         Team redTeam = new Team { Name = "Red's Team", Description = "Equipo de Red", User = Red };
-        _dbContext.Teams.AddRange(adminTeam, ashTeam, mistyTeam, redTeam);
-        _dbContext.SaveChanges();
+        await _dbContext.Teams.AddRangeAsync(adminTeam, ashTeam, mistyTeam, redTeam);
+        await _dbContext.SaveChangesAsync();
 
         // Crear Naturalezas
         Nature Hardy = new Nature { Name = PokeNature.Hardy, StatBoost = StatType.Attack, StatDrop = StatType.Attack };
@@ -54,15 +59,15 @@ public class Seeder {
         Nature Jolly = new Nature { Name = PokeNature.Jolly, StatBoost = StatType.Speed, StatDrop = StatType.SpecialAttack };
         Nature Naive = new Nature { Name = PokeNature.Naive, StatBoost = StatType.Speed, StatDrop = StatType.SpecialDefense };
         Nature Serious = new Nature { Name = PokeNature.Serious, StatBoost = StatType.Speed, StatDrop = StatType.Speed };
-        _dbContext.Natures.AddRange(Hardy, Lonely, Adamant, Naughty, Brave, Bold, Docile, Impish, Lax, Relaxed, Modest, Mild, Bashful, Rash, Quiet, Calm, Gentle, Careful, Quirky, Sassy, Timid, Hasty, Jolly, Naive, Serious);
-        _dbContext.SaveChanges();
+        await _dbContext.Natures.AddRangeAsync(Hardy, Lonely, Adamant, Naughty, Brave, Bold, Docile, Impish, Lax, Relaxed, Modest, Mild, Bashful, Rash, Quiet, Calm, Gentle, Careful, Quirky, Sassy, Timid, Hasty, Jolly, Naive, Serious);
+        await _dbContext.SaveChangesAsync();
 
         // PokemonTeams
         PokemonTeam admin1PokemonTeam = new PokemonTeam { TeamId = adminTeam.Id, PokemonId = 150, NatureId = 1, Slot = 1, MovementId1 = 85, MovementId2 = 60, MovementId3 = 59, MovementId4 = 100, Nickname = "MewTwooSSJ100" };
         PokemonTeam ash1PokemonTeam = new PokemonTeam { TeamId = ashTeam.Id, PokemonId = 25, NatureId = 1, Slot = 1, MovementId1 = 85 };
         PokemonTeam misty1PokemonTeam = new PokemonTeam { TeamId = mistyTeam.Id, PokemonId = 120, NatureId = 2, Slot = 1, MovementId1 = 55 };
         PokemonTeam red1PokemonTeam = new PokemonTeam { TeamId = redTeam.Id, PokemonId = 6, NatureId = 3, Slot = 1, MovementId1 = 150 };
-        _dbContext.PokemonTeams.AddRange(admin1PokemonTeam, ash1PokemonTeam, misty1PokemonTeam, red1PokemonTeam);
-        _dbContext.SaveChanges();
+        await _dbContext.PokemonTeams.AddRangeAsync(admin1PokemonTeam, ash1PokemonTeam, misty1PokemonTeam, red1PokemonTeam);
+        await _dbContext.SaveChangesAsync();
     }
 }
