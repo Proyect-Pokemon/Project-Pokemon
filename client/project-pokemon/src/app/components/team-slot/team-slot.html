@@ -1,0 +1,26 @@
+<div class="team-slot">
+    <button class="team-button" (click)="onToggle()">
+        <span class="team-name">{{ team.name }}</span>
+        <span class="arrow" [class.expanded]="team.isExpanded">▼</span>
+    </button>
+    
+    @if (team.isExpanded) {
+        <div class="pokemon-list">
+            @for (slot of getPokemonSlots(); track $index) {
+                @if (slot !== null) {
+                    <div class="pokemon-slot filled">
+                        <img [src]="slot.pokemon?.sprite" [alt]="slot.pokemon?.name || 'Pokemon'">
+                        @if (slot.nickname) {
+                            <span class="pokemon-nickname">{{ slot.nickname }}</span>
+                        }
+                    </div>
+                } @else {
+                    <button class="pokemon-slot empty" (click)="onAddPokemon(getSlotNumber($index))">
+                        <span class="plus-icon">+</span>
+                        <span class="slot-number">Slot {{ getSlotNumber($index) }}</span>
+                    </button>
+                }
+            }
+        </div>
+    }
+</div>

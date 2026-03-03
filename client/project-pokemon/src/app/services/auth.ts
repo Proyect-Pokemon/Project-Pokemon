@@ -36,4 +36,32 @@ export class AuthService {
 
     return result;
   }
+
+  getUserIdFromJwt(): number | null {
+    if (!this.jwt) {
+      return null;
+    }
+
+    try {
+      const payloadPart = this.jwt.split('.')[1];
+      const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+      const payloadJson = atob(padded);
+      const payload = JSON.parse(payloadJson);
+
+      const userIdRaw =
+        payload.nameid ??
+        payload.sub ??
+        payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+
+      if (userIdRaw === undefined || userIdRaw === null) {
+        return null;
+      }
+
+      const userId = Number(userIdRaw);
+      return Number.isNaN(userId) ? null : userId;
+    } catch {
+      return null;
+    }
+  }
 }

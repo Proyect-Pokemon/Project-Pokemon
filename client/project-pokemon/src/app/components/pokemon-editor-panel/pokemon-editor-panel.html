@@ -1,0 +1,16 @@
+@if (isOpen) {
+    <div class="panel-overlay" (click)="onClose()"></div>
+}
+<div class="pokemon-editor-panel" [class.open]="isOpen">
+    <div class="panel-header">
+        <h2>Añadir Pokémon</h2>
+        <button class="close-button" (click)="onClose()">
+            <span class="close-icon">✕</span>
+        </button>
+    </div>
+    
+    <div class="panel-content">
+        <!-- Aquí irá el contenido del editor -->
+        <p>Panel de edición de pokémon</p>
+    </div>
+</div>

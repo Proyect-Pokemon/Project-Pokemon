@@ -13,7 +13,7 @@ public class TeamController : ControllerBase {
         _unitOfWork = unitOfWork;
     }
 
-    //GET: api/users
+    //GET: api/team
     [HttpGet]
     public async Task<IEnumerable<GetTeamDto>> GetAllTeams() {
         ICollection<Team> Teams = await _unitOfWork.TeamRepository.GetAllAsync();

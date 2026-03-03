@@ -1,1 +1,31 @@
-<p>team-builder works!</p>
+<div class="team-builder-container">
+    <div class="teams-section">
+        <h1>Crear equipos</h1>
+        
+        <div class="teams-list">
+        @for (team of teams; track team.id) {
+            <app-team-slot 
+            [team]="team"
+            (toggleExpand)="toggleTeamExpansion($event)"
+            (nameChange)="updateTeamName($event)"
+            (addPokemon)="handleAddPokemon($event)"
+            />
+        }
+        
+        @if (canAddMoreTeams()) {
+            <button class="add-team-button" (click)="addTeam()">
+            <span class="plus-icon">+</span>
+            <span>Añadir Equipo</span>
+            </button>
+        }
+        </div>
+    </div>
+</div>
+
+<!-- Panel editor de pokémon -->
+<app-pokemon-editor-panel
+    [isOpen]="isPanelOpen"
+    [teamId]="selectedTeamId"
+    [slot]="selectedSlot"
+    (close)="closePanel()"
+/>
