@@ -9,6 +9,7 @@ public class DataLoader {
     private readonly PokemonDbContext _db;
     private readonly PokemonDataService _pokemonLoader;
     private readonly MovementDataService _movementLoader;
+
     public DataLoader(
     MovementDataService movementLoader,
     PokemonDbContext db,
@@ -18,11 +19,8 @@ public class DataLoader {
         _movementLoader = movementLoader;
     }
     public async Task LoadAllDataAsync() {
-
         // await _pokemonLoader.LoadGenerationAsync(1);
-
         await LoadPokemons();
-
         await LoadMovements();
     }
     private async Task LoadPokemons() {

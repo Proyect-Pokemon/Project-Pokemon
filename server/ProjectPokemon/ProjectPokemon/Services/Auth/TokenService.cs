@@ -5,7 +5,7 @@ using ProjectPokemon.Models.Database.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace ProjectPokemon.Services
+namespace ProjectPokemon.Services.Auth
 {
     public class TokenService
     {
