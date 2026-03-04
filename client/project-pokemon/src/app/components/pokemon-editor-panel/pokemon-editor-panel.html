@@ -10,7 +10,48 @@
     </div>
     
     <div class="panel-content">
-        <!-- Aquí irá el contenido del editor -->
-        <p>Panel de edición de pokémon</p>
+        @if (pokemonDisplayName && pokemonSprite) {
+            <div class="selected-pokemon-preview">
+                <h3 class="pokemon-display-name">{{ pokemonDisplayName }}</h3>
+                <img [src]="pokemonSprite" [alt]="pokemonDisplayName" class="pokemon-preview-sprite">
+            </div>
+        } @else {
+            <div class="empty-pokemon-preview" aria-label="Slot vacío">
+                @if (!showSearchControls()) {
+                    <div class="pokemon-placeholder-circle" aria-hidden="true"></div>
+                    <p class="empty-slot-label">Slot {{ slot }} vacío</p>
+                    <button class="search-pokemon-button" (click)="toggleSearchControls()">
+                        Buscar Pokémon por número
+                    </button>
+                } @else {
+                    @if (searchedPokemon()) {
+                        <div class="selected-pokemon-preview">
+                            <h3 class="pokemon-display-name">{{ searchedPokemon()?.name }}</h3>
+                            <img [src]="searchedPokemon()?.spriteFront" [alt]="searchedPokemon()?.name" class="pokemon-preview-sprite">
+                        </div>
+                        <button class="add-pokemon-button" (click)="onCreatePokemonTeam()">
+                            Añadir a equipo
+                        </button>
+                    }
+                }
+
+                @if (showSearchControls()) {
+                    <div class="search-by-number">
+                        <input
+                            type="number"
+                            min="1"
+                            placeholder="Número de Pokédex"
+                            [value]="searchPokemonNumber() ?? ''"
+                            (input)="onSearchNumberInput($event)"
+                            autofocus
+                        >
+                    </div>
+                }
+
+                @if (searchError()) {
+                    <p class="search-error">{{ searchError() }}</p>
+                }
+            </div>
+        }
     </div>
 </div>

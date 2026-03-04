@@ -1,30 +1,44 @@
-import { PokemonApi } from "./pokemon-api";
+import { Pokemon } from "./pokemon";
 
-export interface PokemonTeam {
-    id?: number;
-    nickname?: string;
+export interface GetAllPokemonTeamDto {
+    id: number;
+    nickname: string | null;
     shiny: boolean;
     slot: number;
     teamId: number;
     pokemonId: number;
     natureId: number;
     movementId1: number;
-    movementId2?: number;
-    movementId3?: number;
-    movementId4?: number;
+    movementId2: number | null;
+    movementId3: number | null;
+    movementId4: number | null;
+}
+
+export interface PokemonTeam {
+    id: number;
+    nickname: string | null;
+    shiny: boolean;
+    slot: number;
+    teamId: number;
+    pokemonId: number;
+    natureId: number;
+    movementId1: number;
+    movementId2: number | null;
+    movementId3: number | null;
+    movementId4: number | null;
     // Información completa del pokémon (se obtiene del API)
-    pokemon?: PokemonApi;
+    pokemon: Pokemon | null;
 }
 
 export interface PostPokemonTeamDto {
-    nickname?: string;
+    nickname: string | null;
     shiny: boolean;
     slot: number;
     teamId: number;
     pokemonId: number;
     natureId: number;
     movementId1: number;
-    movementId2?: number;
-    movementId3?: number;
-    movementId4?: number;
+    movementId2: number | null;
+    movementId3: number | null;
+    movementId4: number | null;
 }

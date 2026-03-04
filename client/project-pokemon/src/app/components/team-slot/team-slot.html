@@ -8,12 +8,17 @@
         <div class="pokemon-list">
             @for (slot of getPokemonSlots(); track $index) {
                 @if (slot !== null) {
-                    <div class="pokemon-slot filled">
-                        <img [src]="slot.pokemon?.sprite" [alt]="slot.pokemon?.name || 'Pokemon'">
+                    <button class="pokemon-slot filled" (click)="onAddPokemon(slot.slot)">
+                        <div class="pokemon-sprite-container">
+                                @if (slot.pokemon) {
+                                    <img [src]="slot.pokemon.spriteFront" [alt]="slot.pokemon.name" class="pokemon-sprite">
+                            }
+                            <span class="pokemon-number">#{{ slot.pokemonId }}</span>
+                        </div>
                         @if (slot.nickname) {
                             <span class="pokemon-nickname">{{ slot.nickname }}</span>
                         }
-                    </div>
+                    </button>
                 } @else {
                     <button class="pokemon-slot empty" (click)="onAddPokemon(getSlotNumber($index))">
                         <span class="plus-icon">+</span>

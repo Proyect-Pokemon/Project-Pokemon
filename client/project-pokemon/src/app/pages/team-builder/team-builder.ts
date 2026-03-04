@@ -1,8 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Team, GetTeamDto } from '../../models/team';
 import { TeamService } from '../../services/team-service';
 import { AuthService } from '../../services/auth';
+import { PokemonTeamService } from '../../services/pokemon-team-service';
+import { PokemonService } from '../../services/pokemon-service';
+import { GetAllPokemonTeamDto, PostPokemonTeamDto } from '../../models/pokemon-team';
 import { TeamSlot } from '../../components/team-slot/team-slot';
 import { PokemonEditorPanel } from '../../components/pokemon-editor-panel/pokemon-editor-panel';
 
@@ -15,35 +18,47 @@ import { PokemonEditorPanel } from '../../components/pokemon-editor-panel/pokemo
 })
 export class TeamBuilder {
   private teamService = inject(TeamService);
-  private authService = inject(AuthService);
+  authService = inject(AuthService);
+  private pokemonTeamService = inject(PokemonTeamService);
+  private pokemonService = inject(PokemonService);
 
-  teams: Team[] = [];
+  teams = signal<Team[]>([]);
   readonly MAX_TEAMS = 5;
   isLoadingTeams = false;
   isCreatingTeam = false;
-  currentUserId: number | null = null;
 
   // Estado del panel editor
   isPanelOpen = false;
   selectedTeamId = 0;
   selectedSlot = 1;
+  selectedPokemonDisplayName: string | null = null;
+  selectedPokemonSprite: string | null = null;
+
+  constructor() {
+    effect(() => {
+      const userId = this.authService.currentUserId();
+      if (userId !== null) {
+        this.loadUserTeams();
+      }
+    });
+  }
 
   async ngOnInit() {
-    this.currentUserId = this.authService.getUserIdFromJwt();
-    await this.loadUserTeams();
+    this.ensureJwtLoaded();
   }
 
   async addTeam() {
-    if (!this.currentUserId || this.teams.length >= this.MAX_TEAMS || this.isCreatingTeam) {
+    const currentUserId = this.authService.currentUserId();
+    if (!currentUserId || this.teams().length >= this.MAX_TEAMS || this.isCreatingTeam) {
       return;
     }
 
     this.isCreatingTeam = true;
 
     const created = await this.teamService.addTeam({
-      name: `Equipo ${this.teams.length + 1}`,
+      name: `Equipo ${this.teams().length + 1}`,
       description: null,
-      userId: this.currentUserId,
+      userId: currentUserId,
     });
 
     if (created) {
@@ -54,14 +69,14 @@ export class TeamBuilder {
   }
 
   toggleTeamExpansion(teamId: number) {
-    const team = this.teams.find(t => t.id === teamId);
+    const team = this.teams().find(t => t.id === teamId);
     if (team) {
       team.isExpanded = !team.isExpanded;
     }
   }
 
   updateTeamName(data: { id: number, name: string }) {
-    const team = this.teams.find(t => t.id === data.id);
+    const team = this.teams().find(t => t.id === data.id);
     if (team) {
       team.name = data.name;
     }
@@ -70,6 +85,20 @@ export class TeamBuilder {
   handleAddPokemon(data: { teamId: number, slot: number }) {
     this.selectedTeamId = data.teamId;
     this.selectedSlot = data.slot;
+
+    const team = this.teams().find(t => t.id === data.teamId);
+    const selectedPokemon = team?.pokemons.find(p => p.slot === data.slot) ?? null;
+
+    if (selectedPokemon?.pokemon) {
+      this.selectedPokemonDisplayName = selectedPokemon.nickname ?? selectedPokemon.pokemon.name;
+      this.selectedPokemonSprite = selectedPokemon.shiny
+        ? (selectedPokemon.pokemon.spriteFrontShiny ?? selectedPokemon.pokemon.spriteFront)
+        : selectedPokemon.pokemon.spriteFront;
+    } else {
+      this.selectedPokemonDisplayName = null;
+      this.selectedPokemonSprite = null;
+    }
+
     this.isPanelOpen = true;
   }
 
@@ -77,32 +106,82 @@ export class TeamBuilder {
     this.isPanelOpen = false;
   }
 
+  async handleCreatePokemonTeam(dto: PostPokemonTeamDto) {
+    const created = await this.pokemonTeamService.addPokemonTeam(dto);
+    if (!created) {
+      return;
+    }
+
+    await this.loadUserTeams();
+    this.closePanel();
+  }
+
   canAddMoreTeams(): boolean {
-    return this.teams.length < this.MAX_TEAMS;
+    return this.authService.currentUserId() !== null && this.teams().length < this.MAX_TEAMS;
+  }
+
+  private ensureJwtLoaded() {
+    if (this.authService.jwt) {
+      console.log('JWT already in memory');
+      return;
+    }
+
+    const jwtFromStorage = localStorage.getItem('jwt');
+    console.log('JWT from localStorage:', jwtFromStorage ? 'found' : 'not found');
+    if (jwtFromStorage) {
+      this.authService.setJwt(jwtFromStorage);
+    }
   }
 
   private async loadUserTeams() {
-    if (!this.currentUserId) {
-      this.teams = [];
+    const currentUserId = this.authService.currentUserId();
+    if (!currentUserId) {
+      console.log('currentUserId is null, skipping team loading');
+      this.teams.set([]);
       return;
     }
 
     this.isLoadingTeams = true;
 
     const allTeams = await this.teamService.getAllTeams();
+    const allPokemonTeams = await this.pokemonTeamService.getAllPokemonTeams();
+    const allPokemons = await this.pokemonService.getAllPokemon();
+    
+    // Crear un mapa de pokémonId -> Pokemon para búsqueda rápida
+    const pokemonMap = new Map(allPokemons.map(p => [p.id, p]));
+    
     const userTeams = allTeams
-      .filter(team => team.userId === this.currentUserId)
+      .filter(team => team.userId === currentUserId)
       .slice(0, this.MAX_TEAMS);
 
-    const expandedById = new Map(this.teams.map(team => [team.id, team.isExpanded]));
+    const expandedById = new Map(this.teams().map(team => [team.id, team.isExpanded]));
 
-    this.teams = userTeams.map((team: GetTeamDto) => ({
-      id: team.id,
-      name: team.name,
-      description: team.description,
-      userId: team.userId,
-      pokemons: [],
-      isExpanded: expandedById.get(team.id) ?? false,
+    this.teams.set(userTeams.map((team: GetTeamDto) => {
+      const pokemonFromTeam = allPokemonTeams
+        .filter((pokemonTeam: GetAllPokemonTeamDto) => pokemonTeam.teamId === team.id)
+        .map((pokemonTeam: GetAllPokemonTeamDto) => ({
+          id: pokemonTeam.id,
+          nickname: pokemonTeam.nickname ?? null,
+          shiny: pokemonTeam.shiny,
+          slot: pokemonTeam.slot,
+          teamId: pokemonTeam.teamId,
+          pokemonId: pokemonTeam.pokemonId,
+          natureId: pokemonTeam.natureId,
+          movementId1: pokemonTeam.movementId1,
+          movementId2: pokemonTeam.movementId2 ?? null,
+          movementId3: pokemonTeam.movementId3 ?? null,
+          movementId4: pokemonTeam.movementId4 ?? null,
+          pokemon: pokemonMap.get(pokemonTeam.pokemonId) ?? null,
+        }));
+
+      return {
+        id: team.id,
+        name: team.name,
+        description: team.description,
+        userId: team.userId,
+        pokemons: pokemonFromTeam,
+        isExpanded: expandedById.get(team.id) ?? false,
+      };
     }));
 
     this.isLoadingTeams = false;

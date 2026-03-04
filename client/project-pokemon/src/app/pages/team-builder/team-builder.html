@@ -3,7 +3,7 @@
         <h1>Crear equipos</h1>
         
         <div class="teams-list">
-        @for (team of teams; track team.id) {
+        @for (team of teams(); track team.id) {
             <app-team-slot 
             [team]="team"
             (toggleExpand)="toggleTeamExpansion($event)"
@@ -27,5 +27,8 @@
     [isOpen]="isPanelOpen"
     [teamId]="selectedTeamId"
     [slot]="selectedSlot"
+    [pokemonDisplayName]="selectedPokemonDisplayName"
+    [pokemonSprite]="selectedPokemonSprite"
+    (createPokemonTeam)="handleCreatePokemonTeam($event)"
     (close)="closePanel()"
 />
