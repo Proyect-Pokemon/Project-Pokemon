@@ -12,7 +12,7 @@
     <div class="panel-content">
         @if (pokemonDisplayName && pokemonSprite) {
             <div class="selected-pokemon-preview">
-                <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base">
+                <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base" (click)="openStatsDialog()">
                     ?
                 </button>
                 <h3 class="pokemon-display-name">{{ pokemonDisplayName }}</h3>
@@ -63,7 +63,7 @@
                 } @else {
                     @if (searchedPokemon()) {
                         <div class="selected-pokemon-preview">
-                            <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base">
+                            <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base" (click)="openStatsDialog()">
                                 ?
                             </button>
                             <h3 class="pokemon-display-name">{{ searchedPokemon()?.name }}</h3>
@@ -102,4 +102,9 @@
             </div>
         }
     </div>
-</div>
+
+    <app-pokemon-stats-dialog 
+        [isOpen]="showStatsDialog()"
+        [stats]="currentPokemonStats()"
+        (close)="closeStatsDialog()">
+    </app-pokemon-stats-dialog>

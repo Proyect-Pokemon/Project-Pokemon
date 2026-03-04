@@ -5,11 +5,21 @@ import { Pokemon } from '../../models/pokemon';
 import { PostPokemonTeamDto } from '../../models/pokemon-team';
 import { Movement } from '../../models/move';
 import { MovementService } from '../../services/movement-service';
+import { PokemonStatsDialog } from '../pokemon-stats-dialog/pokemon-stats-dialog';
+
+interface PokemonStats {
+    hp: number;
+    attack: number;
+    defense: number;
+    specialAttack: number;
+    specialDefense: number;
+    speed: number;
+}
 
 @Component({
     selector: 'app-pokemon-editor-panel',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, PokemonStatsDialog],
     templateUrl: './pokemon-editor-panel.html',
     styleUrls: ['./pokemon-editor-panel.css'],
 })
@@ -39,6 +49,8 @@ export class PokemonEditorPanel {
     movements = signal<(Movement | null)[]>([null, null, null, null]);
     allMovementsCache = signal<Movement[]>([]);
     movementIdsSignal = signal<(number | null)[]>([null, null, null, null]);
+    showStatsDialog = signal(false);
+    currentPokemonStats = signal<PokemonStats | null>(null);
 
     get isEasterEggSlot(): boolean {
         return this.slot <= 0 || this.slot >= 7;
@@ -151,6 +163,8 @@ export class PokemonEditorPanel {
         this.searchPokemonNumber.set(null);
         this.searchedPokemon.set(null);
         this.searchError.set(null);
+        this.showStatsDialog.set(false);
+        this.currentPokemonStats.set(null);
     }
 
     onPreviousSlot() {
@@ -177,5 +191,44 @@ export class PokemonEditorPanel {
                 }, 300);
             }, 300);
         }
+    }
+
+    async openStatsDialog() {
+        // Obtener stats del Pokémon actual
+        let pokemon: Pokemon | null = null;
+
+        // Si está buscando, use el Pokémon encontrado
+        if (this.searchedPokemon()) {
+            pokemon = this.searchedPokemon();
+        } else if (this.pokemonId) {
+            // Si tiene un Pokémon seleccionado, búscalo en el cache
+            const cache = this.allPokemonCache();
+            pokemon = cache.find(p => p.id === this.pokemonId) ?? null;
+
+            // Si no está en cache, cargalo
+            if (!pokemon) {
+                const allPokemon = await this.pokemonService.getAllPokemon();
+                pokemon = allPokemon.find(p => p.id === this.pokemonId) ?? null;
+            }
+        }
+
+        // Extraer stats si el Pokémon se encontró
+        if (pokemon) {
+            this.currentPokemonStats.set({
+                hp: pokemon.hp,
+                attack: pokemon.attack,
+                defense: pokemon.defense,
+                specialAttack: pokemon.specialAttack,
+                specialDefense: pokemon.specialDefense,
+                speed: pokemon.speed,
+            });
+        }
+
+        this.showStatsDialog.set(true);
+    }
+
+    closeStatsDialog() {
+        this.showStatsDialog.set(false);
+        this.currentPokemonStats.set(null);
     }
 }
