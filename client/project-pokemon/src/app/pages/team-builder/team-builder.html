@@ -29,6 +29,8 @@
     [slot]="selectedSlot"
     [pokemonDisplayName]="selectedPokemonDisplayName"
     [pokemonSprite]="selectedPokemonSprite"
+    [pokemonId]="selectedPokemonId"
     (createPokemonTeam)="handleCreatePokemonTeam($event)"
+    (changeSlot)="handleChangeSlot($event)"
     (close)="closePanel()"
 />

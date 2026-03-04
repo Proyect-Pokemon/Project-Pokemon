@@ -97,6 +97,8 @@
     color: #d0d0d0;
     opacity: 0.6;
     z-index: 1;
+    user-select: none;
+    cursor: default;
 }
 
 .pokemon-id {

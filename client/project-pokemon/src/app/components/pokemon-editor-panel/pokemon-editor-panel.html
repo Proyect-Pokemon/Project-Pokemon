@@ -13,7 +13,27 @@
         @if (pokemonDisplayName && pokemonSprite) {
             <div class="selected-pokemon-preview">
                 <h3 class="pokemon-display-name">{{ pokemonDisplayName }}</h3>
-                <img [src]="pokemonSprite" [alt]="pokemonDisplayName" class="pokemon-preview-sprite">
+                @if (isEasterEggSlot) {
+                    <div class="easter-egg-message">
+                        <p>¡Has encontrado un Easter Egg! 🎉</p>
+                    </div>
+                }
+                <div class="pokemon-navigation-container">
+                    <button class="nav-arrow-button nav-previous" (click)="onPreviousSlot()" [disabled]="slot <= 1" title="Slot anterior">
+                        ◀
+                    </button>
+                    <div class="pokemon-sprite-container" [ngClass]="{ 'slide-left': animationDirection() === 'left', 'slide-right': animationDirection() === 'right', 'slide-in-left': animationDirection() === 'leftIn', 'slide-in-right': animationDirection() === 'rightIn' }">
+                        <img [src]="pokemonSprite" [alt]="pokemonDisplayName" class="pokemon-preview-sprite">
+                        @if (isEasterEggSlot) {
+                            <span class="pokemon-number">#???</span>
+                        } @else if (pokemonId) {
+                            <span class="pokemon-number">#{{ ('00' + pokemonId).slice(-3) }}</span>
+                        }
+                    </div>
+                    <button class="nav-arrow-button nav-next" (click)="onNextSlot()" [disabled]="slot >= 6" title="Siguiente slot">
+                        ▶
+                    </button>
+                </div>
             </div>
         } @else {
             <div class="empty-pokemon-preview" aria-label="Slot vacío">
@@ -27,7 +47,12 @@
                     @if (searchedPokemon()) {
                         <div class="selected-pokemon-preview">
                             <h3 class="pokemon-display-name">{{ searchedPokemon()?.name }}</h3>
-                            <img [src]="searchedPokemon()?.spriteFront" [alt]="searchedPokemon()?.name" class="pokemon-preview-sprite">
+                            <div class="pokemon-sprite-container">
+                                <img [src]="searchedPokemon()?.spriteFront" [alt]="searchedPokemon()?.name" class="pokemon-preview-sprite">
+                                @if (searchedPokemon()?.id) {
+                                    <span class="pokemon-number">#{{ ('00' + searchedPokemon()?.id).slice(-3) }}</span>
+                                }
+                            </div>
                         </div>
                         <button class="add-pokemon-button" (click)="onCreatePokemonTeam()">
                             Añadir a equipo

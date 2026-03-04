@@ -19,14 +19,21 @@ export class PokemonEditorPanel {
     @Input() slot: number = 1;
     @Input() pokemonDisplayName: string | null = null;
     @Input() pokemonSprite: string | null = null;
+    @Input() pokemonId: number | null = null;
     @Output() close = new EventEmitter<void>();
     @Output() createPokemonTeam = new EventEmitter<PostPokemonTeamDto>();
+    @Output() changeSlot = new EventEmitter<number>();
 
     showSearchControls = signal(false);
     searchPokemonNumber = signal<number | null>(null);
     searchedPokemon = signal<Pokemon | null>(null);
     searchError = signal<string | null>(null);
     allPokemonCache = signal<Pokemon[]>([]);
+    animationDirection = signal<'left' | 'right' | 'leftIn' | 'rightIn' | 'none'>('none');
+
+    get isEasterEggSlot(): boolean {
+        return this.slot <= 0 || this.slot >= 7;
+    }
 
     constructor() {
         effect(() => {
@@ -111,5 +118,31 @@ export class PokemonEditorPanel {
         this.searchPokemonNumber.set(null);
         this.searchedPokemon.set(null);
         this.searchError.set(null);
+    }
+
+    onPreviousSlot() {
+        if (this.slot > -3) {
+            this.animationDirection.set('right');
+            setTimeout(() => {
+                this.changeSlot.emit(this.slot - 1);
+                this.animationDirection.set('rightIn');
+                setTimeout(() => {
+                    this.animationDirection.set('none');
+                }, 300);
+            }, 300);
+        }
+    }
+
+    onNextSlot() {
+        if (this.slot < 10) {
+            this.animationDirection.set('left');
+            setTimeout(() => {
+                this.changeSlot.emit(this.slot + 1);
+                this.animationDirection.set('leftIn');
+                setTimeout(() => {
+                    this.animationDirection.set('none');
+                }, 300);
+            }, 300);
+        }
     }
 }

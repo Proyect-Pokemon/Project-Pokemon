@@ -33,6 +33,7 @@ export class TeamBuilder {
   selectedSlot = 1;
   selectedPokemonDisplayName: string | null = null;
   selectedPokemonSprite: string | null = null;
+  selectedPokemonId: number | null = null;
 
   constructor() {
     effect(() => {
@@ -86,6 +87,15 @@ export class TeamBuilder {
     this.selectedTeamId = data.teamId;
     this.selectedSlot = data.slot;
 
+    // Easter egg: MissingNo for slots -3 to 0 and 7 to 10
+    if (data.slot <= 0 || data.slot >= 7) {
+      this.selectedPokemonDisplayName = 'MissingNo';
+      this.selectedPokemonSprite = 'assets/error/missing-no.png';
+      this.selectedPokemonId = 0;
+      this.isPanelOpen = true;
+      return;
+    }
+
     const team = this.teams().find(t => t.id === data.teamId);
     const selectedPokemon = team?.pokemons.find(p => p.slot === data.slot) ?? null;
 
@@ -94,9 +104,11 @@ export class TeamBuilder {
       this.selectedPokemonSprite = selectedPokemon.shiny
         ? (selectedPokemon.pokemon.spriteFrontShiny ?? selectedPokemon.pokemon.spriteFront)
         : selectedPokemon.pokemon.spriteFront;
+      this.selectedPokemonId = selectedPokemon.pokemon.id;
     } else {
       this.selectedPokemonDisplayName = null;
       this.selectedPokemonSprite = null;
+      this.selectedPokemonId = null;
     }
 
     this.isPanelOpen = true;
@@ -104,6 +116,10 @@ export class TeamBuilder {
 
   closePanel() {
     this.isPanelOpen = false;
+  }
+
+  handleChangeSlot(newSlot: number) {
+    this.handleAddPokemon({ teamId: this.selectedTeamId, slot: newSlot });
   }
 
   async handleCreatePokemonTeam(dto: PostPokemonTeamDto) {
