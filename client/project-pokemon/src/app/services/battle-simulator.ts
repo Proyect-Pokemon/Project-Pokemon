@@ -1,5 +1,5 @@
 import { PokemonApi } from "../models/pokemon-api";
-import { Move as Movement } from "../models/move";
+import { BattleMove as Movement } from "../models/move";
 
 import { Injectable } from "@angular/core";
 import { CalculateDamageService } from "./calculate-damage";
@@ -10,7 +10,11 @@ import { TurnOrder } from "./turn-order";
     providedIn: 'root',
 })
 export class BattleSimulatorService {
-    constructor(private moveSelector: MoveSelection, private turnOrder: TurnOrder) {}
+    constructor(
+        private moveSelector: MoveSelection,
+        private turnOrder: TurnOrder,
+        private damageService: CalculateDamageService
+    ) {}
 
     simulateBattle(
         pokemonA: PokemonApi,
@@ -35,33 +39,24 @@ export class BattleSimulatorService {
         );
         const { firstAttacker, secondAttacker, firstMovement, secondMovement, firstHp, secondHp, firstIsA } = order;
 
-    // Variables para calcular el daño:
-    // USUARIO
-    const stabA = userMovement.type === pokemonA.type1 || userMovement.type === pokemonA.type2 ? 1.5 : 1;
-    const effectiveA = 1;
-    const variationA = Math.floor(Math.random() * (100 - 85 + 1)) + 85; // Valor máximo de 100 y mínimo de 85, +1 para incluir ambos
-    const attackA = userMovement.moveClass === "Physical" ? pokemonA.atk : pokemonA.spa;
-    const powerA = userMovement.power;
-    const defenseA = opponentMovement.moveClass === "Physical" ? pokemonB.def : pokemonB.spd;
-
-    // OPONENTE
-    const stabB = opponentMovement.type === pokemonB.type1 || opponentMovement.type === pokemonB.type2 ? 1.5 : 1;
-    const effectiveB = 1;
-    const variationB = Math.floor(Math.random() * (100 - 85 + 1)) + 85;
-    const attackB = opponentMovement.moveClass === "Physical" ? pokemonB.atk : pokemonB.spa;
-    const powerB = opponentMovement.power;
-    const defenseB = userMovement.moveClass === "Physical" ? pokemonA.def : pokemonA.spd;
-
-    // Se llama al servicio calculateDamage
-        const damageService = new CalculateDamageService();
-        let damageFirst, damageSecond;
-        if (firstIsA) {
-            damageFirst = damageService.calculateDamage(stabA, effectiveA, variationA, attackA, powerA ?? 0, defenseA);
-            damageSecond = damageService.calculateDamage(stabB, effectiveB, variationB, attackB, powerB ?? 0, defenseB);
-        } else {
-            damageFirst = damageService.calculateDamage(stabB, effectiveB, variationB, attackB, powerB ?? 0, defenseB);
-            damageSecond = damageService.calculateDamage(stabA, effectiveA, variationA, attackA, powerA ?? 0, defenseA);
-        }
+        // Calcular daño para ambos ataques
+        const damageFirst = this.damageService.calculateDamage(
+            this.calculateStab(firstMovement, firstAttacker),
+            1,
+            this.getRandomVariation(),
+            this.getAttackStat(firstMovement, firstAttacker),
+            firstMovement.power ?? 0,
+            this.getDefenseStat(secondMovement, secondAttacker)
+        );
+        
+        const damageSecond = this.damageService.calculateDamage(
+            this.calculateStab(secondMovement, secondAttacker),
+            1,
+            this.getRandomVariation(),
+            this.getAttackStat(secondMovement, secondAttacker),
+            secondMovement.power ?? 0,
+            this.getDefenseStat(firstMovement, firstAttacker)
+        );
 
     // Restar el daño a la vida del defensor
     let firstTargetHp = secondHp - damageFirst;
@@ -101,14 +96,31 @@ export class BattleSimulatorService {
         console.log(`${winner} ha ganado el combate`);
     }
     
-        return {
-            hpA: newHpA,
-            hpB: newHpB,
-            userMovement,
-            opponentMovement,
-            damageFirst, // Daño infligido por el primer atacante
-            damageSecond, // Daño infligido por el segundo atacante (si ataca)
-            winner
-        };
+    return {
+        hpA: newHpA,
+        hpB: newHpB,
+        userMovement,
+        opponentMovement,
+        damageFirst,
+        damageSecond,
+        winner
+    };
+    }
+
+    // Métodos auxiliares para reutilizar lógica
+    private calculateStab(move: Movement, pokemon: PokemonApi): number {
+        return move.type === pokemon.type1 || move.type === pokemon.type2 ? 1.5 : 1;
+    }
+
+    private getRandomVariation(): number {
+        return Math.floor(Math.random() * (100 - 85 + 1)) + 85;
+    }
+
+    private getAttackStat(move: Movement, pokemon: PokemonApi): number {
+        return move.moveClass === "Physical" ? pokemon.atk : pokemon.spa;
+    }
+
+    private getDefenseStat(move: Movement, pokemon: PokemonApi): number {
+        return move.moveClass === "Physical" ? pokemon.def : pokemon.spd;
     }
 }

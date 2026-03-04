@@ -8,6 +8,10 @@ import { Result } from '../models/result';
 })
 export class ApiService {
   private readonly BASE_URL = 'https://localhost:7277/api/';
+  jwt: string | null = null;
+
+  private http = inject(HttpClient);
+
   // Método para hacer peticiones GET a la API
   async get<T = void>(path: string): Promise<Result<T>> {
     try {
@@ -19,15 +23,9 @@ export class ApiService {
       );
       return Result.success(response.status, response.body as T);
     } catch (error: any) {
-      const status = error instanceof HttpErrorResponse ? error.status : 500;
-      const message = error instanceof HttpErrorResponse ? (error.error?.message || error.message || error.statusText) : error.message || 'Unknown error';
-      return Result.error(status, message);
+      return this.handleError(error);
     }
   }
-
-  jwt: string | null = null;
-
-  private http = inject(HttpClient);
 
   // Método para hacer peticiones POST a la API
   async post<T = void>(path: string, body: any): Promise<Result<T>> {
@@ -38,18 +36,22 @@ export class ApiService {
           observe: 'response'
         })
       );
-
       return Result.success(response.status, response.body as T);
-
     } catch (error: any) {
-      const status = error instanceof HttpErrorResponse ? error.status : 500;
-      const message = error instanceof HttpErrorResponse ? (error.error?.message || error.message || error.statusText) : error.message || 'Unknown error';
-      return Result.error(status, message);
+      return this.handleError(error);
     }
   }
 
-  // Método para obtener los headers de las peticiones
-  // Incluyendo el JWT
+  // Método privado para manejar errores de forma centralizada
+  private handleError<T = void>(error: any): Result<T> {
+    const status = error instanceof HttpErrorResponse ? error.status : 500;
+    const message = error instanceof HttpErrorResponse
+      ? (error.error?.message || error.message || error.statusText)
+      : error.message || 'Unknown error';
+    return Result.error(status, message);
+  }
+
+  // Método para obtener los headers de las peticiones incluyendo el JWT
   private getHeaders(): HttpHeaders {
     let headers: any = {
       'Content-Type': 'application/json'

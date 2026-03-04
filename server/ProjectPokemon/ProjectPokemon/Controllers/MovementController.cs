@@ -20,9 +20,11 @@ namespace ProjectPokemon.Controllers {
             ICollection<Movement> moves = await _unitOfWork.MovementRepository.GetAllAsync();
 
             IEnumerable<MovementDto> movementDto = moves.Select(moves => new MovementDto {
+                Id = moves.Id,
                 Name = moves.Name,
                 Description = moves.Description,
                 Power = moves.Power ?? 0,
+                MovementClass = moves.MovementClass,
                 Accuracy = moves.Accuracy ?? 0,
                 Pp = moves.Pp,
                 Type = moves.Type

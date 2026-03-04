@@ -34,6 +34,7 @@ export class TeamBuilder {
   selectedPokemonDisplayName: string | null = null;
   selectedPokemonSprite: string | null = null;
   selectedPokemonId: number | null = null;
+  selectedMovementIds: (number | null)[] = [null, null, null, null];
 
   constructor() {
     effect(() => {
@@ -44,9 +45,7 @@ export class TeamBuilder {
     });
   }
 
-  async ngOnInit() {
-    this.ensureJwtLoaded();
-  }
+  // ngOnInit no es necesario ya que el JWT se carga en app.ts
 
   async addTeam() {
     const currentUserId = this.authService.currentUserId();
@@ -92,6 +91,7 @@ export class TeamBuilder {
       this.selectedPokemonDisplayName = 'MissingNo';
       this.selectedPokemonSprite = 'assets/error/missing-no.png';
       this.selectedPokemonId = 0;
+      this.selectedMovementIds = [null, null, null, null];
       this.isPanelOpen = true;
       return;
     }
@@ -105,10 +105,17 @@ export class TeamBuilder {
         ? (selectedPokemon.pokemon.spriteFrontShiny ?? selectedPokemon.pokemon.spriteFront)
         : selectedPokemon.pokemon.spriteFront;
       this.selectedPokemonId = selectedPokemon.pokemon.id;
+      this.selectedMovementIds = [
+        selectedPokemon.movementId1,
+        selectedPokemon.movementId2,
+        selectedPokemon.movementId3,
+        selectedPokemon.movementId4
+      ];
     } else {
       this.selectedPokemonDisplayName = null;
       this.selectedPokemonSprite = null;
       this.selectedPokemonId = null;
+      this.selectedMovementIds = [null, null, null, null];
     }
 
     this.isPanelOpen = true;
@@ -136,18 +143,6 @@ export class TeamBuilder {
     return this.authService.currentUserId() !== null && this.teams().length < this.MAX_TEAMS;
   }
 
-  private ensureJwtLoaded() {
-    if (this.authService.jwt) {
-      console.log('JWT already in memory');
-      return;
-    }
-
-    const jwtFromStorage = localStorage.getItem('jwt');
-    console.log('JWT from localStorage:', jwtFromStorage ? 'found' : 'not found');
-    if (jwtFromStorage) {
-      this.authService.setJwt(jwtFromStorage);
-    }
-  }
 
   private async loadUserTeams() {
     const currentUserId = this.authService.currentUserId();

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { PokemonApi } from '../models/pokemon-api';
-import { Move } from '../models/move';
+import { BattleMove } from '../models/move';
 
 @Injectable({
   providedIn: 'root',
@@ -10,7 +10,7 @@ import { Move } from '../models/move';
 // Se inyecta en el BattleService para ser utilizado durante la simulación del combate
 
 export class MoveSelection {
-  getRandomOpponentMove(pokemon: PokemonApi): Move {
+  getRandomOpponentMove(pokemon: PokemonApi): BattleMove {
     if (!pokemon.moves || pokemon.moves.length === 0) {
       throw new Error('El Pokémon no tiene movimientos disponibles');
     }

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { PokemonService } from '../../services/pokemon-service';
 import { Pokemon } from '../../models/pokemon';
 import { PostPokemonTeamDto } from '../../models/pokemon-team';
+import { Movement } from '../../models/move';
+import { MovementService } from '../../services/movement-service';
 
 @Component({
     selector: 'app-pokemon-editor-panel',
@@ -13,6 +15,7 @@ import { PostPokemonTeamDto } from '../../models/pokemon-team';
 })
 export class PokemonEditorPanel {
     private readonly pokemonService = inject(PokemonService);
+    private readonly movementService = inject(MovementService);
 
     @Input() isOpen = false;
     @Input() teamId = 0;
@@ -20,6 +23,9 @@ export class PokemonEditorPanel {
     @Input() pokemonDisplayName: string | null = null;
     @Input() pokemonSprite: string | null = null;
     @Input() pokemonId: number | null = null;
+    @Input() set movementIds(value: (number | null)[]) {
+        this.movementIdsSignal.set(value);
+    }
     @Output() close = new EventEmitter<void>();
     @Output() createPokemonTeam = new EventEmitter<PostPokemonTeamDto>();
     @Output() changeSlot = new EventEmitter<number>();
@@ -30,6 +36,9 @@ export class PokemonEditorPanel {
     searchError = signal<string | null>(null);
     allPokemonCache = signal<Pokemon[]>([]);
     animationDirection = signal<'left' | 'right' | 'leftIn' | 'rightIn' | 'none'>('none');
+    movements = signal<(Movement | null)[]>([null, null, null, null]);
+    allMovementsCache = signal<Movement[]>([]);
+    movementIdsSignal = signal<(number | null)[]>([null, null, null, null]);
 
     get isEasterEggSlot(): boolean {
         return this.slot <= 0 || this.slot >= 7;
@@ -61,6 +70,22 @@ export class PokemonEditorPanel {
                 this.searchedPokemon.set(found);
             }
         });
+
+        // Cargar cache de movimientos al inicializar
+        this.loadMovementsCache();
+
+        // Efecto para actualizar movimientos cuando los IDs cambian
+        effect(() => {
+            const ids = this.movementIdsSignal();
+            const cache = this.allMovementsCache();
+            
+            const loadedMovements = ids.map(id => {
+                if (!id) return null;
+                return cache.find(m => m.id === id) ?? null;
+            });
+            
+            this.movements.set(loadedMovements);
+        });
     }
 
     private async loadPokemonCache() {
@@ -69,6 +94,14 @@ export class PokemonEditorPanel {
         }
         const allPokemon = await this.pokemonService.getAllPokemon();
         this.allPokemonCache.set(allPokemon);
+    }
+
+    private async loadMovementsCache() {
+        if (this.allMovementsCache().length > 0) {
+            return;
+        }
+        const allMovements = await this.movementService.getAllMovements();
+        this.allMovementsCache.set(allMovements);
     }
 
     toggleSearchControls() {

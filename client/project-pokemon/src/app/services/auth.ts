@@ -68,13 +68,21 @@ export class AuthService {
     this.api.jwt = value;
   }
 
+
   constructor(private api: ApiService) {}
+
+  // Inicializa el JWT desde localStorage si existe
+  initializeJwtFromStorage(): void {
+    const jwtFromStorage = localStorage.getItem('jwt');
+    if (jwtFromStorage) {
+      this.setJwt(jwtFromStorage);
+    }
+  }
 
   // Establece el JWT que viene del localStorage
   setJwt(jwt: string): void {
     this.jwt = jwt;
   }
-
   async login(authData: AuthRequest, rememberMe: boolean = false): Promise<Result<AuthResponse>> {
     const result = await this.api.post<AuthResponse>('auth/login', authData);
 
