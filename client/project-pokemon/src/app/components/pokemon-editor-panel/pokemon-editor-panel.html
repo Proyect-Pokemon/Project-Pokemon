@@ -72,9 +72,6 @@
                                 @if (searchedPokemon()?.id) {
                                     <span class="pokemon-number">#{{ ('00' + searchedPokemon()?.id).slice(-3) }}</span>
                                 }
-                                <button type="button" class="pokemon-item-placeholder" aria-label="Añadir objeto" title="Añadir objeto">
-                                    <span class="item-plus-symbol">+</span>
-                                </button>
                             </div>
                         </div>
                         <button class="add-pokemon-button" (click)="onCreatePokemonTeam()">

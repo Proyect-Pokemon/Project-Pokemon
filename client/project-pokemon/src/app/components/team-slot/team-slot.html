@@ -1,8 +1,11 @@
 <div class="team-slot">
-    <button class="team-button" (click)="onToggle()">
-        <span class="team-name">{{ team.name }}</span>
-        <span class="arrow" [class.expanded]="team.isExpanded">▼</span>
-    </button>
+    <div class="team-button-row">
+        <button class="team-button" (click)="onToggle()">
+            <span class="team-name">{{ team.name }}</span>
+            <span class="arrow" [class.expanded]="team.isExpanded">▼</span>
+        </button>
+        <span class="team-edit-icon" aria-hidden="true"></span>
+    </div>
     
     @if (team.isExpanded) {
         <div class="pokemon-list">
