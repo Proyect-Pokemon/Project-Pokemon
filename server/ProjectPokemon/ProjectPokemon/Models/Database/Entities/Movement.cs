@@ -7,8 +7,8 @@ public class Movement {
     public required string Description { get; set; }
     public required int Pp { get; set; }
     public required MovementClass MovementClass { get; set; }
-    public required int? Accuracy { get; set; } = null; // Porcentaje de acierto de un movimiento
-    public required int? Power { get; set; } // Potencia del movimiento. Un movimiento de clase estado tendría 0
+    public int? Accuracy { get; set; } = null; // Porcentaje de acierto de un movimiento
+    public int? Power { get; set; } = null; // Potencia del movimiento. Un movimiento de clase estado tendría 0
     public required PokeTarget Target { get; set; }
     public required int Priority { get; set; } // <-- Consultar el documento con las prioridades en combate
     public required int EffectChance { get; set; } // Probabilidad que tiene el movimiento de que ocurra el efecto secundario. Es el num en %
