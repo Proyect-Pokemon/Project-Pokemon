@@ -79,4 +79,19 @@ public class PokemonTeamController : ControllerBase {
 
         return Ok(dto);
     }
+
+    [HttpDelete("{id}")]
+    [Authorize]
+    public async Task<IActionResult> DeletePokemonTeam(int id) {
+        PokemonTeam? pokemonteam = await _unitOfWork.PokemonTeamRepository.GetByIdAsync(id);
+        if (pokemonteam == null) {
+            return NotFound();
+        }
+        await _unitOfWork.PokemonTeamRepository.DeleteAsync(pokemonteam);
+        bool success = await _unitOfWork.SaveAsync();
+        if (!success) {
+            return BadRequest();
+        }
+        return Ok();
+    }
 }
