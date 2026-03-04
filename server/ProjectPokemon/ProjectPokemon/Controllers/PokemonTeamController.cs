@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProjectPokemon.Models.Database;
@@ -19,6 +20,7 @@ public class PokemonTeamController : ControllerBase {
 
     //GET: api/pokemonteam
     [HttpGet]
+    [Authorize]
     public async Task<IEnumerable<GetAllPokemonTeamDto>> GetAllPokemonTeams() {
         ICollection<PokemonTeam> PokemonTeams = await _unitOfWork.PokemonTeamRepository.GetAllAsync();
 
@@ -40,6 +42,7 @@ public class PokemonTeamController : ControllerBase {
 
     // POST
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<PostPokemonTeamDto>> AddPokemonTeam([FromBody] PostPokemonTeamDto dto) {
         // Validar rango de slot
         if (dto.Slot < 1 || dto.Slot > 6) {

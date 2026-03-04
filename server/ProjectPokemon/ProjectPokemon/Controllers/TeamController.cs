@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Database.Entities;
 using ProjectPokemon.Models.Dtos.Team;
@@ -15,6 +16,7 @@ public class TeamController : ControllerBase {
 
     //GET: api/team
     [HttpGet]
+    [Authorize]
     public async Task<IEnumerable<GetTeamDto>> GetAllTeams() {
         ICollection<Team> Teams = await _unitOfWork.TeamRepository.GetAllAsync();
 
@@ -30,6 +32,7 @@ public class TeamController : ControllerBase {
 
     // POST
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<PostTeamDto>> AddTeam([FromBody] PostTeamDto dto) {
         Team team = new Team {
             Name = dto.Name,
