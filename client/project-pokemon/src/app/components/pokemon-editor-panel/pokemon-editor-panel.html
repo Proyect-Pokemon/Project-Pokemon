@@ -12,6 +12,9 @@
     <div class="panel-content">
         @if (pokemonDisplayName && pokemonSprite) {
             <div class="selected-pokemon-preview">
+                <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base">
+                    ?
+                </button>
                 <h3 class="pokemon-display-name">{{ pokemonDisplayName }}</h3>
                 @if (isEasterEggSlot) {
                     <div class="easter-egg-message">
@@ -29,6 +32,9 @@
                         } @else if (pokemonId) {
                             <span class="pokemon-number">#{{ ('00' + pokemonId).slice(-3) }}</span>
                         }
+                        <button type="button" class="pokemon-item-placeholder" aria-label="Añadir objeto" title="Añadir objeto">
+                            <span class="item-plus-symbol">+</span>
+                        </button>
                     </div>
                     <button class="nav-arrow-button nav-next" (click)="onNextSlot()" [disabled]="slot >= 6" title="Siguiente slot">
                         ▶
@@ -57,12 +63,18 @@
                 } @else {
                     @if (searchedPokemon()) {
                         <div class="selected-pokemon-preview">
+                            <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base">
+                                ?
+                            </button>
                             <h3 class="pokemon-display-name">{{ searchedPokemon()?.name }}</h3>
                             <div class="pokemon-sprite-container">
                                 <img [src]="searchedPokemon()?.spriteFront" [alt]="searchedPokemon()?.name" class="pokemon-preview-sprite">
                                 @if (searchedPokemon()?.id) {
                                     <span class="pokemon-number">#{{ ('00' + searchedPokemon()?.id).slice(-3) }}</span>
                                 }
+                                <button type="button" class="pokemon-item-placeholder" aria-label="Añadir objeto" title="Añadir objeto">
+                                    <span class="item-plus-symbol">+</span>
+                                </button>
                             </div>
                         </div>
                         <button class="add-pokemon-button" (click)="onCreatePokemonTeam()">
