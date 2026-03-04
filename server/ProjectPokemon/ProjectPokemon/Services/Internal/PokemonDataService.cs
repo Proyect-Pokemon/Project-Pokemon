@@ -7,13 +7,6 @@ namespace ProjectPokemon.Services.Internal;
 public class PokemonDataService {
     private readonly PokeApiClient client = new PokeApiClient();
 
-    //public async Task LoadGenerationAsync(int generation) {
-    //    Generation gen = await client.GetResourceAsync<Generation>(generation);
-    //    foreach (NamedApiResource<PokemonSpecies> specie in gen.PokemonSpecies) {
-    //        client.GetResourceAsync<PokemonSpecies>(specie.Name);
-    //    }
-    //}
-
     public async Task<PokemonEntity> LoadPokemon(int id) {
         var pokemon = await client.GetResourceAsync<Pokemon>(id);
 
@@ -54,10 +47,17 @@ public class PokemonDataService {
             Weight = pokemon.Weight / 10,
             SpriteFront = pokemon.Sprites.Versions.GenerationV.BlackWhite.Animated.FrontDefault, // TO DO --> Esto recoge una url de la PokeApi
             SpriteBack = pokemon.Sprites.Versions.GenerationV.BlackWhite.Animated.BackDefault, // Necesitamos que sea una url a nuestro wwwroot
+            MiniSprite = pokemon.Sprites.Versions.GenerationVII.Icons.FrontDefault,
+            SpriteFrontShiny = pokemon.Sprites.Versions.GenerationV.BlackWhite.Animated.FrontShiny,
+            SpriteBackShiny = pokemon.Sprites.Versions.GenerationV.BlackWhite.Animated.BackShiny,
+            SpriteFrontFem = pokemon.Sprites.Versions.GenerationV.BlackWhite.Animated.FrontFemale,
+            SpriteBackFem = pokemon.Sprites.Versions.GenerationV.BlackWhite.Animated.BackFemale,
+            SpriteFrontFemShiny = pokemon.Sprites.Versions.GenerationV.BlackWhite.Animated.FrontShinyFemale,
+            SpriteBackFemShiny = pokemon.Sprites.Versions.GenerationV.BlackWhite.Animated.BackShinyFemale,
             Type1 = type1,
             Type2 = type2
             //
-            // TO DO --> Hay que añadir los atributos que faltan
+            // TO DO --> Falta el cry
             //
         };
     }
