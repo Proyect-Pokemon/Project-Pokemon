@@ -49,4 +49,23 @@ public class TeamController : ControllerBase {
 
         return Ok(dto);
     }
+
+    // PUT
+    [HttpPut("{id}")]
+    [Authorize]
+    public async Task<ActionResult<PutTeamDto>> UpdateTeam(int id, [FromBody] PutTeamDto dto) {
+        Team? team = await _unitOfWork.TeamRepository.GetByIdAsync(id);
+        if (team == null) {
+            return NotFound();
+        }
+        team.Name = dto.Name;
+        team.Description = dto.Description;
+        await _unitOfWork.TeamRepository.UpdateAsync(team);
+        bool success = await _unitOfWork.SaveAsync();
+        if (!success) {
+            return BadRequest();
+        }
+        return Ok(dto);
+    }
+    // DELETE
 }
