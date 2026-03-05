@@ -20,7 +20,7 @@ public class PokemonTeamController : ControllerBase {
 
     //GET: api/pokemonteam
     [HttpGet]
-    //[Authorize]
+    [Authorize]
     public async Task<IEnumerable<GetAllPokemonTeamDto>> GetAllPokemonTeams() {
         ICollection<PokemonTeam> PokemonTeams = await _unitOfWork.PokemonTeamRepository.GetAllAsync();
 
@@ -43,7 +43,7 @@ public class PokemonTeamController : ControllerBase {
 
     // POST
     [HttpPost]
-    //[Authorize]
+    [Authorize]
     public async Task<ActionResult<PostPokemonTeamDto>> AddPokemonTeam([FromBody] PostPokemonTeamDto dto) {
         // Validar rango de slot
         if (dto.Slot < 1 || dto.Slot > 6) {
@@ -116,9 +116,8 @@ public class PokemonTeamController : ControllerBase {
     }
 
     // DELETE
-
     [HttpDelete("{id}")]
-    //[Authorize]
+    [Authorize]
     public async Task<IActionResult> DeletePokemonTeam(int id) {
         PokemonTeam? pokemonteam = await _unitOfWork.PokemonTeamRepository.GetByIdAsync(id);
         if (pokemonteam == null) {
@@ -133,8 +132,8 @@ public class PokemonTeamController : ControllerBase {
     }
     
     // PUT
-    [HttpPut("{id}")]
-    //[Authorize]
+    [HttpPut("{id}All")]
+    [Authorize]
     public async Task<IActionResult> UpdatePokemonTeam(int id, [FromBody] PutPokemonTeamDto dto) {
         // Validar que el sexo sea M, H o null
         if (dto.Sex != null && dto.Sex != 'M' && dto.Sex != 'H') {
@@ -174,6 +173,23 @@ public class PokemonTeamController : ControllerBase {
         pokemonteam.MovementId2 = dto.MovementId2;
         pokemonteam.MovementId3 = dto.MovementId3;
         pokemonteam.MovementId4 = dto.MovementId4;
+        await _unitOfWork.PokemonTeamRepository.UpdateAsync(pokemonteam);
+        bool success = await _unitOfWork.SaveAsync();
+        if (!success) {
+            return BadRequest();
+        }
+        return Ok(dto);
+    }
+
+    [HttpPut("{id}Nickname")]
+    [Authorize]
+    public async Task<IActionResult> UpdatePokemonTeamNickname(int id, [FromBody] PutPokemonTeamNicknameDto dto) {
+
+        PokemonTeam? pokemonteam = await _unitOfWork.PokemonTeamRepository.GetByIdAsync(id);
+        if (pokemonteam == null) {
+            return NotFound();
+        }
+        pokemonteam.Nickname = dto.Nickname;
         await _unitOfWork.PokemonTeamRepository.UpdateAsync(pokemonteam);
         bool success = await _unitOfWork.SaveAsync();
         if (!success) {
