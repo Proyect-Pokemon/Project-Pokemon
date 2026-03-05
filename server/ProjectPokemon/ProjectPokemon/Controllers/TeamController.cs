@@ -68,4 +68,18 @@ public class TeamController : ControllerBase {
         return Ok(dto);
     }
     // DELETE
+    [HttpDelete("{id}")]
+    [Authorize]
+    public async Task<ActionResult> DeleteTeam(int id) {
+        Team? team = await _unitOfWork.TeamRepository.GetByIdAsync(id);
+        if (team == null) {
+            return NotFound();
+        }
+        await _unitOfWork.TeamRepository.DeleteAsync(team);
+        bool success = await _unitOfWork.SaveAsync();
+        if (!success) {
+            return BadRequest();
+        }
+        return NoContent();
+    }
 }
