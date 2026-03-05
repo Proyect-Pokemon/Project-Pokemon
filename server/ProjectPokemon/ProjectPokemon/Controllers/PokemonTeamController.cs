@@ -20,7 +20,7 @@ public class PokemonTeamController : ControllerBase {
 
     //GET: api/pokemonteam
     [HttpGet]
-    [Authorize]
+    //[Authorize]
     public async Task<IEnumerable<GetAllPokemonTeamDto>> GetAllPokemonTeams() {
         ICollection<PokemonTeam> PokemonTeams = await _unitOfWork.PokemonTeamRepository.GetAllAsync();
 
@@ -43,7 +43,7 @@ public class PokemonTeamController : ControllerBase {
 
     // POST
     [HttpPost]
-    [Authorize]
+    //[Authorize]
     public async Task<ActionResult<PostPokemonTeamDto>> AddPokemonTeam([FromBody] PostPokemonTeamDto dto) {
         // Validar rango de slot
         if (dto.Slot < 1 || dto.Slot > 6) {
@@ -67,6 +67,28 @@ public class PokemonTeamController : ControllerBase {
         // Validar que el sexo sea M, H o null
         if (dto.Sex != null && dto.Sex != 'M' && dto.Sex != 'H') {
             return BadRequest(new { error = "El campo 'Sex' debe ser 'M', 'H' o null." });
+        }
+
+        // Validar que los movimientos no sean repetidos
+        HashSet<int> movimientos = new HashSet<int>();
+        movimientos.Add(dto.MovementId1);
+
+        if (dto.MovementId2 != null) {
+            if (!movimientos.Add(dto.MovementId2.Value)) {
+                return BadRequest(new { error = "Los movimientos no pueden ser repetidos." });
+            }
+        }
+
+        if (dto.MovementId3 != null) {
+            if (!movimientos.Add(dto.MovementId3.Value)) {
+                return BadRequest(new { error = "Los movimientos no pueden ser repetidos." });
+            }
+        }
+
+        if (dto.MovementId4 != null) {
+            if (!movimientos.Add(dto.MovementId4.Value)) {
+                return BadRequest(new { error = "Los movimientos no pueden ser repetidos." });
+            }
         }
 
         PokemonTeam pokemonteam = new PokemonTeam {
@@ -96,7 +118,7 @@ public class PokemonTeamController : ControllerBase {
     // DELETE
 
     [HttpDelete("{id}")]
-    [Authorize]
+    //[Authorize]
     public async Task<IActionResult> DeletePokemonTeam(int id) {
         PokemonTeam? pokemonteam = await _unitOfWork.PokemonTeamRepository.GetByIdAsync(id);
         if (pokemonteam == null) {
@@ -109,31 +131,45 @@ public class PokemonTeamController : ControllerBase {
         }
         return Ok();
     }
-    /*
+    
     // PUT
     [HttpPut("{id}")]
-    [Authorize]
+    //[Authorize]
     public async Task<IActionResult> UpdatePokemonTeam(int id, [FromBody] PutPokemonTeamDto dto) {
-        if (id != dto.Id) {
-            return BadRequest(new { error = "El ID en la URL no coincide con el ID en el cuerpo de la solicitud." });
+        // Validar que el sexo sea M, H o null
+        if (dto.Sex != null && dto.Sex != 'M' && dto.Sex != 'H') {
+            return BadRequest(new { error = "El campo 'Sex' debe ser 'M', 'H' o null." });
         }
-        // Validar rango de slot
-        if (dto.Slot < 1 || dto.Slot > 6) {
-            return BadRequest(new { error = "El campo 'Slot' debe estar entre 1 y 6." });
+
+        // Validar que los movimientos no sean repetidos
+        HashSet<int> movimientos = new HashSet<int>();
+        movimientos.Add(dto.MovementId1);
+
+        if (dto.MovementId2 != null) {
+            if (!movimientos.Add(dto.MovementId2.Value)) {
+                return BadRequest(new { error = "Los movimientos no pueden ser repetidos." });
+            }
         }
-        // Validar que no exista ya un PokemonTeam con el mismo TeamId y Slot (excluyendo el actual)
-        bool existsSameSlot = await _unitOfWork.PokemonTeamRepository
-            .GetQueryable()
-            .AnyAsync(pt => pt.TeamId == dto.TeamId && pt.Slot == dto.Slot && pt.Id != id);
-        if (existsSameSlot) {
-            return BadRequest(new { error = "Ya existe un Pokémon en ese slot para el equipo indicado." });
+
+        if (dto.MovementId3 != null) {
+            if (!movimientos.Add(dto.MovementId3.Value)) {
+                return BadRequest(new { error = "Los movimientos no pueden ser repetidos." });
+            }
         }
+
+        if (dto.MovementId4 != null) {
+            if (!movimientos.Add(dto.MovementId4.Value)) {
+                return BadRequest(new { error = "Los movimientos no pueden ser repetidos." });
+            }
+        }
+
         PokemonTeam? pokemonteam = await _unitOfWork.PokemonTeamRepository.GetByIdAsync(id);
         if (pokemonteam == null) {
             return NotFound();
         }
         pokemonteam.Shiny = dto.Shiny;
         pokemonteam.NatureId = dto.NatureId;
+        pokemonteam.Sex = dto.Sex;
         pokemonteam.MovementId1 = dto.MovementId1;
         pokemonteam.MovementId2 = dto.MovementId2;
         pokemonteam.MovementId3 = dto.MovementId3;
@@ -145,5 +181,4 @@ public class PokemonTeamController : ControllerBase {
         }
         return Ok(dto);
     }
-    */
 }
