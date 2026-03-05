@@ -59,17 +59,17 @@ public class Seeder {
         _dbContext.SaveChanges();
 
         // PokemonTeams
-        PokemonTeam admin1PokemonTeam = new PokemonTeam { TeamId = adminTeam.Id, PokemonId = 150, NatureId = 1, Slot = 1, MovementId1 = 85, MovementId2 = 60, MovementId3 = 59, MovementId4 = 100, Nickname = "MewTwooSSJ100" };
-        PokemonTeam ash1PokemonTeam = new PokemonTeam { TeamId = ashTeam.Id, PokemonId = 25, NatureId = 1, Slot = 1, MovementId1 = 85 };
-        PokemonTeam misty1PokemonTeam = new PokemonTeam { TeamId = mistyTeam.Id, PokemonId = 120, NatureId = 2, Slot = 1, MovementId1 = 55 };
-        PokemonTeam red1PokemonTeam = new PokemonTeam { TeamId = redTeam.Id, PokemonId = 6, NatureId = 3, Slot = 1, MovementId1 = 150 };
+        PokemonTeam admin1PokemonTeam = new PokemonTeam { TeamId = adminTeam.Id, PokemonId = 150, NatureId = 1, Slot = 1, MovementId1 = 85, MovementId2 = 60, MovementId3 = 59, MovementId4 = 100, Nickname = "MewTwooSSJ100", Sex = null };
+        PokemonTeam ash1PokemonTeam = new PokemonTeam { TeamId = ashTeam.Id, PokemonId = 25, NatureId = 1, Slot = 1, MovementId1 = 85, Sex = 'M' };
+        PokemonTeam misty1PokemonTeam = new PokemonTeam { TeamId = mistyTeam.Id, PokemonId = 120, NatureId = 2, Slot = 1, MovementId1 = 55, Sex = 'H' };
+        PokemonTeam red1PokemonTeam = new PokemonTeam { TeamId = redTeam.Id, PokemonId = 6, NatureId = 3, Slot = 1, MovementId1 = 150, Sex = 'M' };
 
-        PokemonTeam MewAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 151, NatureId = 1, Slot = 1, MovementId1 = 53, MovementId2 = 57, MovementId3 = 59, MovementId4 = 94, Nickname = "Mew" };
-        PokemonTeam MewTwoAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 150, NatureId = 11, Slot = 2, MovementId1 = 105, MovementId2 = 57, MovementId3 = 96, MovementId4 = 94, Nickname = "MewTwo" };
-        PokemonTeam MoltresAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 146, NatureId = 11, Slot = 3, MovementId1 = 83, MovementId2 = 126, MovementId3 = 97, MovementId4 = 53, Nickname = "Moltres" };
-        PokemonTeam ZapdosAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 145, NatureId = 11, Slot = 4, MovementId1 = 86, MovementId2 = 87, MovementId3 = 85, MovementId4 = 65, Nickname = "Zapdos" };
-        PokemonTeam ArticunoAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 144, NatureId = 1, Slot =5, MovementId1 = 59, MovementId2 = 58, MovementId3 = 62, MovementId4 = 97, Nickname = "Articuno" };
-        PokemonTeam SnorlaxAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 143, NatureId = 3, Slot = 6, MovementId1 = 34, MovementId2 = 156, MovementId3 = 14, MovementId4 = 107, Nickname = "Snorlax" };
+        PokemonTeam MewAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 151, NatureId = 1, Slot = 1, MovementId1 = 53, MovementId2 = 57, MovementId3 = 59, MovementId4 = 94, Nickname = "Mew", Sex = null };
+        PokemonTeam MewTwoAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 150, NatureId = 11, Slot = 2, MovementId1 = 105, MovementId2 = 57, MovementId3 = 96, MovementId4 = 94, Nickname = "MewTwo", Sex = null };
+        PokemonTeam MoltresAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 146, NatureId = 11, Slot = 3, MovementId1 = 83, MovementId2 = 126, MovementId3 = 97, MovementId4 = 53, Nickname = "Moltres", Sex = null };
+        PokemonTeam ZapdosAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 145, NatureId = 11, Slot = 4, MovementId1 = 86, MovementId2 = 87, MovementId3 = 85, MovementId4 = 65, Nickname = "Zapdos", Sex = null };
+        PokemonTeam ArticunoAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 144, NatureId = 1, Slot =5, MovementId1 = 59, MovementId2 = 58, MovementId3 = 62, MovementId4 = 97, Nickname = "Articuno", Sex = null };
+        PokemonTeam SnorlaxAdmin = new PokemonTeam { TeamId = LegendTeam.Id, PokemonId = 143, NatureId = 3, Slot = 6, MovementId1 = 34, MovementId2 = 156, MovementId3 = 14, MovementId4 = 107, Nickname = "Snorlax", Sex = 'M' };
 
         _dbContext.PokemonTeams.AddRange(admin1PokemonTeam, ash1PokemonTeam, misty1PokemonTeam, red1PokemonTeam, MewAdmin, MewTwoAdmin, MoltresAdmin, ZapdosAdmin, ArticunoAdmin, SnorlaxAdmin);
         _dbContext.SaveChanges();

@@ -27,6 +27,7 @@ public class PokemonTeamController : ControllerBase {
         IEnumerable<GetAllPokemonTeamDto> getAllPokemonTeamsDto = PokemonTeams.Select(PokemonTeam => new GetAllPokemonTeamDto {
             Id = PokemonTeam.Id,
             Nickname = PokemonTeam.Nickname,
+            Sex = PokemonTeam.Sex,
             Shiny = PokemonTeam.Shiny,
             Slot = PokemonTeam.Slot,
             TeamId = PokemonTeam.TeamId,
@@ -57,8 +58,20 @@ public class PokemonTeamController : ControllerBase {
             return BadRequest(new { error = "Ya existe un Pokémon en ese slot para el equipo indicado." });
         }
 
+        //Validar que el TeamId exista
+        bool teamExists = await _unitOfWork.TeamRepository.GetQueryable().AnyAsync(t => t.Id == dto.TeamId);
+        if (!teamExists) {
+            return BadRequest(new { error = "El TeamId proporcionado no existe." });
+        }
+
+        // Validar que el sexo sea M, H o null
+        if (dto.Sex != null && dto.Sex != 'M' && dto.Sex != 'H') {
+            return BadRequest(new { error = "El campo 'Sex' debe ser 'M', 'H' o null." });
+        }
+
         PokemonTeam pokemonteam = new PokemonTeam {
             Nickname = dto.Nickname,
+            Sex = dto.Sex,
             Shiny = dto.Shiny = false,
             Slot = dto.Slot,
             TeamId = dto.TeamId,
@@ -80,6 +93,8 @@ public class PokemonTeamController : ControllerBase {
         return Ok(dto);
     }
 
+    // DELETE
+
     [HttpDelete("{id}")]
     [Authorize]
     public async Task<IActionResult> DeletePokemonTeam(int id) {
@@ -94,4 +109,41 @@ public class PokemonTeamController : ControllerBase {
         }
         return Ok();
     }
+    /*
+    // PUT
+    [HttpPut("{id}")]
+    [Authorize]
+    public async Task<IActionResult> UpdatePokemonTeam(int id, [FromBody] PutPokemonTeamDto dto) {
+        if (id != dto.Id) {
+            return BadRequest(new { error = "El ID en la URL no coincide con el ID en el cuerpo de la solicitud." });
+        }
+        // Validar rango de slot
+        if (dto.Slot < 1 || dto.Slot > 6) {
+            return BadRequest(new { error = "El campo 'Slot' debe estar entre 1 y 6." });
+        }
+        // Validar que no exista ya un PokemonTeam con el mismo TeamId y Slot (excluyendo el actual)
+        bool existsSameSlot = await _unitOfWork.PokemonTeamRepository
+            .GetQueryable()
+            .AnyAsync(pt => pt.TeamId == dto.TeamId && pt.Slot == dto.Slot && pt.Id != id);
+        if (existsSameSlot) {
+            return BadRequest(new { error = "Ya existe un Pokémon en ese slot para el equipo indicado." });
+        }
+        PokemonTeam? pokemonteam = await _unitOfWork.PokemonTeamRepository.GetByIdAsync(id);
+        if (pokemonteam == null) {
+            return NotFound();
+        }
+        pokemonteam.Shiny = dto.Shiny;
+        pokemonteam.NatureId = dto.NatureId;
+        pokemonteam.MovementId1 = dto.MovementId1;
+        pokemonteam.MovementId2 = dto.MovementId2;
+        pokemonteam.MovementId3 = dto.MovementId3;
+        pokemonteam.MovementId4 = dto.MovementId4;
+        await _unitOfWork.PokemonTeamRepository.UpdateAsync(pokemonteam);
+        bool success = await _unitOfWork.SaveAsync();
+        if (!success) {
+            return BadRequest();
+        }
+        return Ok(dto);
+    }
+    */
 }

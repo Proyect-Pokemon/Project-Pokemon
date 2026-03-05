@@ -6,6 +6,7 @@ namespace ProjectPokemon.Models.Database.Entities {
         public long Id { get; set; }
         public bool Shiny { get; set; } = false;
         public string? Nickname { get; set; } = null; //si es nulo usa el nombre del pokemon
+        public char? Sex {  get; set; }
         public required int Slot { get; set; } // 1 a 6
         public long TeamId { get; set; } 
         public Team Team { get; set; } = null!;

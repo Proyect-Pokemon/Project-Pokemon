@@ -1,6 +1,7 @@
 ﻿namespace ProjectPokemon.Models.Dtos.PokemonTeam {
     public class PostPokemonTeamDto {
         public string? Nickname { get; set; }
+        public char? Sex { get; set; } = null;
         public bool Shiny { get; set; } = false;
         public int Slot { get; set; }
         public long TeamId { get; set; }
