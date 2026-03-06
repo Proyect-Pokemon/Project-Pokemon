@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { PokemonApi } from '../models/pokemon-api';
-import { Move } from '../models/move';
+import { BattleMove } from '../models/move';
 import { GetTurnOrder } from '../models/get-turn-order';
 
 @Injectable({
@@ -10,54 +10,34 @@ export class TurnOrder {
   getTurnOrder(
     pokemonA: PokemonApi,
     pokemonB: PokemonApi,
-    moveA: Move,
-    moveB: Move,
+    moveA: BattleMove,
+    moveB: BattleMove,
     hpA: number,
     hpB: number
   ): GetTurnOrder {
-    if (pokemonA.spe > pokemonB.spe) {
-      return {
-        firstAttacker: pokemonA,
-        secondAttacker: pokemonB,
-        firstMovement: moveA,
-        secondMovement: moveB,
-        firstHp: hpA,
-        secondHp: hpB,
-        firstIsA: true
-      };
-    } else if (pokemonB.spe > pokemonA.spe) {
-      return {
-        firstAttacker: pokemonB,
-        secondAttacker: pokemonA,
-        firstMovement: moveB,
-        secondMovement: moveA,
-        firstHp: hpB,
-        secondHp: hpA,
-        firstIsA: false
-      };
-    } else {
-      // Si la velocidad es igual, elegir al azar
-      if (Math.random() < 0.5) {
-        return {
-          firstAttacker: pokemonA,
-          secondAttacker: pokemonB,
-          firstMovement: moveA,
-          secondMovement: moveB,
-          firstHp: hpA,
-          secondHp: hpB,
-          firstIsA: true
-        };
-      } else {
-        return {
-          firstAttacker: pokemonB,
-          secondAttacker: pokemonA,
-          firstMovement: moveB,
-          secondMovement: moveA,
-          firstHp: hpB,
-          secondHp: hpA,
-          firstIsA: false
-        };
-      }
-    }
+    const isAPrimero = pokemonA.spe > pokemonB.spe || (pokemonA.spe === pokemonB.spe && Math.random() < 0.5);
+    return isAPrimero
+      ? this.createTurnOrder(pokemonA, pokemonB, moveA, moveB, hpA, hpB, true)
+      : this.createTurnOrder(pokemonB, pokemonA, moveB, moveA, hpB, hpA, false);
+  }
+
+  private createTurnOrder(
+    firstAttacker: PokemonApi,
+    secondAttacker: PokemonApi,
+    firstMovement: BattleMove,
+    secondMovement: BattleMove,
+    firstHp: number,
+    secondHp: number,
+    firstIsA: boolean
+  ): GetTurnOrder {
+    return {
+      firstAttacker,
+      secondAttacker,
+      firstMovement,
+      secondMovement,
+      firstHp,
+      secondHp,
+      firstIsA
+    };
   }
 }

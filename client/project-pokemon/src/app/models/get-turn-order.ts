@@ -1,11 +1,11 @@
 import { PokemonApi } from './pokemon-api';
-import { Move } from './move';
+import { BattleMove } from './move';
 
 export interface GetTurnOrder {
 	firstAttacker: PokemonApi;
 	secondAttacker: PokemonApi;
-	firstMovement: Move;
-	secondMovement: Move;
+	firstMovement: BattleMove;
+	secondMovement: BattleMove;
 	firstHp: number;
 	secondHp: number;
 	firstIsA: boolean;

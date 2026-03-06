@@ -1,21 +1,39 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Database.Entities;
+using ProjectPokemon.Models.Dtos.Pokemon;
 
 namespace ProjectPokemon.Controllers {
     [Route("api/[controller]")]
     [ApiController]
     public class PokemonController : ControllerBase {
 
-        private readonly PokemonDbContext _context;
-        public PokemonController(PokemonDbContext context) {
-            _context = context;
+        private readonly UnitOfWork _unitOfWork;
+        public PokemonController(UnitOfWork unitOfWork) {
+            _unitOfWork = unitOfWork;
         }
+
         [HttpGet]
         public async Task<IEnumerable<Pokemon>> GetAllPokemon() {
-            return await _context.Pokemons.ToListAsync();
+            return await _unitOfWork.PokemonRepository.GetAllAsync();
+        }
+
+
+        [HttpGet("Name")]
+        public async Task<IEnumerable<SearchPokemonDto>> GetPokemonByNameAsync([FromQuery] string name) {
+            if (string.IsNullOrWhiteSpace(name)) {
+                return Enumerable.Empty<SearchPokemonDto>();
+            }
+
+            ICollection<Pokemon> pokemons = await _unitOfWork.PokemonRepository.SearchByNameAsync(name);
+
+            IEnumerable<SearchPokemonDto> searchPokemonDto = pokemons.Select(pokemon => new SearchPokemonDto {
+                Id = pokemon.Id,
+                Name = pokemon.Name,
+                SpriteFront = pokemon.SpriteFront
+            });
+            return searchPokemonDto;
         }
     }
 }

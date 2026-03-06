@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { BattleService } from '../../services/battle-service';
 import { BattleResponse } from '../../models/pokemon-api';
-import { Move } from '../../models/move';
+import { BattleMove } from '../../models/move';
 import { MovementButton } from '../../components/movement-button/movement-button';
 import { BattleSimulatorService } from '../../services/battle-simulator';
 import { CommonModule, TitleCasePipe } from '@angular/common';
@@ -49,7 +49,7 @@ export class Battle {
     this.battle.set(true);
   }
 
-  attack(move: Move): void {
+  attack(move: BattleMove): void {
     this.battleInfo.update(battle => {
       if (!battle) return battle;
       move.currentPp = move.currentPp - 1;

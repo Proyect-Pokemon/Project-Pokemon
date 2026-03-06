@@ -5,5 +5,6 @@
         public string? Description { get; set; } = null;
         public long UserId { get; set; }
         public User User { get; set; } = null!;
+        public ICollection<PokemonTeam> PokemonsTeam { get; set; } = [];
     }
 }

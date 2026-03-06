@@ -1,10 +1,16 @@
 // Servicio de autenticación para manejar el login y el JWT
 import { computed, Injectable, signal } from '@angular/core';
 import { jwtDecode } from 'jwt-decode';
-import { AuthRequest } from '../models/auth-request';
 import { ApiService } from './api';
 import { AuthResponse } from '../models/auth-response';
 import { Result } from '../models/result';
+
+type JwtPayload = {
+  id?: string | number;
+  role?: string;
+  unique_name?: string;
+  AvatarPath?: string | null;
+};
 
 type JwtPayload = {
   id?: string | number;
@@ -32,14 +38,14 @@ export class AuthService {
   });
 
   readonly isAuthenticated = computed(() => !!this.jwtSignal());
-  readonly currentUserId = computed(() => {
+  readonly currentUserId = computed<number | null>(() => {
     const decoded = this.decodedPayload();
     if (!decoded || decoded.id === undefined || decoded.id === null) {
       return null;
     }
 
-    const userId = typeof decoded.id === 'number' ? decoded.id : decoded.id;
-    return userId;
+    const userId = Number(decoded.id);
+    return Number.isNaN(userId) ? null : userId;
   });
   readonly isAdmin = computed(() => {
     const decoded = this.decodedPayload();
@@ -53,7 +59,9 @@ export class AuthService {
   readonly avatarPath = computed(() => {
     const decoded = this.decodedPayload();
     const avatarPath = decoded?.AvatarPath?.trim();
-    return avatarPath && avatarPath.length > 0 ? avatarPath : '/assets/avatar-default.png';
+    return avatarPath && avatarPath.length > 0
+      ? avatarPath
+      : '/assets/avatar-default.png';
   });
 
   // Mantiene compatibilidad con el código existente
@@ -68,18 +76,25 @@ export class AuthService {
 
   constructor(private api: ApiService) {}
 
+  // Inicializa el JWT desde localStorage si existe
+  initializeJwtFromStorage(): void {
+    const jwtFromStorage = localStorage.getItem('jwt');
+    if (jwtFromStorage) {
+      this.setJwt(jwtFromStorage);
+    }
+  }
+
   // Establece el JWT que viene del localStorage
   setJwt(jwt: string): void {
     this.jwt = jwt;
   }
-
   async login(authData: AuthRequest, rememberMe: boolean = false): Promise<Result<AuthResponse>> {
     const result = await this.api.post<AuthResponse>('auth/login', authData);
 
     if (result.success && result.data) {
       const token = result.data.accessToken;
       this.jwt = token;
-      
+
       // Se guarda el token en localStorage solo si rememberMe es true
       if (rememberMe) {
         localStorage.setItem('jwt', token);
@@ -89,5 +104,9 @@ export class AuthService {
     }
 
     return result;
+  }
+
+  getUserIdFromJwt(): number | null {
+    return this.currentUserId();
   }
 }

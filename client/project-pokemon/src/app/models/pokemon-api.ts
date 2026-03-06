@@ -1,4 +1,4 @@
-import { Move } from "./move";
+import { BattleMove } from "./move";
 
 export interface PokemonApi {
     name: string;
@@ -11,7 +11,7 @@ export interface PokemonApi {
     spe: number;
     type1: string;
     type2: string | null;
-    moves: Move[];
+    moves: BattleMove[];
 }
 
 export interface BattleResponse {

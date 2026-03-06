@@ -15,12 +15,13 @@ public class Pokemon {
     // Sprites y Sonidos
     public required string SpriteFront { get; set; }
     public required string SpriteBack { get; set; }
-    public string? SpriteFrontShiny { get; set; } // <-- Será required
-    public string? SpriteBackShiny { get; set; } // <-- Será required
+    public required string SpriteFrontShiny { get; set; }
+    public required string SpriteBackShiny { get; set; }
     public string? SpriteFrontFem { get; set; }
     public string? SpriteBackFem { get; set; }
     public string? SpriteFrontFemShiny { get; set; }
     public string? SpriteBackFemShiny { get; set; }
+    public required string MiniSprite { get; set; }
     public string? Cry { get; set; } // <-- Será required
 
     // Relaciones

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLinkWithHref } from '@angular/router';
 import { AuthService } from './services/auth';
 
@@ -17,10 +17,6 @@ export class App implements OnInit{
   constructor() {}
 
   ngOnInit() {
-    // Cargamos el JWT del localStorage al iniciar la app
-    const jwt = localStorage.getItem('jwt');
-    if (jwt) {
-      this.authService.setJwt(jwt);
-    }
+    this.authService.initializeJwtFromStorage();
   }
 }
