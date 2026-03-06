@@ -17,6 +17,14 @@ namespace ProjectPokemon.Controllers {
         public async Task<IEnumerable<Pokemon>> GetAllPokemon() {
             return await _unitOfWork.PokemonRepository.GetAllAsync();
         }
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Pokemon>> GetAllPokemonById(int id) {
+            Pokemon? pokemon = await _unitOfWork.PokemonRepository.GetByIdAsync(id);
+            if (pokemon == null) {
+                return NotFound();
+            }
+            return Ok(pokemon);
+        }
 
 
         [HttpGet("Name")]

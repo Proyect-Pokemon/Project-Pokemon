@@ -4,7 +4,7 @@
         public char? Sex { get; set; } = null;
         public bool Shiny { get; set; } = false;
         public int Slot { get; set; }
-        public long TeamId { get; set; }
+        public int TeamId { get; set; }
         public int PokemonId { get; set; }
         public int NatureId { get; set; }
         public required int MovementId1 { get; set; }

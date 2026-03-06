@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ProjectPokemon.Models.Database.Repositories; 
 
-public class PokemonRepository : BaseRepository<Pokemon, long> {
+public class PokemonRepository : BaseRepository<Pokemon, int> {
     public PokemonRepository(PokemonDbContext context) : base(context) {
     }
 

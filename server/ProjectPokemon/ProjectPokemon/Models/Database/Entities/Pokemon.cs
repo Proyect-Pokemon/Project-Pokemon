@@ -22,7 +22,7 @@ public class Pokemon {
     public string? SpriteFrontFemShiny { get; set; }
     public string? SpriteBackFemShiny { get; set; }
     public required string MiniSprite { get; set; }
-    public string? Cry { get; set; } // <-- Será required
+    public string? Cry { get; set; } // <-- Será required cuando se implemente la funcionalidad de sonido
 
     // Relaciones
     public required PokeType Type1 { get; set; }
