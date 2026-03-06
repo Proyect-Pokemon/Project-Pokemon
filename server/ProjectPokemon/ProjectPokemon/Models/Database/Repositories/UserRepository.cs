@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 
 namespace ProjectPokemon.Models.Database.Repositories; 
-public class UserRepository : BaseRepository<User, long> {
+public class UserRepository : BaseRepository<User, int> {
     public UserRepository(PokemonDbContext context) : base(context) {
     }
     public async Task<User?> GetUserByNicknameAsync(string nickname) {

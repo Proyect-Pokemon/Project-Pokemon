@@ -5,7 +5,7 @@ namespace ProjectPokemon.Models.Database.Entities;
 [Index(nameof(Email), IsUnique = true)]
 [Index(nameof(Nickname), IsUnique = true)]
 public class User {
-    public long Id { get; set; }
+    public int Id { get; set; }
     public required string Email { get; set; }
     public required string Nickname { get; set; }
     public required string Password { get; set; }

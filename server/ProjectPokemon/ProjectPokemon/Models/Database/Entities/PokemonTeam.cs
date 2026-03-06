@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ProjectPokemon.Models.Database.Entities {
     public class PokemonTeam {
-        public long Id { get; set; }
+        public int Id { get; set; }
         public bool Shiny { get; set; } = false;
         public string? Nickname { get; set; } = null; //si es nulo usa el nombre del pokemon
         public char? Sex {  get; set; }
         public required int Slot { get; set; } // 1 a 6
-        public long TeamId { get; set; } 
+        public int TeamId { get; set; } 
         public Team Team { get; set; } = null!;
         public int PokemonId { get; set; }
         public Pokemon Pokemon { get; set; } = null!;
