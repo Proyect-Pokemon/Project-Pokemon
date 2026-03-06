@@ -4,9 +4,7 @@ header {
     text-align: right;
 }
 
-nav {
-
-}
+nav {}
 
 li {
     display: inline-block;
@@ -18,4 +16,3 @@ a {
     padding: 5px;
     color: var(--primary-color);
 }
-
