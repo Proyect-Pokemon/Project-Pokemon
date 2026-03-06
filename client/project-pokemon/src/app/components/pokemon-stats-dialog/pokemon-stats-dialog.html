@@ -17,29 +17,29 @@
                 <span class="stat-value stat-final" [style.color]="getStatColor(calculateHp(stats.hp))">{{ calculateHp(stats.hp) }}</span>
             </div>
             <div class="stat-row">
-                <span class="stat-label">Ataque</span>
+                <span class="stat-label" [style.color]="getNatureStatColor('attack')">Ataque</span>
                 <span class="stat-value">{{ stats.attack }}</span>
-                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.attack))">{{ calculateStat(stats.attack) }}</span>
+                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.attack, 'attack'))">{{ calculateStat(stats.attack, 'attack') }}</span>
             </div>
             <div class="stat-row">
-                <span class="stat-label">Defensa</span>
+                <span class="stat-label" [style.color]="getNatureStatColor('defense')">Defensa</span>
                 <span class="stat-value">{{ stats.defense }}</span>
-                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.defense))">{{ calculateStat(stats.defense) }}</span>
+                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.defense, 'defense'))">{{ calculateStat(stats.defense, 'defense') }}</span>
             </div>
             <div class="stat-row">
-                <span class="stat-label">Ataque Esp.</span>
+                <span class="stat-label" [style.color]="getNatureStatColor('specialattack')">Ataque Esp.</span>
                 <span class="stat-value">{{ stats.specialAttack }}</span>
-                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.specialAttack))">{{ calculateStat(stats.specialAttack) }}</span>
+                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.specialAttack, 'specialattack'))">{{ calculateStat(stats.specialAttack, 'specialattack') }}</span>
             </div>
             <div class="stat-row">
-                <span class="stat-label">Defensa Esp.</span>
+                <span class="stat-label" [style.color]="getNatureStatColor('specialdefense')">Defensa Esp.</span>
                 <span class="stat-value">{{ stats.specialDefense }}</span>
-                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.specialDefense))">{{ calculateStat(stats.specialDefense) }}</span>
+                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.specialDefense, 'specialdefense'))">{{ calculateStat(stats.specialDefense, 'specialdefense') }}</span>
             </div>
             <div class="stat-row">
-                <span class="stat-label">Velocidad</span>
+                <span class="stat-label" [style.color]="getNatureStatColor('speed')">Velocidad</span>
                 <span class="stat-value">{{ stats.speed }}</span>
-                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.speed))">{{ calculateStat(stats.speed) }}</span>
+                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.speed, 'speed'))">{{ calculateStat(stats.speed, 'speed') }}</span>
             </div>
         </div>
     </div>
