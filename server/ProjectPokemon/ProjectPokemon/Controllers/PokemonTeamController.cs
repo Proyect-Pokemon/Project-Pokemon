@@ -1,15 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Database.Entities;
 using ProjectPokemon.Models.Dtos.PokemonTeam;
-using ProjectPokemon.Models.Dtos.Team;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace ProjectPokemon.Controllers; 
+namespace ProjectPokemon.Controllers;
+
 [Route("api/[controller]")]
 [ApiController]
 public class PokemonTeamController : ControllerBase {
@@ -130,7 +127,7 @@ public class PokemonTeamController : ControllerBase {
         }
         return Ok();
     }
-    
+
     // PUT
     [HttpPut("{id}All")]
     [Authorize]
