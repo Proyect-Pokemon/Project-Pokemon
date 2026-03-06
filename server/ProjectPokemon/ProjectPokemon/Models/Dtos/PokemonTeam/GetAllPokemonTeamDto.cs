@@ -2,6 +2,7 @@
     public class GetAllPokemonTeamDto {
         public long Id { get; set; }
         public string? Nickname { get; set; }
+        public char? Sex { get; set; } = null;
         public bool Shiny { get; set; } 
         public int Slot { get; set; }
         public long TeamId { get; set; }

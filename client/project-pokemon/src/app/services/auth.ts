@@ -1,36 +1,29 @@
+// Servicio de autenticación para manejar el login y el JWT
 import { computed, Injectable, signal } from '@angular/core';
 import { jwtDecode } from 'jwt-decode';
 import { ApiService } from './api';
-import { AuthRequest } from '../models/auth-request';
 import { AuthResponse } from '../models/auth-response';
+import { AuthRequest } from '../models/auth-request';
+import { Result } from '../models/result';
 import { RegisterRequest } from '../models/register-request';
 
 type JwtPayload = {
   id?: string | number;
   role?: string;
   unique_name?: string;
+  AvatarPath?: string | null;
 };
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-
   private readonly jwtSignal = signal<string | null>(null);
-
-  constructor(private api: ApiService) {
-
-    // Restaurar sesión
-    const jwt = localStorage.getItem('jwt');
-    if (jwt) {
-      this.setJwt(jwt);
-    }
-
-  }
-
   private readonly decodedPayload = computed<JwtPayload | null>(() => {
     const token = this.jwtSignal();
-    if (!token) return null;
+    if (!token) {
+      return null;
+    }
 
     try {
       return jwtDecode<JwtPayload>(token);
@@ -40,19 +33,33 @@ export class AuthService {
   });
 
   readonly isAuthenticated = computed(() => !!this.jwtSignal());
-
-  readonly currentUserId = computed(() => {
+  readonly currentUserId = computed<number | null>(() => {
     const decoded = this.decodedPayload();
-    if (!decoded?.id) return null;
+    if (!decoded || decoded.id === undefined || decoded.id === null) {
+      return null;
+    }
 
-    const id = Number(decoded.id);
-    return Number.isNaN(id) ? null : id;
+    const userId = Number(decoded.id);
+    return Number.isNaN(userId) ? null : userId;
+  });
+  readonly isAdmin = computed(() => {
+    const decoded = this.decodedPayload();
+    return decoded?.role?.toLowerCase() === 'admin';
+  });
+  readonly nickname = computed(() => {
+    const decoded = this.decodedPayload();
+    const nickname = decoded?.unique_name?.trim();
+    return nickname && nickname.length > 0 ? nickname : 'Usuario';
+  });
+  readonly avatarPath = computed(() => {
+    const decoded = this.decodedPayload();
+    const avatarPath = decoded?.AvatarPath?.trim();
+    return avatarPath && avatarPath.length > 0
+      ? avatarPath
+      : '/assets/avatar-default.png';
   });
 
-  readonly isAdmin = computed(() =>
-    this.decodedPayload()?.role?.toLowerCase() === 'admin'
-  );
-
+  // Mantiene compatibilidad con el código existente
   get jwt(): string | null {
     return this.jwtSignal();
   }
@@ -62,21 +69,28 @@ export class AuthService {
     this.api.jwt = value;
   }
 
+  constructor(private api: ApiService) {}
+
+  // Inicializa el JWT desde localStorage si existe
+  initializeJwtFromStorage(): void {
+    const jwtFromStorage = localStorage.getItem('jwt');
+    if (jwtFromStorage) {
+      this.setJwt(jwtFromStorage);
+    }
+  }
+
+  // Establece el JWT que viene del localStorage
   setJwt(jwt: string): void {
     this.jwt = jwt;
   }
+  async login(authData: AuthRequest, rememberMe: boolean = false): Promise<Result<AuthResponse>> {
+    const result = await this.api.post<AuthResponse>('auth/login', authData);
 
-  async login(
-    authData: AuthRequest,
-    rememberMe: boolean = false
-  ): Promise<boolean> {
+    if (result.success && result.data) {
+      const token = result.data.accessToken;
+      this.jwt = token;
 
-    const response = await this.api.post<AuthResponse>('auth/login', authData);
-
-    if (response?.accessToken) {
-
-      this.jwt = response.accessToken;
-
+      // Se guarda el token en localStorage solo si rememberMe es true
       if (rememberMe) {
         localStorage.setItem('jwt', response.accessToken);
       }
@@ -90,5 +104,9 @@ export class AuthService {
   async register(registerData: RegisterRequest): Promise<boolean> {
     await this.api.post('auth/register', registerData);
     return true;
+  }
+
+  getUserIdFromJwt(): number | null {
+    return this.currentUserId();
   }
 }

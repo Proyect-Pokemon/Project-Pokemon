@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLinkWithHref } from '@angular/router';
 import { AuthService } from './services/auth';
 
@@ -9,9 +9,14 @@ import { AuthService } from './services/auth';
   styleUrl: './app.css'
 })
 
-export class App {
+export class App implements OnInit{
   private readonly authService = inject(AuthService);
-  protected readonly title = signal('project-pokemon');
-  protected readonly isAuthenticated = this.authService.isAuthenticated;
-  protected readonly isAdmin = this.authService.isAdmin;
+  isAuthenticated = this.authService.isAuthenticated;
+  isAdmin = this.authService.isAdmin;
+
+  constructor() {}
+
+  ngOnInit() {
+    this.authService.initializeJwtFromStorage();
+  }
 }

@@ -8,11 +8,12 @@ import { Register } from './pages/register/register';
 import { TeamBuilder } from './pages/team-builder/team-builder';
 import { Battle } from './pages/battle/battle';
 import { redirectionGuard } from './guards/redirection-guard';
+import { adminGuard } from './guards/admin-guard';
 
 export const routes: Routes = [
     { path: 'about', component: About },
-    { path: 'admin-panel', component: AdminPanel, canActivate: [redirectionGuard] },
-    { path: 'battle', component: Battle, canActivate: [redirectionGuard] },
+    { path: 'admin-panel', component: AdminPanel, canActivate: [redirectionGuard, adminGuard] },
+    { path: 'battle', component: Battle },
     { path: 'friends', component: Friends, canActivate: [redirectionGuard] },
     { path: 'login', component: Login },
     { path: 'profile', component: Profile, canActivate: [redirectionGuard] },
