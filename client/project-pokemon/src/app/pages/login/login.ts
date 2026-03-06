@@ -41,16 +41,16 @@ export class Login implements OnInit, OnDestroy {
         this.rememberMeChecked
       );
 
-      if (result === true) {
+      if (result.success) {
 
         const redirectTo =
-          this.route.snapshot.queryParams['redirectTo'] || '/feed';
+          this.route.snapshot.queryParams['redirectTo'] || '/battle';
 
         this.router.navigateByUrl(redirectTo);
         return;
       }
 
-      this.errorMessage.set('Usuario o contraseña incorrectos.');
+      this.errorMessage.set(result.message || 'Usuario o contraseña incorrectos.');
 
     } catch (err: any) {
 

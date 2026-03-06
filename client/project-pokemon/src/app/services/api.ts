@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
+import { Result } from '../models/result';
 
 @Injectable({
   providedIn: 'root',
@@ -42,6 +43,36 @@ export class ApiService {
     }
   }
 
+  // Método para hacer peticiones PUT a la API
+  async put<T = void>(path: string, body: any): Promise<Result<T>> {
+    try {
+      const response = await lastValueFrom(
+        this.http.put<T>(`${this.BASE_URL}${path}`, body, {
+          headers: this.getHeaders(),
+          observe: 'response'
+        })
+      );
+      return Result.success(response.status, response.body as T);
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
+
+  // Método para hacer peticiones DELETE a la API
+  async delete<T = void>(path: string): Promise<Result<T>> {
+    try {
+      const response = await lastValueFrom(
+        this.http.delete<T>(`${this.BASE_URL}${path}`, {
+          headers: this.getHeaders(),
+          observe: 'response'
+        })
+      );
+      return Result.success(response.status, response.body as T);
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
+
   // Método privado para manejar errores de forma centralizada
   private handleError<T = void>(error: any): Result<T> {
     const status = error instanceof HttpErrorResponse ? error.status : 500;
@@ -53,19 +84,14 @@ export class ApiService {
 
   // Método para obtener los headers de las peticiones incluyendo el JWT
   private getHeaders(): HttpHeaders {
-    let headers: any = {
+    let headers = new HttpHeaders({
       'Content-Type': 'application/json'
-    };
+    });
 
-  async put<T>(path: string, body: any): Promise<T> {
-    return await lastValueFrom(
-      this.http.put<T>(`${this.BASE_URL}${path}`, body)
-    );
-  }
+    if (this.jwt) {
+      headers = headers.set('Authorization', `Bearer ${this.jwt}`);
+    }
 
-  async delete<T>(path: string): Promise<T> {
-    return await lastValueFrom(
-      this.http.delete<T>(`${this.BASE_URL}${path}`)
-    );
+    return headers;
   }
 }

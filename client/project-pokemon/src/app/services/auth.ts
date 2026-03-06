@@ -92,21 +92,21 @@ export class AuthService {
 
       // Se guarda el token en localStorage solo si rememberMe es true
       if (rememberMe) {
-        localStorage.setItem('jwt', response.accessToken);
+        localStorage.setItem('jwt', token);
       }
 
-      return true;
+      return result;
     }
 
-    return false;
+    return result;
   }
 
-  async register(registerData: RegisterRequest): Promise<boolean> {
-    await this.api.post('auth/register', registerData);
-    return true;
+  async register(registerData: RegisterRequest): Promise<Result<AuthResponse>> {
+    return await this.api.post<AuthResponse>('auth/register', registerData);
   }
 
   getUserIdFromJwt(): number | null {
     return this.currentUserId();
   }
+
 }
