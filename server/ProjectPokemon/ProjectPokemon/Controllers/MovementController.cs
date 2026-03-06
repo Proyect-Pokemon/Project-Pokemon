@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Database.Entities;
 using ProjectPokemon.Models.Dtos.Movement;
-using ProjectPokemon.Models.Dtos.User;
 
 namespace ProjectPokemon.Controllers {
     [Route("api/[controller]")]

@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Database.Entities;
 using ProjectPokemon.Models.Dtos.Pokemon;

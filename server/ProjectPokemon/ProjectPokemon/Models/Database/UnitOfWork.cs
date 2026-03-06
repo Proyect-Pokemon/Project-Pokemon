@@ -8,6 +8,7 @@ namespace ProjectPokemon.Models.Database {
         public PokemonTeamRepository PokemonTeamRepository => field ??= new PokemonTeamRepository(_context!);
         public PokemonRepository PokemonRepository => field ??= new PokemonRepository(_context!);
         public MovementRepository MovementRepository => field ??= new MovementRepository(_context!);
+        public NatureRepository NatureRepository => field ??= new NatureRepository(_context!);
 
         public UnitOfWork(PokemonDbContext context) {
             _context = context;
