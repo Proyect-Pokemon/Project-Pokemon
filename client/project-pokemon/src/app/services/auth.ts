@@ -4,7 +4,13 @@ import { jwtDecode } from 'jwt-decode';
 import { ApiService } from './api';
 import { AuthResponse } from '../models/auth-response';
 import { Result } from '../models/result';
-import { AuthRequest } from '../models/auth-request';
+
+type JwtPayload = {
+  id?: string | number;
+  role?: string;
+  unique_name?: string;
+  AvatarPath?: string | null;
+};
 
 type JwtPayload = {
   id?: string | number;
@@ -67,7 +73,6 @@ export class AuthService {
     this.jwtSignal.set(value);
     this.api.jwt = value;
   }
-
 
   constructor(private api: ApiService) {}
 

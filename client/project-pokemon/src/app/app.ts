@@ -10,7 +10,11 @@ import { AuthService } from './services/auth';
 })
 
 export class App implements OnInit{
-  constructor(private authService: AuthService) {}
+  private readonly authService = inject(AuthService);
+  isAuthenticated = this.authService.isAuthenticated;
+  isAdmin = this.authService.isAdmin;
+
+  constructor() {}
 
   ngOnInit() {
     this.authService.initializeJwtFromStorage();
