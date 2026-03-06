@@ -1,13 +1,25 @@
 <header>
     <nav>
         <ul>
-            <li><a routerLink="/battle">Combate</a></li>
-            <li><a routerLink="/team-builder">Equipos</a></li>
-            <li><a routerLink="/friends">Amigos</a></li>
+
+            @if (isAuthenticated()) {
+                <li><a routerLink="/battle">Combate</a></li>
+                <li><a routerLink="/team-builder">Equipos</a></li>
+                <li><a routerLink="/friends">Amigos</a></li>
+                <li><a routerLink="/profile">Perfil</a></li>
+            }
+
             <li><a routerLink="/about">Sobre nosotros</a></li>
-            <li><a routerLink="/admin-panel">Panel de administración</a></li> <!--Sólo se mostrará si el usuario es un administrador-->
-            <li><a routerLink="/profile">Perfil</a></li>
-            <li><a routerLink="/login">Login</a></li>
+
+            @if (isAdmin()) {
+                <li><a routerLink="/admin-panel">Panel de administración</a></li>
+            }
+
+            @if (!isAuthenticated()) {
+                <li><a routerLink="/login">Login</a></li>
+                <li><a routerLink="/register">Registrarse</a></li>
+            }
+
         </ul>
     </nav>
 </header>
