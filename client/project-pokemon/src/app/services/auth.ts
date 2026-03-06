@@ -3,14 +3,9 @@ import { computed, Injectable, signal } from '@angular/core';
 import { jwtDecode } from 'jwt-decode';
 import { ApiService } from './api';
 import { AuthResponse } from '../models/auth-response';
+import { AuthRequest } from '../models/auth-request';
 import { Result } from '../models/result';
-
-type JwtPayload = {
-  id?: string | number;
-  role?: string;
-  unique_name?: string;
-  AvatarPath?: string | null;
-};
+import { RegisterRequest } from '../models/register-request';
 
 type JwtPayload = {
   id?: string | number;
@@ -97,13 +92,18 @@ export class AuthService {
 
       // Se guarda el token en localStorage solo si rememberMe es true
       if (rememberMe) {
-        localStorage.setItem('jwt', token);
-      } else {
-        localStorage.removeItem('jwt');
+        localStorage.setItem('jwt', response.accessToken);
       }
+
+      return true;
     }
 
-    return result;
+    return false;
+  }
+
+  async register(registerData: RegisterRequest): Promise<boolean> {
+    await this.api.post('auth/register', registerData);
+    return true;
   }
 
   getUserIdFromJwt(): number | null {

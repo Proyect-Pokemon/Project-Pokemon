@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProjectPokemon.Enum;
 using ProjectPokemon.Models.Dtos.Auth;
-using ProjectPokemon.Services;
+using ProjectPokemon.Models.Dtos.User;
+using ProjectPokemon.Services.Auth;
 
 namespace ProjectPokemon.Controllers
 {
@@ -16,7 +18,7 @@ namespace ProjectPokemon.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<string>> Login([FromBody] LoginModel model)
+        public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -26,7 +28,33 @@ namespace ProjectPokemon.Controllers
             if (token is null)
                 return Unauthorized("Credenciales invalidas");
 
-            return Ok(new AuthResponseDto { AccessToken = token });
+            return Ok(new AuthResponseDto
+            {
+                AccessToken = token
+            });
+        }
+
+        [HttpPost("register")]
+        public async Task<ActionResult> Register([FromBody] AddUserDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            string? error = await _authService.CheckUserExists(dto.Email, dto.Nickname);
+
+            if (!string.IsNullOrEmpty(error))
+                return BadRequest(error);
+
+            RegisterResult result = await _authService.RegisterAsync(dto);
+
+            return result switch
+            {
+                RegisterResult.Success => Ok(),
+                RegisterResult.EmailAlreadyExists => BadRequest("El email ya existe."),
+                RegisterResult.NicknameAlreadyExists => BadRequest("El nickname ya existe."),
+                RegisterResult.InvalidData => BadRequest("Datos inválidos."),
+                _ => BadRequest("No se pudo registrar el usuario.")
+            };
         }
     }
 }

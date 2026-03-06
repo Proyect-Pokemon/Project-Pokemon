@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace ProjectPokemon.Models.Database.Repositories;
 
-public abstract class BaseRepository<TEntity, TId> where TEntity : class {
+public abstract class BaseRepository<TEntity, TId> : IRepository<TEntity, TId> where TEntity : class {
     protected PokemonDbContext _dbContext { get; init; }
     public BaseRepository(PokemonDbContext dbContext) {
         _dbContext = dbContext;

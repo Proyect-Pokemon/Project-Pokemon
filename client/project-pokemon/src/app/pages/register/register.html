@@ -1,31 +1,61 @@
 <div class="big-container">
-    <form>
+    <form [formGroup]="registerForm" (ngSubmit)="submit()">
+
+        @if (errorMessage()) {
+        <div class="error-global">
+            {{ errorMessage() }}
+        </div>
+        }
+
         <div class="container">
             <div class="container-header">
                 <h1>¡Bienvenido a ProjectPokemon!</h1>
                 <span>Rellena los datos para crear tu cuenta.</span>
             </div>
+
             <div class="div-form">
+
+                @for (field of ['nickname','email','password','confirmPassword']; track field) {
+
                 <div class="div-input">
-                    <span>Nickname<span class="required">*</span></span>
-                    <input type="text" id="nickname" required>
+                    <span>
+                        {{ getLabel(field) }}
+                        <span class="required"> *</span>
+                    </span>
+
+                    <input [type]="field === 'password' || field === 'confirmPassword' ? 'password' : 'text'"
+                        [formControlName]="field" [placeholder]="getLabel(field)" autocomplete="off">
+
+                    @if (registerForm.get(field)?.touched && registerForm.get(field)?.invalid) {
+                    <div class="error">
+                        {{ getAngularError(field) }}
+                    </div>
+                    }
+
+                    @if (
+                    field === 'confirmPassword' &&
+                    registerForm.errors?.['passwordsMismatch'] &&
+                    registerForm.get('confirmPassword')?.touched
+                    ) {
+                    <div class="error">
+                        Las contraseñas no coinciden
+                    </div>
+                    }
+
                 </div>
+
+                }
+
                 <div class="div-input">
-                    <span>Correo electrónico<span class="required">*</span></span>
-                    <input type="text" id="input-email" required>
+                    <button type="submit" class="btn" [disabled]="registerForm.invalid">
+                        Registrarse
+                    </button>
+                    <span class="small-text">
+                        ¿Ya tienes cuenta?
+                        <a routerLink="/login">¡Inicia sesión!</a>
+                    </span>
                 </div>
-                <div class="div-input">
-                    <span>Contraseña <span class="required">*</span></span>
-                    <input type="password" id="input-password" required>
-                </div>
-                <div class="div-input">
-                    <span>Confirmar contraseña <span class="required">*</span></span>
-                    <input type="password" id="input-password" required>
-                </div>
-                <div class="div-input">
-                    <input class="btn" type="submit" value="Registrarse">
-                    <span class="small-text">¿Ya tienes cuenta? <a routerLink="/login">¡Inicia sesión!</a></span>
-                </div>
+
             </div>
         </div>
     </form>

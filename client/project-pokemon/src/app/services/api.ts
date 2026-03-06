@@ -1,12 +1,12 @@
-import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
-import { Result } from '../models/result';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ApiService {
+
   private readonly BASE_URL = 'https://localhost:7277/api/';
   jwt: string | null = null;
 
@@ -57,10 +57,15 @@ export class ApiService {
       'Content-Type': 'application/json'
     };
 
-    if (this.jwt) {
-      headers['Authorization'] = `Bearer ${this.jwt}`;
-    }
+  async put<T>(path: string, body: any): Promise<T> {
+    return await lastValueFrom(
+      this.http.put<T>(`${this.BASE_URL}${path}`, body)
+    );
+  }
 
-    return new HttpHeaders(headers);
+  async delete<T>(path: string): Promise<T> {
+    return await lastValueFrom(
+      this.http.delete<T>(`${this.BASE_URL}${path}`)
+    );
   }
 }

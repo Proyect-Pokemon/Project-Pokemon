@@ -13,10 +13,6 @@ export class BattleService {
 
   // Obtiene los datos del combate usando el servicio get de ApiService
   async getBattle(): Promise<BattleResponse | null> {
-    const result = await this.apiService.get<BattleResponse>('battle');
-    if (result.success && result.data !== undefined) {
-      return result.data;
-    }
-    return null;
+    return await this.apiService.get<BattleResponse>('battle');
   }
 }
