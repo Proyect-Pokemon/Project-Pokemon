@@ -98,10 +98,74 @@
                 }
             </div>
         }
+
+        @if ((pokemonDisplayName && pokemonSprite) || searchedPokemon()) {
+            <div class="nature-section">
+                <button
+                    type="button"
+                    class="nature-toggle"
+                    (click)="toggleNatureSection()"
+                    [attr.aria-expanded]="isNatureSectionExpanded()"
+                    aria-controls="nature-details">
+                    <span class="nature-toggle-title">Naturaleza</span>
+                    <span class="nature-toggle-summary">
+                        @if (selectedNature(); as activeNature) {
+                            {{ getNatureName(activeNature) }}
+                        } @else if (isLoadingNatures()) {
+                            Cargando...
+                        } @else {
+                            Sin naturaleza
+                        }
+                    </span>
+                    <span class="nature-toggle-icon" [class.open]="isNatureSectionExpanded()">&#9662;</span>
+                </button>
+
+                @if (isNatureSectionExpanded()) {
+                    <div id="nature-details" class="nature-details">
+                        @if (isLoadingNatures()) {
+                            <p class="nature-status">Cargando naturalezas...</p>
+                        } @else if (natureError()) {
+                            <p class="nature-status error">{{ natureError() }}</p>
+                        } @else if (allNaturesCache().length > 0) {
+                            <div class="nature-select-wrapper">
+                                <label class="nature-select-label" for="nature-select">Selecciona una naturaleza</label>
+                                <div class="nature-select-shell">
+                                    <select
+                                        id="nature-select"
+                                        class="nature-select"
+                                        [value]="selectedNatureId()"
+                                        (change)="onNatureChange($event)">
+                                        @for (nature of allNaturesCache(); track nature.id) {
+                                            <option [value]="nature.id">
+                                                {{ getNatureName(nature) }} ({{ getNatureDescriptor(nature) }})
+                                            </option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+
+                            @if (selectedNature(); as activeNature) {
+                                <div class="nature-impact" [class.neutral]="isNeutralNature(activeNature)">
+                                    @if (isNeutralNature(activeNature)) {
+                                        <span class="nature-chip nature-chip-neutral">Sin cambios en stats</span>
+                                    } @else {
+                                        <span class="nature-chip nature-chip-boost">+ {{ getNatureStatLabel(activeNature.statBoost) }}</span>
+                                        <span class="nature-chip nature-chip-drop">- {{ getNatureStatLabel(activeNature.statDrop) }}</span>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        }
     </div>
 
     <app-pokemon-stats-dialog 
         [isOpen]="showStatsDialog()"
         [stats]="currentPokemonStats()"
+        [natureBoostStat]="selectedNature()?.statBoost ?? null"
+        [natureDropStat]="selectedNature()?.statDrop ?? null"
         (close)="closeStatsDialog()">
     </app-pokemon-stats-dialog>
+</div>

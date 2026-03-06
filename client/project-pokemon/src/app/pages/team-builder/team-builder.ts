@@ -34,6 +34,7 @@ export class TeamBuilder {
   selectedPokemonDisplayName: string | null = null;
   selectedPokemonSprite: string | null = null;
   selectedPokemonId: number | null = null;
+  selectedNatureId = 1;
   selectedMovementIds: (number | null)[] = [null, null, null, null];
 
   constructor() {
@@ -91,6 +92,7 @@ export class TeamBuilder {
       this.selectedPokemonDisplayName = 'MissingNo';
       this.selectedPokemonSprite = 'assets/error/missing-no.png';
       this.selectedPokemonId = 0;
+      this.selectedNatureId = 1;
       this.selectedMovementIds = [null, null, null, null];
       this.isPanelOpen = true;
       return;
@@ -105,6 +107,7 @@ export class TeamBuilder {
         ? (selectedPokemon.pokemon.spriteFrontShiny ?? selectedPokemon.pokemon.spriteFront)
         : selectedPokemon.pokemon.spriteFront;
       this.selectedPokemonId = selectedPokemon.pokemon.id;
+      this.selectedNatureId = selectedPokemon.natureId;
       this.selectedMovementIds = [
         selectedPokemon.movementId1,
         selectedPokemon.movementId2,
@@ -115,6 +118,7 @@ export class TeamBuilder {
       this.selectedPokemonDisplayName = null;
       this.selectedPokemonSprite = null;
       this.selectedPokemonId = null;
+      this.selectedNatureId = 1;
       this.selectedMovementIds = [null, null, null, null];
     }
 
