@@ -9,14 +9,9 @@ import { AuthService } from './services/auth';
   styleUrl: './app.css'
 })
 
-export class App implements OnInit{
-  constructor(private authService: AuthService) {}
-
-  ngOnInit() {
-    // Cargamos el JWT del localStorage al iniciar la app
-    const jwt = localStorage.getItem('jwt');
-    if (jwt) {
-      this.authService.setJwt(jwt);
-    }
-  }
+export class App {
+  private readonly authService = inject(AuthService);
+  protected readonly title = signal('project-pokemon');
+  protected readonly isAuthenticated = this.authService.isAuthenticated;
+  protected readonly isAdmin = this.authService.isAdmin;
 }
