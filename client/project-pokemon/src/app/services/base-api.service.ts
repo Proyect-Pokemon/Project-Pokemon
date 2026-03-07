@@ -31,4 +31,15 @@ export class BaseApiService {
     const result = await this.apiService.post<T>(endpoint, data);
     return result.success;
   }
+
+  /**
+   * Actualiza un item en la API
+   * @param endpoint El endpoint de la API
+   * @param data Los datos a enviar
+   * @returns true si la operación fue exitosa, false en caso contrario
+   */
+  async update<T>(endpoint: string, data: T): Promise<boolean> {
+    const result = await this.apiService.put<T>(endpoint, data);
+    return result.success;
+  }
 }

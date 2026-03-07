@@ -9,6 +9,7 @@ import { PokemonStatsDialog } from '../pokemon-stats-dialog/pokemon-stats-dialog
 import { NatureService } from '../../services/nature-service';
 import { Nature } from '../../models/nature';
 import { PokemonStats } from '../../models/pokemon-stats';
+import { PokemonTeamService } from '../../services/pokemon-team-service';
 
 @Component({
     selector: 'app-pokemon-editor-panel',
@@ -18,9 +19,13 @@ import { PokemonStats } from '../../models/pokemon-stats';
     styleUrls: ['./pokemon-editor-panel.css'],
 })
 export class PokemonEditorPanel {
+    @ViewChild('nicknameInput') nicknameInput?: ElementRef<HTMLInputElement>;
+
     private readonly pokemonService = inject(PokemonService);
     private readonly movementService = inject(MovementService);
     private readonly natureService = inject(NatureService);
+    private readonly pokemonTeamService = inject(PokemonTeamService);
+    readonly MAX_NICKNAME_LENGTH = 12;
     private readonly MIN_TEAM_SLOT = 1;
     private readonly MAX_TEAM_SLOT = 6;
     private readonly SLOT_TRANSITION_MS = 300;
@@ -34,6 +39,10 @@ export class PokemonEditorPanel {
     @Input() set isOpen(value: boolean) {
         this.panelOpen = value;
         if (!value) {
+            this.isNatureSectionExpanded.set(false);
+            this.isEditingNickname.set(false);
+            this.nicknameDraft.set('');
+            this.isSavingNickname.set(false);
             this.resetPanelUiState();
         } else {
             // Al abrir el panel, cargar y mostrar todos los Pokémon si la búsqueda está vacía
@@ -53,6 +62,9 @@ export class PokemonEditorPanel {
     @Input() pokemonDisplayName: string | null = null;
     @Input() pokemonSprite: string | null = null;
     @Input() pokemonId: number | null = null;
+    @Input() pokemonTeamId: number | null = null;
+    @Input() pokemonBaseName: string | null = null;
+    @Input() pokemonNickname: string | null = null;
     @Input() set natureId(value: number | null) {
         const normalizedNatureId = value && value > 0 ? value : 1;
         this.initialNatureId.set(normalizedNatureId);
@@ -64,6 +76,7 @@ export class PokemonEditorPanel {
     @Output() close = new EventEmitter<void>();
     @Output() createPokemonTeam = new EventEmitter<PostPokemonTeamDto>();
     @Output() changeSlot = new EventEmitter<number>();
+    @Output() nicknameUpdated = new EventEmitter<{ pokemonTeamId: number, nickname: string | null }>();
 
     searchQuery = signal<string>('');
     searchResults = signal<Pokemon[]>([]);
@@ -81,6 +94,9 @@ export class PokemonEditorPanel {
     isNatureSectionExpanded = signal(false);
     showStatsDialog = signal(false);
     currentPokemonStats = signal<PokemonStats | null>(null);
+    isEditingNickname = signal(false);
+    nicknameDraft = signal('');
+    isSavingNickname = signal(false);
     private initialNatureId = signal(1);
 
     selectedNature = computed(() => {
@@ -311,6 +327,103 @@ export class PokemonEditorPanel {
         this.isNatureSectionExpanded.update(value => !value);
     }
 
+    canEditNickname(): boolean {
+        return !this.isEasterEggSlot && !!this.pokemonDisplayName && !!this.pokemonSprite;
+    }
+
+    onPokemonDisplayNameClick() {
+        if (!this.canEditNickname()) {
+            return;
+        }
+
+        this.nicknameDraft.set((this.pokemonNickname ?? this.pokemonBaseName ?? this.pokemonDisplayName ?? '').trim().slice(0, this.MAX_NICKNAME_LENGTH));
+        this.isEditingNickname.set(true);
+        setTimeout(() => this.focusNicknameInput(), 0);
+    }
+
+    onNicknameInput(event: Event) {
+        const target = event.target as HTMLInputElement | null;
+        const draftValue = target?.value ?? '';
+        this.nicknameDraft.set(draftValue.slice(0, this.MAX_NICKNAME_LENGTH));
+    }
+
+    onNicknameBlur() {
+        this.saveNickname();
+    }
+
+    onNicknameKeydown(event: KeyboardEvent) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            this.saveNickname();
+            return;
+        }
+
+        if (event.key === 'Escape') {
+            this.cancelNicknameEdit();
+        }
+    }
+
+    private cancelNicknameEdit() {
+        this.isEditingNickname.set(false);
+        this.nicknameDraft.set('');
+    }
+
+    private focusNicknameInput() {
+        const inputElement = this.nicknameInput?.nativeElement;
+        if (!inputElement || this.isSavingNickname()) {
+            return;
+        }
+
+        inputElement.focus();
+        inputElement.select();
+    }
+
+    private async saveNickname() {
+        if (!this.isEditingNickname()) {
+            return;
+        }
+
+        const normalizedNextNickname = this.nicknameDraft().trim().slice(0, this.MAX_NICKNAME_LENGTH);
+        const nextNickname: string | null = normalizedNextNickname.length > 0 ? normalizedNextNickname : null;
+
+        const normalizedCurrentNickname = (this.pokemonNickname ?? '').trim().slice(0, this.MAX_NICKNAME_LENGTH);
+        const currentNickname: string | null = normalizedCurrentNickname.length > 0 ? normalizedCurrentNickname : null;
+
+        this.cancelNicknameEdit();
+
+        if (nextNickname === currentNickname) {
+            return;
+        }
+
+        const pokemonTeamId = await this.resolvePokemonTeamIdForNicknameUpdate();
+        if (pokemonTeamId === null) {
+            return;
+        }
+
+        this.isSavingNickname.set(true);
+
+        const success = await this.pokemonTeamService.updateNickname(pokemonTeamId, { nickname: nextNickname });
+
+        this.isSavingNickname.set(false);
+
+        if (success) {
+            this.nicknameUpdated.emit({ pokemonTeamId, nickname: nextNickname });
+        }
+    }
+
+    private async resolvePokemonTeamIdForNicknameUpdate(): Promise<number | null> {
+        if (this.pokemonTeamId !== null) {
+            return this.pokemonTeamId;
+        }
+
+        const pokemonTeams = await this.pokemonTeamService.getAllPokemonTeams();
+        const selectedPokemonTeam = pokemonTeams.find(pokemonTeam =>
+            pokemonTeam.teamId === this.teamId && pokemonTeam.slot === this.slot
+        );
+
+        return selectedPokemonTeam?.id ?? null;
+    }
+
     onCreatePokemonTeam() {
         const foundPokemon = this.selectedPokemonFromSearch();
         if (!foundPokemon) {
@@ -345,6 +458,7 @@ export class PokemonEditorPanel {
         this.currentPokemonStats.set(null);
         this.selectedNatureId.set(this.initialNatureId());
         this.isNatureSectionExpanded.set(false);
+        this.cancelNicknameEdit();
         this.isSlotTransitioning = false;
         this.pendingSlot = null;
         this.animationDirection.set('none');

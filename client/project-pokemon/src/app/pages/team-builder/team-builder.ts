@@ -34,6 +34,9 @@ export class TeamBuilder {
   selectedPokemonDisplayName: string | null = null;
   selectedPokemonSprite: string | null = null;
   selectedPokemonId: number | null = null;
+  selectedPokemonTeamId: number | null = null;
+  selectedPokemonBaseName: string | null = null;
+  selectedPokemonNickname: string | null = null;
   selectedNatureId = 1;
   selectedMovementIds: (number | null)[] = [null, null, null, null];
 
@@ -92,6 +95,9 @@ export class TeamBuilder {
       this.selectedPokemonDisplayName = 'MissingNo';
       this.selectedPokemonSprite = 'assets/error/missing-no.png';
       this.selectedPokemonId = 0;
+      this.selectedPokemonTeamId = null;
+      this.selectedPokemonBaseName = null;
+      this.selectedPokemonNickname = null;
       this.selectedNatureId = 1;
       this.selectedMovementIds = [null, null, null, null];
       this.isPanelOpen = true;
@@ -102,11 +108,14 @@ export class TeamBuilder {
     const selectedPokemon = team?.pokemons.find(p => p.slot === data.slot) ?? null;
 
     if (selectedPokemon?.pokemon) {
-      this.selectedPokemonDisplayName = selectedPokemon.nickname ?? selectedPokemon.pokemon.name;
+      this.selectedPokemonNickname = selectedPokemon.nickname ?? null;
+      this.selectedPokemonDisplayName = this.selectedPokemonNickname ?? selectedPokemon.pokemon.name;
       this.selectedPokemonSprite = selectedPokemon.shiny
         ? (selectedPokemon.pokemon.spriteFrontShiny ?? selectedPokemon.pokemon.spriteFront)
         : selectedPokemon.pokemon.spriteFront;
       this.selectedPokemonId = selectedPokemon.pokemon.id;
+      this.selectedPokemonTeamId = selectedPokemon.id;
+      this.selectedPokemonBaseName = selectedPokemon.pokemon.name;
       this.selectedNatureId = selectedPokemon.natureId;
       this.selectedMovementIds = [
         selectedPokemon.movementId1,
@@ -118,6 +127,9 @@ export class TeamBuilder {
       this.selectedPokemonDisplayName = null;
       this.selectedPokemonSprite = null;
       this.selectedPokemonId = null;
+      this.selectedPokemonTeamId = null;
+      this.selectedPokemonBaseName = null;
+      this.selectedPokemonNickname = null;
       this.selectedNatureId = 1;
       this.selectedMovementIds = [null, null, null, null];
     }
@@ -131,6 +143,22 @@ export class TeamBuilder {
 
   handleChangeSlot(newSlot: number) {
     this.handleAddPokemon({ teamId: this.selectedTeamId, slot: newSlot });
+  }
+
+  handleNicknameUpdated(data: { pokemonTeamId: number, nickname: string | null }) {
+    this.teams.update(teams => teams.map(team => ({
+      ...team,
+      pokemons: team.pokemons.map(pokemon =>
+        pokemon.id === data.pokemonTeamId
+          ? { ...pokemon, nickname: data.nickname }
+          : pokemon
+      ),
+    })));
+
+    if (this.selectedPokemonTeamId === data.pokemonTeamId) {
+      this.selectedPokemonNickname = data.nickname;
+      this.selectedPokemonDisplayName = data.nickname ?? this.selectedPokemonBaseName;
+    }
   }
 
   async handleCreatePokemonTeam(dto: PostPokemonTeamDto) {

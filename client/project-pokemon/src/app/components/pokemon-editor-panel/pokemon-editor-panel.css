@@ -167,6 +167,45 @@
     font-weight: 700;
     color: #2c3e50;
     text-transform: capitalize;
+    position: relative;
+    z-index: 8;
+    transition: color 0.2s ease;
+}
+
+.pokemon-display-name.nickname-editable {
+    cursor: text;
+}
+
+.pokemon-display-name.nickname-editable:hover {
+    color: #1f3142;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 0.2rem;
+}
+
+.pokemon-display-name.exact-nickname {
+    text-transform: none;
+}
+
+.pokemon-display-name-input {
+    margin: 0 0 0.75rem 0;
+    width: min(100%, 280px);
+    border: 1px solid #bec8d8;
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    color: #2c3e50;
+    text-transform: none;
+    position: relative;
+    z-index: 8;
+}
+
+.pokemon-display-name-input:focus {
+    outline: none;
+    border-color: #5b7fb3;
+    box-shadow: 0 0 0 3px rgba(91, 127, 179, 0.2);
 }
 
 .easter-egg-message {
@@ -270,6 +309,7 @@
     z-index: 1;
     user-select: none;
     cursor: default;
+    pointer-events: none;
 }
 
 .pokemon-item-placeholder {
