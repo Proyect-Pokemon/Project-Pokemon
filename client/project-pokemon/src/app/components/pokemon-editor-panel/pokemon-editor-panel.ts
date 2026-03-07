@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, signal, effect, computed, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, signal, effect, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PokemonService } from '../../services/pokemon-service';
 import { Pokemon } from '../../models/pokemon';
@@ -7,24 +7,24 @@ import { Movement } from '../../models/move';
 import { MovementService } from '../../services/movement-service';
 import { PokemonStatsDialog } from '../pokemon-stats-dialog/pokemon-stats-dialog';
 import { PokemonStatsButton } from './pokemon-stats-button/pokemon-stats-button';
-import { NatureService } from '../../services/nature-service';
-import { Nature } from '../../models/nature';
+import { PokemonNatureSelector } from './pokemon-nature-selector/pokemon-nature-selector';
+import { PokemonMovesGrid } from './pokemon-moves-grid/pokemon-moves-grid';
 import { PokemonStats } from '../../models/pokemon-stats';
 import { PokemonTeamService } from '../../services/pokemon-team-service';
 
 @Component({
     selector: 'app-pokemon-editor-panel',
     standalone: true,
-    imports: [CommonModule, PokemonStatsDialog, PokemonStatsButton],
+    imports: [CommonModule, PokemonStatsDialog, PokemonStatsButton, PokemonNatureSelector, PokemonMovesGrid],
     templateUrl: './pokemon-editor-panel.html',
     styleUrls: ['./pokemon-editor-panel.css'],
 })
 export class PokemonEditorPanel {
     @ViewChild('nicknameInput') nicknameInput?: ElementRef<HTMLInputElement>;
+    @ViewChild('natureSelector') natureSelector?: PokemonNatureSelector;
 
     private readonly pokemonService = inject(PokemonService);
     private readonly movementService = inject(MovementService);
-    private readonly natureService = inject(NatureService);
     private readonly pokemonTeamService = inject(PokemonTeamService);
     readonly MAX_NICKNAME_LENGTH = 12;
     private readonly MIN_TEAM_SLOT = 1;
@@ -40,7 +40,6 @@ export class PokemonEditorPanel {
     @Input() set isOpen(value: boolean) {
         this.panelOpen = value;
         if (!value) {
-            this.isNatureSectionExpanded.set(false);
             this.isEditingNickname.set(false);
             this.nicknameDraft.set('');
             this.isSavingNickname.set(false);
@@ -66,11 +65,7 @@ export class PokemonEditorPanel {
     @Input() pokemonTeamId: number | null = null;
     @Input() pokemonBaseName: string | null = null;
     @Input() pokemonNickname: string | null = null;
-    @Input() set natureId(value: number | null) {
-        const normalizedNatureId = value && value > 0 ? value : 1;
-        this.initialNatureId.set(normalizedNatureId);
-        this.selectedNatureId.set(normalizedNatureId);
-    }
+    @Input() natureId: number | null = null;
     @Input() set movementIds(value: (number | null)[]) {
         this.movementIdsSignal.set(value);
     }
@@ -88,68 +83,12 @@ export class PokemonEditorPanel {
     movements = signal<(Movement | null)[]>([null, null, null, null]);
     allMovementsCache = signal<Movement[]>([]);
     movementIdsSignal = signal<(number | null)[]>([null, null, null, null]);
-    allNaturesCache = signal<Nature[]>([]);
-    selectedNatureId = signal(1);
-    isLoadingNatures = signal(false);
-    natureError = signal<string | null>(null);
-    isNatureSectionExpanded = signal(false);
     showStatsDialog = signal(false);
     currentPokemonStats = signal<PokemonStats | null>(null);
     isEditingNickname = signal(false);
     nicknameDraft = signal('');
     isSavingNickname = signal(false);
-    private initialNatureId = signal(1);
-
-    selectedNature = computed(() => {
-        const selectedNatureId = this.selectedNatureId();
-        return this.allNaturesCache().find(nature => nature.id === selectedNatureId) ?? null;
-    });
-
-    private readonly statLabels: Record<string, string> = {
-        hp: 'PS',
-        attack: 'Ataque',
-        defense: 'Defensa',
-        specialattack: 'Ataque Especial',
-        specialdefense: 'Defensa Especial',
-        speed: 'Velocidad',
-    };
-
-    private readonly numericStatKeys: Record<number, string> = {
-        0: 'hp',
-        1: 'attack',
-        2: 'defense',
-        3: 'specialattack',
-        4: 'specialdefense',
-        5: 'speed',
-    };
-
-    private readonly natureNames: Record<string, string> = {
-        hardy: 'Fuerte',
-        bold: 'Osada',
-        modest: 'Modesta',
-        calm: 'Serena',
-        timid: 'Miedosa',
-        lonely: 'Huraña',
-        docile: 'Dócil',
-        mild: 'Afable',
-        gentle: 'Amable',
-        hasty: 'Activa',
-        adamant: 'Firme',
-        impish: 'Agitada',
-        bashful: 'Tímida',
-        careful: 'Cauta',
-        jolly: 'Alegre',
-        naughty: 'Pícara',
-        lax: 'Floja',
-        rash: 'Alocada',
-        quirky: 'Rara',
-        naive: 'Ingenua',
-        brave: 'Audaz',
-        relaxed: 'Plácida',
-        quiet: 'Mansa',
-        sassy: 'Grosera',
-        serious: 'Seria',
-    };
+    selectedNatureId = signal(1);
 
     get isEasterEggSlot(): boolean {
         return this.slot <= 0 || this.slot >= 7;
@@ -220,7 +159,6 @@ export class PokemonEditorPanel {
 
         // Cargar cache de movimientos al inicializar
         this.loadMovementsCache();
-        this.loadNaturesCache();
 
         // Efecto para actualizar movimientos cuando los IDs cambian
         effect(() => {
@@ -233,19 +171,6 @@ export class PokemonEditorPanel {
             });
             
             this.movements.set(loadedMovements);
-        });
-
-        effect(() => {
-            const natures = this.allNaturesCache();
-            const selectedNatureId = this.selectedNatureId();
-
-            if (natures.length === 0) {
-                return;
-            }
-
-            if (!natures.some(nature => nature.id === selectedNatureId)) {
-                this.selectedNatureId.set(natures[0].id);
-            }
         });
     }
 
@@ -275,23 +200,6 @@ export class PokemonEditorPanel {
         this.allMovementsCache.set(allMovements);
     }
 
-    private async loadNaturesCache() {
-        if (this.allNaturesCache().length > 0 || this.isLoadingNatures()) {
-            return;
-        }
-
-        this.isLoadingNatures.set(true);
-        this.natureError.set(null);
-
-        const allNatures = await this.natureService.getAllNatures();
-        this.allNaturesCache.set(allNatures);
-
-        if (allNatures.length === 0) {
-            this.natureError.set('No se pudieron cargar las naturalezas.');
-        }
-
-        this.isLoadingNatures.set(false);
-    }
 
     onSearchInput(event: Event) {
         const target = event.target as HTMLInputElement | null;
@@ -312,20 +220,8 @@ export class PokemonEditorPanel {
         this.selectedPokemonFromSearch.set(pokemon);
     }
 
-    onNatureChange(event: Event) {
-        const target = event.target as HTMLSelectElement | null;
-        if (!target) {
-            return;
-        }
-
-        const value = Number(target.value);
-        if (!Number.isNaN(value) && value > 0) {
-            this.selectedNatureId.set(value);
-        }
-    }
-
-    toggleNatureSection() {
-        this.isNatureSectionExpanded.update(value => !value);
+    onSelectedNatureChanged(natureId: number) {
+        this.selectedNatureId.set(natureId);
     }
 
     canEditNickname(): boolean {
@@ -457,12 +353,14 @@ export class PokemonEditorPanel {
         this.searchError.set(null);
         this.showStatsDialog.set(false);
         this.currentPokemonStats.set(null);
-        this.selectedNatureId.set(this.initialNatureId());
-        this.isNatureSectionExpanded.set(false);
         this.cancelNicknameEdit();
         this.isSlotTransitioning = false;
         this.pendingSlot = null;
         this.animationDirection.set('none');
+        // Reset nature selector
+        if (this.natureSelector) {
+            this.natureSelector.resetNatureSelection();
+        }
     }
 
     onPreviousSlot() {
@@ -548,36 +446,6 @@ export class PokemonEditorPanel {
         }
 
         this.showStatsDialog.set(true);
-    }
-
-    getNatureDescriptor(nature: Nature): string {
-        if (this.isNeutralNature(nature)) {
-            return 'Sin cambios';
-        }
-
-        return `+${this.getNatureStatLabel(nature.statBoost)} / -${this.getNatureStatLabel(nature.statDrop)}`;
-    }
-
-    getNatureStatLabel(stat: string | number): string {
-        const normalizedKey = this.normalizeStatKey(stat);
-        return this.statLabels[normalizedKey] ?? String(stat);
-    }
-
-    getNatureName(nature: Nature): string {
-        const normalizedName = nature.name.toLowerCase();
-        return this.natureNames[normalizedName] ?? nature.name;
-    }
-
-    isNeutralNature(nature: Nature): boolean {
-        return this.normalizeStatKey(nature.statBoost) === this.normalizeStatKey(nature.statDrop);
-    }
-
-    private normalizeStatKey(stat: string | number): string {
-        if (typeof stat === 'number') {
-            return this.numericStatKeys[stat] ?? String(stat);
-        }
-
-        return stat.toLowerCase().replace(/[\s_]/g, '');
     }
 
     closeStatsDialog() {

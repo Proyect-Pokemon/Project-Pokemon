@@ -1,0 +1,10 @@
+<div class="moves-section">
+    <h3 class="moves-title">Movimientos</h3>
+    <div class="moves-grid">
+        @for (movement of movements; track $index) {
+            <button class="move-button" [class.empty]="!movement">
+                <span class="move-name">{{ movement?.name ?? 'Sin movimiento' }}</span>
+            </button>
+        }
+    </div>
+</div>
