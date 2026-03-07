@@ -1,25 +1,26 @@
 import { Component, Input, Output, EventEmitter, inject, signal, effect, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PokemonService } from '../../services/pokemon-service';
 import { Pokemon } from '../../models/pokemon';
 import { PostPokemonTeamDto } from '../../models/pokemon-team';
 import { Movement } from '../../models/move';
 import { MovementService } from '../../services/movement-service';
+import { PokemonService } from '../../services/pokemon-service';
 import { PokemonStatsDialog } from '../pokemon-stats-dialog/pokemon-stats-dialog';
 import { PokemonNatureSelector } from './pokemon-nature-selector/pokemon-nature-selector';
 import { PokemonMovesGrid } from './pokemon-moves-grid/pokemon-moves-grid';
 import { PokemonPreview } from './pokemon-preview/pokemon-preview';
+import { PokemonSearchPanel } from './pokemon-search-panel/pokemon-search-panel';
 import { PokemonStats } from '../../models/pokemon-stats';
 
 @Component({
     selector: 'app-pokemon-editor-panel',
     standalone: true,
-    imports: [CommonModule, PokemonStatsDialog, PokemonNatureSelector, PokemonMovesGrid, PokemonPreview],
+    imports: [CommonModule, PokemonStatsDialog, PokemonNatureSelector, PokemonMovesGrid, PokemonPreview, PokemonSearchPanel],
     templateUrl: './pokemon-editor-panel.html',
     styleUrls: ['./pokemon-editor-panel.css'],
 })
 export class PokemonEditorPanel {
-    @ViewChild('searchInput') searchInput?: HTMLInputElement;
+    @ViewChild('searchPanel') searchPanel?: PokemonSearchPanel;
     @ViewChild('natureSelector') natureSelector?: PokemonNatureSelector;
 
     private readonly pokemonService = inject(PokemonService);
@@ -39,11 +40,9 @@ export class PokemonEditorPanel {
             this.resetPanelUiState();
         } else {
             // Al abrir el panel, cargar y mostrar todos los Pokémon si la búsqueda está vacía
-            this.loadInitialPokemonList();
+            this.searchPanel?.loadInitialPokemonList();
             // Hacer focus en el input de búsqueda
-            setTimeout(() => {
-                this.searchInput?.focus();
-            }, 0);
+            this.searchPanel?.focusSearchInput();
         }
     }
 
@@ -67,11 +66,6 @@ export class PokemonEditorPanel {
     @Output() changeSlot = new EventEmitter<number>();
     @Output() nicknameUpdated = new EventEmitter<{ pokemonTeamId: number, nickname: string | null }>();
 
-    searchQuery = signal<string>('');
-    searchResults = signal<Pokemon[]>([]);
-    selectedPokemonFromSearch = signal<Pokemon | null>(null);
-    searchError = signal<string | null>(null);
-    allPokemonCache = signal<Pokemon[]>([]);
     animationDirection = signal<'left' | 'right' | 'leftIn' | 'rightIn' | 'none'>('none');
     movements = signal<(Movement | null)[]>([null, null, null, null]);
     allMovementsCache = signal<Movement[]>([]);
@@ -95,58 +89,6 @@ export class PokemonEditorPanel {
     }
 
     constructor() {
-        this.loadPokemonCache();
-
-        effect(() => {
-            const query = this.searchQuery();
-            const cache = this.allPokemonCache();
-            
-            if (cache.length === 0) {
-                return;
-            }
-
-            this.searchError.set(null);
-
-            // Si está vacío, mostrar todos los pokemon
-            if (!query || query.trim() === '') {
-                this.searchResults.set([...cache].sort((a, b) => a.id - b.id));
-                return;
-            }
-
-            // Intentar convertir a número
-            const numericId = parseInt(query);
-            
-            if (!isNaN(numericId)) {
-                // Búsqueda por ID
-                const found = cache.filter(p => p.id === numericId);
-                if (found.length === 0) {
-                    this.searchError.set('No se encontró Pokémon con ese número.');
-                    this.searchResults.set([]);
-                } else {
-                    this.searchResults.set(found);
-                    // Si solo hay un resultado, seleccionarlo automáticamente
-                    if (found.length === 1) {
-                        this.selectedPokemonFromSearch.set(found[0]);
-                    }
-                }
-            } else {
-                // Búsqueda por nombre (case-insensitive, contains)
-                const normalizedQuery = query.toLowerCase().trim();
-                const found = cache.filter(p => p.name.toLowerCase().includes(normalizedQuery));
-                
-                if (found.length === 0) {
-                    this.searchError.set('No se encontraron Pokémon con ese nombre.');
-                    this.searchResults.set([]);
-                } else {
-                    this.searchResults.set(found.sort((a, b) => a.id - b.id));
-                    // Si solo hay un resultado, seleccionarlo automáticamente
-                    if (found.length === 1) {
-                        this.selectedPokemonFromSearch.set(found[0]);
-                    }
-                }
-            }
-        });
-
         // Cargar cache de movimientos al inicializar
         this.loadMovementsCache();
 
@@ -164,24 +106,6 @@ export class PokemonEditorPanel {
         });
     }
 
-    private async loadPokemonCache() {
-        if (this.allPokemonCache().length > 0) {
-            return;
-        }
-        const allPokemon = await this.pokemonService.getAllPokemon();
-        this.allPokemonCache.set(allPokemon);
-    }
-
-    private async loadInitialPokemonList() {
-        // Asegurar que el cache esté cargado
-        await this.loadPokemonCache();
-        
-        // Si la búsqueda está vacía, mostrar todos los Pokémon
-        if (!this.searchQuery() || this.searchQuery().trim() === '') {
-            this.searchResults.set([...this.allPokemonCache()].sort((a, b) => a.id - b.id));
-        }
-    }
-
     private async loadMovementsCache() {
         if (this.allMovementsCache().length > 0) {
             return;
@@ -190,42 +114,17 @@ export class PokemonEditorPanel {
         this.allMovementsCache.set(allMovements);
     }
 
-
-    onSearchInput(event: Event) {
-        const target = event.target as HTMLInputElement | null;
-        if (!target) {
-            this.searchQuery.set('');
-            return;
-        }
-
-        // Limpiar la selección cuando el usuario escribe
-        if (this.selectedPokemonFromSearch()) {
-            this.selectedPokemonFromSearch.set(null);
-        }
-
-        this.searchQuery.set(target.value);
-    }
-
-    selectPokemonFromGrid(pokemon: Pokemon) {
-        this.selectedPokemonFromSearch.set(pokemon);
-    }
-
     onSelectedNatureChanged(natureId: number) {
         this.selectedNatureId.set(natureId);
     }
 
-    onCreatePokemonTeam() {
-        const foundPokemon = this.selectedPokemonFromSearch();
-        if (!foundPokemon) {
-            return;
-        }
-
+    onPokemonSelected(pokemon: Pokemon) {
         this.createPokemonTeam.emit({
             nickname: null,
             shiny: false,
             slot: this.slot,
             teamId: this.teamId,
-            pokemonId: foundPokemon.id,
+            pokemonId: pokemon.id,
             natureId: this.selectedNatureId(),
             movementId1: 1,
             movementId2: null,
@@ -240,10 +139,7 @@ export class PokemonEditorPanel {
     }
 
     private resetPanelUiState() {
-        this.searchQuery.set('');
-        this.searchResults.set([]);
-        this.selectedPokemonFromSearch.set(null);
-        this.searchError.set(null);
+        this.searchPanel?.reset();
         this.showStatsDialog.set(false);
         this.currentPokemonStats.set(null);
         this.isSlotTransitioning = false;
@@ -308,33 +204,23 @@ export class PokemonEditorPanel {
 
     async openStatsDialog() {
         // Obtener stats del Pokémon actual
-        let pokemon: Pokemon | null = null;
-
-        // Si está buscando, use el Pokémon encontrado
-        if (this.selectedPokemonFromSearch()) {
-            pokemon = this.selectedPokemonFromSearch();
-        } else if (this.pokemonId) {
-            // Si tiene un Pokémon seleccionado, búscalo en el cache
-            const cache = this.allPokemonCache();
-            pokemon = cache.find(p => p.id === this.pokemonId) ?? null;
-
-            // Si no está en cache, cargalo
-            if (!pokemon) {
+        if (this.pokemonId) {
+            try {
                 const allPokemon = await this.pokemonService.getAllPokemon();
-                pokemon = allPokemon.find(p => p.id === this.pokemonId) ?? null;
+                const pokemon = allPokemon.find(p => p.id === this.pokemonId);
+                if (pokemon) {
+                    this.currentPokemonStats.set({
+                        hp: pokemon.hp,
+                        attack: pokemon.attack,
+                        defense: pokemon.defense,
+                        specialAttack: pokemon.specialAttack,
+                        specialDefense: pokemon.specialDefense,
+                        speed: pokemon.speed,
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading Pokemon stats:', error);
             }
-        }
-
-        // Extraer stats si el Pokémon se encontró
-        if (pokemon) {
-            this.currentPokemonStats.set({
-                hp: pokemon.hp,
-                attack: pokemon.attack,
-                defense: pokemon.defense,
-                specialAttack: pokemon.specialAttack,
-                specialDefense: pokemon.specialDefense,
-                speed: pokemon.speed,
-            });
         }
 
         this.showStatsDialog.set(true);

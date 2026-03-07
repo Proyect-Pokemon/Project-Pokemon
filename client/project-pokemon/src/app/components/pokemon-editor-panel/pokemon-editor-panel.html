@@ -33,51 +33,10 @@
             <app-pokemon-moves-grid [movements]="movements()"></app-pokemon-moves-grid>
         } @else {
             <div class="empty-pokemon-preview" aria-label="Slot vacío">
-                <div class="search-container">
-                    <input
-                        #searchInput
-                        type="text"
-                        placeholder="Buscar por nombre o número"
-                        [value]="searchQuery()"
-                        (input)="onSearchInput($event)"
-                        class="search-input"
-                        autofocus
-                    >
-                </div>
-
-                @if (searchError()) {
-                    <p class="search-error">{{ searchError() }}</p>
-                }
-
-                @if (selectedPokemonFromSearch()) {
-                    <div class="selected-pokemon-preview">
-                        <h3 class="pokemon-display-name">{{ selectedPokemonFromSearch()?.name }}</h3>
-                        <div class="pokemon-sprite-container">
-                            <img [src]="selectedPokemonFromSearch()?.spriteFront" [alt]="selectedPokemonFromSearch()?.name" class="pokemon-preview-sprite">
-                            @if (selectedPokemonFromSearch()?.id) {
-                                <span class="pokemon-number">#{{ ('00' + selectedPokemonFromSearch()?.id).slice(-3) }}</span>
-                            }
-                        </div>
-                    </div>
-                    <button class="add-pokemon-button" (click)="onCreatePokemonTeam()">
-                        Añadir a equipo
-                    </button>
-                }
-
-                @if (searchResults().length > 0 && !selectedPokemonFromSearch()) {
-                    <div class="pokemon-grid">
-                        @for (pokemon of searchResults(); track pokemon.id) {
-                            <button 
-                                class="pokemon-grid-item" 
-                                (click)="selectPokemonFromGrid(pokemon)"
-                                [title]="pokemon.name">
-                                <img [src]="pokemon.miniSprite" [alt]="pokemon.name" class="pokemon-mini-sprite">
-                                <span class="pokemon-grid-number">#{{ ('00' + pokemon.id).slice(-3) }}</span>
-                                <span class="pokemon-grid-name">{{ pokemon.name }}</span>
-                            </button>
-                        }
-                    </div>
-                }
+                <app-pokemon-search-panel
+                    #searchPanel
+                    (pokemonSelected)="onPokemonSelected($event)">
+                </app-pokemon-search-panel>
             </div>
         }
 
