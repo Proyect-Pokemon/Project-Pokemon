@@ -11,56 +11,24 @@
     
     <div class="panel-content">
         @if (pokemonDisplayName && pokemonSprite) {
-            <div class="selected-pokemon-preview">
-                <app-pokemon-stats-button (click)="openStatsDialog()"></app-pokemon-stats-button>
-                @if (isEditingNickname()) {
-                    <input
-                        #nicknameInput
-                        type="text"
-                        class="pokemon-display-name-input"
-                        [value]="nicknameDraft()"
-                        (input)="onNicknameInput($event)"
-                        (blur)="onNicknameBlur()"
-                        (keydown)="onNicknameKeydown($event)"
-                        [disabled]="isSavingNickname()"
-                        [attr.maxlength]="MAX_NICKNAME_LENGTH"
-                        autofocus
-                    >
-                } @else {
-                    <h3
-                        class="pokemon-display-name"
-                        [class.nickname-editable]="canEditNickname()"
-                        [class.exact-nickname]="pokemonNickname !== null"
-                        [attr.title]="canEditNickname() ? 'Click para editar nickname' : null"
-                        (click)="onPokemonDisplayNameClick()">
-                        {{ pokemonDisplayName }}
-                    </h3>
-                }
-                @if (isEasterEggSlot) {
-                    <div class="easter-egg-message">
-                        <p>¡Has encontrado un Easter Egg! 🎉</p>
-                    </div>
-                }
-                <div class="pokemon-navigation-container">
-                    <button class="nav-arrow-button nav-previous" (click)="onPreviousSlot()" [disabled]="disablePreviousArrow" title="Slot anterior">
-                        ◀
-                    </button>
-                    <div class="pokemon-sprite-container" [ngClass]="{ 'slide-left': animationDirection() === 'left', 'slide-right': animationDirection() === 'right', 'slide-in-left': animationDirection() === 'leftIn', 'slide-in-right': animationDirection() === 'rightIn' }">
-                        <img [src]="pokemonSprite" [alt]="pokemonDisplayName" class="pokemon-preview-sprite">
-                        @if (isEasterEggSlot) {
-                            <span class="pokemon-number">#???</span>
-                        } @else if (pokemonId) {
-                            <span class="pokemon-number">#{{ ('00' + pokemonId).slice(-3) }}</span>
-                        }
-                        <button type="button" class="pokemon-item-placeholder" aria-label="Añadir objeto" title="Añadir objeto">
-                            <span class="item-plus-symbol">+</span>
-                        </button>
-                    </div>
-                    <button class="nav-arrow-button nav-next" (click)="onNextSlot()" [disabled]="disableNextArrow" title="Siguiente slot">
-                        ▶
-                    </button>
-                </div>
-            </div>
+            <app-pokemon-preview
+                [pokemonDisplayName]="pokemonDisplayName"
+                [pokemonSprite]="pokemonSprite"
+                [pokemonId]="pokemonId"
+                [pokemonBaseName]="pokemonBaseName"
+                [pokemonNickname]="pokemonNickname"
+                [pokemonTeamId]="pokemonTeamId"
+                [teamId]="teamId"
+                [slot]="slot"
+                [isEasterEggSlot]="isEasterEggSlot"
+                [disablePreviousArrow]="disablePreviousArrow"
+                [disableNextArrow]="disableNextArrow"
+                [animationDirection]="animationDirection()"
+                (openStatsDialog)="openStatsDialog()"
+                (previousSlot)="onPreviousSlot()"
+                (nextSlot)="onNextSlot()"
+                (nicknameUpdated)="nicknameUpdated.emit($event)">
+            </app-pokemon-preview>
 
             <app-pokemon-moves-grid [movements]="movements()"></app-pokemon-moves-grid>
         } @else {
@@ -83,7 +51,6 @@
 
                 @if (selectedPokemonFromSearch()) {
                     <div class="selected-pokemon-preview">
-                        <app-pokemon-stats-button (click)="openStatsDialog()"></app-pokemon-stats-button>
                         <h3 class="pokemon-display-name">{{ selectedPokemonFromSearch()?.name }}</h3>
                         <div class="pokemon-sprite-container">
                             <img [src]="selectedPokemonFromSearch()?.spriteFront" [alt]="selectedPokemonFromSearch()?.name" class="pokemon-preview-sprite">
