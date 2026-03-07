@@ -6,6 +6,7 @@ import { PostPokemonTeamDto } from '../../models/pokemon-team';
 import { Movement } from '../../models/move';
 import { MovementService } from '../../services/movement-service';
 import { PokemonStatsDialog } from '../pokemon-stats-dialog/pokemon-stats-dialog';
+import { PokemonStatsButton } from './pokemon-stats-button/pokemon-stats-button';
 import { NatureService } from '../../services/nature-service';
 import { Nature } from '../../models/nature';
 import { PokemonStats } from '../../models/pokemon-stats';
@@ -14,7 +15,7 @@ import { PokemonTeamService } from '../../services/pokemon-team-service';
 @Component({
     selector: 'app-pokemon-editor-panel',
     standalone: true,
-    imports: [CommonModule, PokemonStatsDialog],
+    imports: [CommonModule, PokemonStatsDialog, PokemonStatsButton],
     templateUrl: './pokemon-editor-panel.html',
     styleUrls: ['./pokemon-editor-panel.css'],
 })

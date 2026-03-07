@@ -12,9 +12,7 @@
     <div class="panel-content">
         @if (pokemonDisplayName && pokemonSprite) {
             <div class="selected-pokemon-preview">
-                <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base" (click)="openStatsDialog()">
-                    ?
-                </button>
+                <app-pokemon-stats-button (click)="openStatsDialog()"></app-pokemon-stats-button>
                 @if (isEditingNickname()) {
                     <input
                         #nicknameInput
@@ -94,9 +92,7 @@
 
                 @if (selectedPokemonFromSearch()) {
                     <div class="selected-pokemon-preview">
-                        <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base" (click)="openStatsDialog()">
-                            ?
-                        </button>
+                        <app-pokemon-stats-button (click)="openStatsDialog()"></app-pokemon-stats-button>
                         <h3 class="pokemon-display-name">{{ selectedPokemonFromSearch()?.name }}</h3>
                         <div class="pokemon-sprite-container">
                             <img [src]="selectedPokemonFromSearch()?.spriteFront" [alt]="selectedPokemonFromSearch()?.name" class="pokemon-preview-sprite">
