@@ -3,20 +3,26 @@
         <h1>Crear equipos</h1>
         
         <div class="teams-list">
-        @for (team of teams(); track team.id) {
-            <app-team-slot 
-            [team]="team"
-            (toggleExpand)="toggleTeamExpansion($event)"
-            (nameChange)="updateTeamName($event)"
-            (addPokemon)="handleAddPokemon($event)"
-            />
-        }
-        
-        @if (canAddMoreTeams()) {
-            <button class="add-team-button" (click)="addTeam()">
-            <span class="plus-icon">+</span>
-            <span>Añadir Equipo</span>
-            </button>
+        @if (isLoadingTeams()) {
+            <app-team-slot-skeleton />
+            <app-team-slot-skeleton />
+            <app-team-slot-skeleton />
+        } @else {
+            @for (team of teams(); track team.id) {
+                <app-team-slot 
+                [team]="team"
+                (toggleExpand)="toggleTeamExpansion($event)"
+                (nameChange)="updateTeamName($event)"
+                (addPokemon)="handleAddPokemon($event)"
+                />
+            }
+            
+            @if (canAddMoreTeams()) {
+                <button class="add-team-button" (click)="addTeam()">
+                <span class="plus-icon">+</span>
+                <span>Añadir Equipo</span>
+                </button>
+            }
         }
         </div>
     </div>

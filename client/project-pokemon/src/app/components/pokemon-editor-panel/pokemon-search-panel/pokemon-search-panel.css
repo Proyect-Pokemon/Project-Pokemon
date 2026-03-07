@@ -1,0 +1,129 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+}
+
+.search-container {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.search-input {
+    width: 100%;
+    max-width: 400px;
+    border: 2px solid #c8d1da;
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--action-color);
+}
+
+.search-error {
+    margin: 0.5rem 0 0;
+    color: var(--fighting-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.selected-pokemon-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.pokemon-display-name {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #2c3e50;
+    text-transform: capitalize;
+}
+
+.pokemon-sprite-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 220px;
+    height: 220px;
+}
+
+.pokemon-preview-sprite {
+    width: 220px;
+    height: 220px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    position: relative;
+    z-index: 2;
+}
+
+.pokemon-number {
+    position: absolute;
+    font-size: 14rem;
+    font-weight: 700;
+    color: #d0d0d0;
+    opacity: 0.5;
+    z-index: 1;
+    user-select: none;
+    cursor: default;
+    pointer-events: none;
+}
+
+.add-pokemon-button {
+    margin-top: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--action-color);
+    color: white;
+    font-weight: 700;
+    padding: 0.65rem 1.2rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    align-self: center;
+    width: fit-content;
+}
+
+.add-pokemon-button:hover {
+    background-color: var(--action-color-hover);
+}
+
+.pokemon-grid {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.75rem;
+    max-height: 450px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    width: 100%;
+}
+
+.pokemon-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.pokemon-grid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.pokemon-grid::-webkit-scrollbar-thumb {
+    background: #c8d1da;
+    border-radius: 10px;
+}
+
+.pokemon-grid::-webkit-scrollbar-thumb:hover {
+    background: #95a5a6;
+}

@@ -7,12 +7,13 @@ import { PokemonTeamService } from '../../services/pokemon-team-service';
 import { PokemonService } from '../../services/pokemon-service';
 import { GetAllPokemonTeamDto, PostPokemonTeamDto } from '../../models/pokemon-team';
 import { TeamSlot } from '../../components/team-slot/team-slot';
+import { TeamSlotSkeleton } from '../../components/team-slot-skeleton/team-slot-skeleton';
 import { PokemonEditorPanel } from '../../components/pokemon-editor-panel/pokemon-editor-panel';
 
 @Component({
   selector: 'app-team-builder',
   standalone: true,
-  imports: [CommonModule, TeamSlot, PokemonEditorPanel],
+  imports: [CommonModule, TeamSlot, TeamSlotSkeleton, PokemonEditorPanel],
   templateUrl: './team-builder.html',
   styleUrls: ['./team-builder.css'],
 })
@@ -24,7 +25,7 @@ export class TeamBuilder {
 
   teams = signal<Team[]>([]);
   readonly MAX_TEAMS = 5;
-  isLoadingTeams = false;
+  isLoadingTeams = signal(false);
   isCreatingTeam = false;
 
   // Estado del panel editor
@@ -183,7 +184,7 @@ export class TeamBuilder {
       return;
     }
 
-    this.isLoadingTeams = true;
+    this.isLoadingTeams.set(true);
 
     const allTeams = await this.teamService.getAllTeams();
     const allPokemonTeams = await this.pokemonTeamService.getAllPokemonTeams();
@@ -226,6 +227,6 @@ export class TeamBuilder {
       };
     }));
 
-    this.isLoadingTeams = false;
+    this.isLoadingTeams.set(false);
   }
 }

@@ -11,189 +11,49 @@
     
     <div class="panel-content">
         @if (pokemonDisplayName && pokemonSprite) {
-            <div class="selected-pokemon-preview">
-                <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base" (click)="openStatsDialog()">
-                    ?
-                </button>
-                @if (isEditingNickname()) {
-                    <input
-                        #nicknameInput
-                        type="text"
-                        class="pokemon-display-name-input"
-                        [value]="nicknameDraft()"
-                        (input)="onNicknameInput($event)"
-                        (blur)="onNicknameBlur()"
-                        (keydown)="onNicknameKeydown($event)"
-                        [disabled]="isSavingNickname()"
-                        [attr.maxlength]="MAX_NICKNAME_LENGTH"
-                        autofocus
-                    >
-                } @else {
-                    <h3
-                        class="pokemon-display-name"
-                        [class.nickname-editable]="canEditNickname()"
-                        [class.exact-nickname]="pokemonNickname !== null"
-                        [attr.title]="canEditNickname() ? 'Click para editar nickname' : null"
-                        (click)="onPokemonDisplayNameClick()">
-                        {{ pokemonDisplayName }}
-                    </h3>
-                }
-                @if (isEasterEggSlot) {
-                    <div class="easter-egg-message">
-                        <p>¡Has encontrado un Easter Egg! 🎉</p>
-                    </div>
-                }
-                <div class="pokemon-navigation-container">
-                    <button class="nav-arrow-button nav-previous" (click)="onPreviousSlot()" [disabled]="disablePreviousArrow" title="Slot anterior">
-                        ◀
-                    </button>
-                    <div class="pokemon-sprite-container" [ngClass]="{ 'slide-left': animationDirection() === 'left', 'slide-right': animationDirection() === 'right', 'slide-in-left': animationDirection() === 'leftIn', 'slide-in-right': animationDirection() === 'rightIn' }">
-                        <img [src]="pokemonSprite" [alt]="pokemonDisplayName" class="pokemon-preview-sprite">
-                        @if (isEasterEggSlot) {
-                            <span class="pokemon-number">#???</span>
-                        } @else if (pokemonId) {
-                            <span class="pokemon-number">#{{ ('00' + pokemonId).slice(-3) }}</span>
-                        }
-                        <button type="button" class="pokemon-item-placeholder" aria-label="Añadir objeto" title="Añadir objeto">
-                            <span class="item-plus-symbol">+</span>
-                        </button>
-                    </div>
-                    <button class="nav-arrow-button nav-next" (click)="onNextSlot()" [disabled]="disableNextArrow" title="Siguiente slot">
-                        ▶
-                    </button>
-                </div>
-            </div>
+            <app-pokemon-preview
+                [pokemonDisplayName]="pokemonDisplayName"
+                [pokemonSprite]="pokemonSprite"
+                [pokemonId]="pokemonId"
+                [pokemonBaseName]="pokemonBaseName"
+                [pokemonNickname]="pokemonNickname"
+                [pokemonTeamId]="pokemonTeamId"
+                [teamId]="teamId"
+                [slot]="slot"
+                [isEasterEggSlot]="isEasterEggSlot"
+                [disablePreviousArrow]="disablePreviousArrow"
+                [disableNextArrow]="disableNextArrow"
+                [animationDirection]="animationDirection()"
+                (openStatsDialog)="openStatsDialog()"
+                (previousSlot)="onPreviousSlot()"
+                (nextSlot)="onNextSlot()"
+                (nicknameUpdated)="nicknameUpdated.emit($event)">
+            </app-pokemon-preview>
 
-            <div class="moves-section">
-                <h3 class="moves-title">Movimientos</h3>
-                <div class="moves-grid">
-                    @for (movement of movements(); track $index) {
-                        <button class="move-button" [class.empty]="!movement">
-                            <span class="move-name">{{ movement?.name ?? 'Sin movimiento' }}</span>
-                        </button>
-                    }
-                </div>
-            </div>
+            <app-pokemon-moves-grid [movements]="movements()"></app-pokemon-moves-grid>
         } @else {
             <div class="empty-pokemon-preview" aria-label="Slot vacío">
-                <div class="search-container">
-                    <input
-                        #searchInput
-                        type="text"
-                        placeholder="Buscar por nombre o número"
-                        [value]="searchQuery()"
-                        (input)="onSearchInput($event)"
-                        class="search-input"
-                        autofocus
-                    >
-                </div>
-
-                @if (searchError()) {
-                    <p class="search-error">{{ searchError() }}</p>
-                }
-
-                @if (selectedPokemonFromSearch()) {
-                    <div class="selected-pokemon-preview">
-                        <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base" (click)="openStatsDialog()">
-                            ?
-                        </button>
-                        <h3 class="pokemon-display-name">{{ selectedPokemonFromSearch()?.name }}</h3>
-                        <div class="pokemon-sprite-container">
-                            <img [src]="selectedPokemonFromSearch()?.spriteFront" [alt]="selectedPokemonFromSearch()?.name" class="pokemon-preview-sprite">
-                            @if (selectedPokemonFromSearch()?.id) {
-                                <span class="pokemon-number">#{{ ('00' + selectedPokemonFromSearch()?.id).slice(-3) }}</span>
-                            }
-                        </div>
-                    </div>
-                    <button class="add-pokemon-button" (click)="onCreatePokemonTeam()">
-                        Añadir a equipo
-                    </button>
-                }
-
-                @if (searchResults().length > 0 && !selectedPokemonFromSearch()) {
-                    <div class="pokemon-grid">
-                        @for (pokemon of searchResults(); track pokemon.id) {
-                            <button 
-                                class="pokemon-grid-item" 
-                                (click)="selectPokemonFromGrid(pokemon)"
-                                [title]="pokemon.name">
-                                <img [src]="pokemon.miniSprite" [alt]="pokemon.name" class="pokemon-mini-sprite">
-                                <span class="pokemon-grid-number">#{{ ('00' + pokemon.id).slice(-3) }}</span>
-                                <span class="pokemon-grid-name">{{ pokemon.name }}</span>
-                            </button>
-                        }
-                    </div>
-                }
+                <app-pokemon-search-panel
+                    #searchPanel
+                    (pokemonSelected)="onPokemonSelected($event)">
+                </app-pokemon-search-panel>
             </div>
         }
 
         @if (pokemonDisplayName && pokemonSprite) {
-            <div class="nature-section">
-                <button
-                    type="button"
-                    class="nature-toggle"
-                    (click)="toggleNatureSection()"
-                    [attr.aria-expanded]="isNatureSectionExpanded()"
-                    aria-controls="nature-details">
-                    <span class="nature-toggle-title">Naturaleza</span>
-                    <span class="nature-toggle-summary">
-                        @if (selectedNature(); as activeNature) {
-                            {{ getNatureName(activeNature) }}
-                        } @else if (isLoadingNatures()) {
-                            Cargando...
-                        } @else {
-                            Sin naturaleza
-                        }
-                    </span>
-                    <span class="nature-toggle-icon" [class.open]="isNatureSectionExpanded()">&#9662;</span>
-                </button>
-
-                @if (isNatureSectionExpanded()) {
-                    <div id="nature-details" class="nature-details">
-                        @if (isLoadingNatures()) {
-                            <p class="nature-status">Cargando naturalezas...</p>
-                        } @else if (natureError()) {
-                            <p class="nature-status error">{{ natureError() }}</p>
-                        } @else if (allNaturesCache().length > 0) {
-                            <div class="nature-select-wrapper">
-                                <label class="nature-select-label" for="nature-select">Selecciona una naturaleza</label>
-                                <div class="nature-select-shell">
-                                    <select
-                                        id="nature-select"
-                                        class="nature-select"
-                                        [value]="selectedNatureId()"
-                                        (change)="onNatureChange($event)">
-                                        @for (nature of allNaturesCache(); track nature.id) {
-                                            <option [value]="nature.id">
-                                                {{ getNatureName(nature) }} ({{ getNatureDescriptor(nature) }})
-                                            </option>
-                                        }
-                                    </select>
-                                </div>
-                            </div>
-
-                            @if (selectedNature(); as activeNature) {
-                                <div class="nature-impact" [class.neutral]="isNeutralNature(activeNature)">
-                                    @if (isNeutralNature(activeNature)) {
-                                        <span class="nature-chip nature-chip-neutral">Sin cambios en stats</span>
-                                    } @else {
-                                        <span class="nature-chip nature-chip-boost">+ {{ getNatureStatLabel(activeNature.statBoost) }}</span>
-                                        <span class="nature-chip nature-chip-drop">- {{ getNatureStatLabel(activeNature.statDrop) }}</span>
-                                    }
-                                </div>
-                            }
-                        }
-                    </div>
-                }
-            </div>
+            <app-pokemon-nature-selector
+                #natureSelector
+                [natureId]="natureId"
+                (natureChanged)="onSelectedNatureChanged($event)">
+            </app-pokemon-nature-selector>
         }
     </div>
 
     <app-pokemon-stats-dialog 
         [isOpen]="showStatsDialog()"
         [stats]="currentPokemonStats()"
-        [natureBoostStat]="selectedNature()?.statBoost ?? null"
-        [natureDropStat]="selectedNature()?.statDrop ?? null"
+        [natureBoostStat]="(natureSelector?.selectedNature())?.statBoost ?? null"
+        [natureDropStat]="(natureSelector?.selectedNature())?.statDrop ?? null"
         (close)="closeStatsDialog()">
     </app-pokemon-stats-dialog>
 </div>

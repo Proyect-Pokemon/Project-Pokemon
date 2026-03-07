@@ -1,0 +1,53 @@
+.moves-section {
+    width: 100%;
+    margin-top: 2rem;
+}
+
+.moves-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    text-align: center;
+}
+
+.moves-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.move-button {
+    background-color: #ecf0f1;
+    border: 2px solid #bdc3c7;
+    border-radius: 8px;
+    padding: 0.95rem 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 62px;
+}
+
+.move-button.empty {
+    background-color: #f8f9fa;
+    border-style: dashed;
+    cursor: default;
+}
+
+.move-button:hover:not(.empty) {
+    background-color: #d5dbdb;
+    border-color: #95a5a6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.move-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    text-align: center;
+}

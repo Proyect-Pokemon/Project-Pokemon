@@ -1,0 +1,50 @@
+<div class="selected-pokemon-preview">
+    <app-pokemon-stats-button (click)="onStatsButtonClick()"></app-pokemon-stats-button>
+    @if (isEditingNickname) {
+        <input
+            #nicknameInput
+            type="text"
+            class="pokemon-display-name-input"
+            [value]="nicknameDraft"
+            (input)="onNicknameInput($event)"
+            (blur)="onNicknameBlur()"
+            (keydown)="onNicknameKeydown($event)"
+            [disabled]="isSavingNickname"
+            [attr.maxlength]="MAX_NICKNAME_LENGTH"
+            autofocus
+        >
+    } @else {
+        <h3
+            class="pokemon-display-name"
+            [class.nickname-editable]="canEditNickname()"
+            [class.exact-nickname]="pokemonNickname !== null"
+            [attr.title]="canEditNickname() ? 'Click para editar nickname' : null"
+            (click)="onPokemonDisplayNameClick()">
+            {{ pokemonDisplayName }}
+        </h3>
+    }
+    @if (isEasterEggSlot) {
+        <div class="easter-egg-message">
+            <p>¡Has encontrado un Easter Egg! 🎉</p>
+        </div>
+    }
+    <div class="pokemon-navigation-container">
+        <button class="nav-arrow-button nav-previous" (click)="onPreviousSlotClick()" [disabled]="disablePreviousArrow" title="Slot anterior">
+            ◀
+        </button>
+        <div class="pokemon-sprite-container" [ngClass]="{ 'slide-left': animationDirection === 'left', 'slide-right': animationDirection === 'right', 'slide-in-left': animationDirection === 'leftIn', 'slide-in-right': animationDirection === 'rightIn' }">
+            <img [src]="pokemonSprite" [alt]="pokemonDisplayName" class="pokemon-preview-sprite">
+            @if (isEasterEggSlot) {
+                <span class="pokemon-number">#???</span>
+            } @else if (pokemonId) {
+                <span class="pokemon-number">#{{ ('00' + pokemonId).slice(-3) }}</span>
+            }
+            <button type="button" class="pokemon-item-placeholder" aria-label="Añadir objeto" title="Añadir objeto">
+                <span class="item-plus-symbol">+</span>
+            </button>
+        </div>
+        <button class="nav-arrow-button nav-next" (click)="onNextSlotClick()" [disabled]="disableNextArrow" title="Siguiente slot">
+            ▶
+        </button>
+    </div>
+</div>
