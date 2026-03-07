@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { PokemonService } from '../../../services/pokemon-service';
 import { Pokemon } from '../../../models/pokemon';
 import { inject } from '@angular/core';
+import { PokemonGridItem } from './pokemon-grid-item/pokemon-grid-item';
 
 @Component({
     selector: 'app-pokemon-search-panel',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, PokemonGridItem],
     templateUrl: './pokemon-search-panel.html',
     styleUrls: ['./pokemon-search-panel.css'],
 })

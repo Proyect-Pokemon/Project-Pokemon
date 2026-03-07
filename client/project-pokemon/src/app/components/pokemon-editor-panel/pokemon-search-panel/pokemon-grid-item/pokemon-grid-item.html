@@ -1,0 +1,8 @@
+<button 
+    class="pokemon-grid-item" 
+    (click)="onSelect()"
+    [title]="pokemon.name">
+    <img [src]="pokemon.miniSprite" [alt]="pokemon.name" class="pokemon-mini-sprite">
+    <span class="pokemon-grid-number">#{{ ('00' + pokemon.id).slice(-3) }}</span>
+    <span class="pokemon-grid-name">{{ pokemon.name }}</span>
+</button>

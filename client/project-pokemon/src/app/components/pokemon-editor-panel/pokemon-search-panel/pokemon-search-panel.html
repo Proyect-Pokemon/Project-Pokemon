@@ -32,14 +32,10 @@
 @if (searchResults().length > 0 && !selectedPokemon()) {
     <div class="pokemon-grid">
         @for (pokemon of searchResults(); track pokemon.id) {
-            <button 
-                class="pokemon-grid-item" 
-                (click)="selectPokemonFromGrid(pokemon)"
-                [title]="pokemon.name">
-                <img [src]="pokemon.miniSprite" [alt]="pokemon.name" class="pokemon-mini-sprite">
-                <span class="pokemon-grid-number">#{{ ('00' + pokemon.id).slice(-3) }}</span>
-                <span class="pokemon-grid-name">{{ pokemon.name }}</span>
-            </button>
+            <app-pokemon-grid-item
+                [pokemon]="pokemon"
+                (pokeSelected)="selectPokemonFromGrid($event)">
+            </app-pokemon-grid-item>
         }
     </div>
 }
