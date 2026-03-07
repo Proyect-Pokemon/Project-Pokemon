@@ -58,19 +58,19 @@
                     <div class="pokemon-placeholder-circle" aria-hidden="true"></div>
                     <p class="empty-slot-label">Slot {{ slot }} vacío</p>
                     <button class="search-pokemon-button" (click)="toggleSearchControls()">
-                        Buscar Pokémon por número
+                        Buscar Pokémon
                     </button>
                 } @else {
-                    @if (searchedPokemon()) {
+                    @if (selectedPokemonFromSearch()) {
                         <div class="selected-pokemon-preview">
                             <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base" (click)="openStatsDialog()">
                                 ?
                             </button>
-                            <h3 class="pokemon-display-name">{{ searchedPokemon()?.name }}</h3>
+                            <h3 class="pokemon-display-name">{{ selectedPokemonFromSearch()?.name }}</h3>
                             <div class="pokemon-sprite-container">
-                                <img [src]="searchedPokemon()?.spriteFront" [alt]="searchedPokemon()?.name" class="pokemon-preview-sprite">
-                                @if (searchedPokemon()?.id) {
-                                    <span class="pokemon-number">#{{ ('00' + searchedPokemon()?.id).slice(-3) }}</span>
+                                <img [src]="selectedPokemonFromSearch()?.spriteFront" [alt]="selectedPokemonFromSearch()?.name" class="pokemon-preview-sprite">
+                                @if (selectedPokemonFromSearch()?.id) {
+                                    <span class="pokemon-number">#{{ ('00' + selectedPokemonFromSearch()?.id).slice(-3) }}</span>
                                 }
                             </div>
                         </div>
@@ -78,28 +78,41 @@
                             Añadir a equipo
                         </button>
                     }
-                }
 
-                @if (showSearchControls()) {
-                    <div class="search-by-number">
+                    <div class="search-container">
                         <input
-                            type="number"
-                            min="1"
-                            placeholder="Número de Pokédex"
-                            [value]="searchPokemonNumber() ?? ''"
-                            (input)="onSearchNumberInput($event)"
+                            type="text"
+                            placeholder="Buscar por nombre o número"
+                            [value]="searchQuery()"
+                            (input)="onSearchInput($event)"
+                            class="search-input"
                             autofocus
                         >
                     </div>
-                }
 
-                @if (searchError()) {
-                    <p class="search-error">{{ searchError() }}</p>
+                    @if (searchError()) {
+                        <p class="search-error">{{ searchError() }}</p>
+                    }
+
+                    @if (searchResults().length > 0 && !selectedPokemonFromSearch()) {
+                        <div class="pokemon-grid">
+                            @for (pokemon of searchResults(); track pokemon.id) {
+                                <button 
+                                    class="pokemon-grid-item" 
+                                    (click)="selectPokemonFromGrid(pokemon)"
+                                    [title]="pokemon.name">
+                                    <img [src]="pokemon.miniSprite" [alt]="pokemon.name" class="pokemon-mini-sprite">
+                                    <span class="pokemon-grid-number">#{{ ('00' + pokemon.id).slice(-3) }}</span>
+                                    <span class="pokemon-grid-name">{{ pokemon.name }}</span>
+                                </button>
+                            }
+                        </div>
+                    }
                 }
             </div>
         }
 
-        @if ((pokemonDisplayName && pokemonSprite) || searchedPokemon()) {
+        @if ((pokemonDisplayName && pokemonSprite) || selectedPokemonFromSearch()) {
             <div class="nature-section">
                 <button
                     type="button"

@@ -60,8 +60,9 @@ export class PokemonEditorPanel {
     @Output() changeSlot = new EventEmitter<number>();
 
     showSearchControls = signal(false);
-    searchPokemonNumber = signal<number | null>(null);
-    searchedPokemon = signal<Pokemon | null>(null);
+    searchQuery = signal<string>('');
+    searchResults = signal<Pokemon[]>([]);
+    selectedPokemonFromSearch = signal<Pokemon | null>(null);
     searchError = signal<string | null>(null);
     allPokemonCache = signal<Pokemon[]>([]);
     animationDirection = signal<'left' | 'right' | 'leftIn' | 'rightIn' | 'none'>('none');
@@ -139,23 +140,45 @@ export class PokemonEditorPanel {
             }
         });
 
-        effect(async () => {
-            const pokemonNumber = this.searchPokemonNumber();
-            if (!pokemonNumber) {
-                this.searchedPokemon.set(null);
-                this.searchError.set(null);
+        effect(() => {
+            const query = this.searchQuery();
+            const cache = this.allPokemonCache();
+            
+            if (cache.length === 0) {
                 return;
             }
 
             this.searchError.set(null);
-            const cache = this.allPokemonCache();
-            const found = cache.find(p => p.id === pokemonNumber) ?? null;
 
-            if (!found) {
-                this.searchedPokemon.set(null);
-                this.searchError.set('No se encontró Pokémon con ese número.');
+            // Si está vacío, mostrar todos los pokemon
+            if (!query || query.trim() === '') {
+                this.searchResults.set([...cache].sort((a, b) => a.id - b.id));
+                return;
+            }
+
+            // Intentar convertir a número
+            const numericId = parseInt(query);
+            
+            if (!isNaN(numericId)) {
+                // Búsqueda por ID
+                const found = cache.filter(p => p.id === numericId);
+                if (found.length === 0) {
+                    this.searchError.set('No se encontró Pokémon con ese número.');
+                    this.searchResults.set([]);
+                } else {
+                    this.searchResults.set(found);
+                }
             } else {
-                this.searchedPokemon.set(found);
+                // Búsqueda por nombre (case-insensitive, contains)
+                const normalizedQuery = query.toLowerCase().trim();
+                const found = cache.filter(p => p.name.toLowerCase().includes(normalizedQuery));
+                
+                if (found.length === 0) {
+                    this.searchError.set('No se encontraron Pokémon con ese nombre.');
+                    this.searchResults.set([]);
+                } else {
+                    this.searchResults.set(found.sort((a, b) => a.id - b.id));
+                }
             }
         });
 
@@ -228,20 +251,27 @@ export class PokemonEditorPanel {
         this.showSearchControls.update(value => !value);
         this.searchError.set(null);
         if (!this.showSearchControls()) {
-            this.searchPokemonNumber.set(null);
-            this.searchedPokemon.set(null);
+            this.searchQuery.set('');
+            this.searchResults.set([]);
+            this.selectedPokemonFromSearch.set(null);
+        } else {
+            // Al abrir, cargar todos los pokemon
+            this.searchQuery.set('');
         }
     }
 
-    onSearchNumberInput(event: Event) {
+    onSearchInput(event: Event) {
         const target = event.target as HTMLInputElement | null;
         if (!target) {
-            this.searchPokemonNumber.set(null);
+            this.searchQuery.set('');
             return;
         }
 
-        const value = Number(target.value);
-        this.searchPokemonNumber.set(Number.isNaN(value) || value <= 0 ? null : value);
+        this.searchQuery.set(target.value);
+    }
+
+    selectPokemonFromGrid(pokemon: Pokemon) {
+        this.selectedPokemonFromSearch.set(pokemon);
     }
 
     onNatureChange(event: Event) {
@@ -261,7 +291,7 @@ export class PokemonEditorPanel {
     }
 
     onCreatePokemonTeam() {
-        const foundPokemon = this.searchedPokemon();
+        const foundPokemon = this.selectedPokemonFromSearch();
         if (!foundPokemon) {
             return;
         }
@@ -284,8 +314,9 @@ export class PokemonEditorPanel {
         this.close.emit();
 
         this.showSearchControls.set(false);
-        this.searchPokemonNumber.set(null);
-        this.searchedPokemon.set(null);
+        this.searchQuery.set('');
+        this.searchResults.set([]);
+        this.selectedPokemonFromSearch.set(null);
         this.searchError.set(null);
         this.showStatsDialog.set(false);
         this.currentPokemonStats.set(null);
@@ -324,8 +355,8 @@ export class PokemonEditorPanel {
         let pokemon: Pokemon | null = null;
 
         // Si está buscando, use el Pokémon encontrado
-        if (this.searchedPokemon()) {
-            pokemon = this.searchedPokemon();
+        if (this.selectedPokemonFromSearch()) {
+            pokemon = this.selectedPokemonFromSearch();
         } else if (this.pokemonId) {
             // Si tiene un Pokémon seleccionado, búscalo en el cache
             const cache = this.allPokemonCache();
