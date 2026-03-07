@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, signal, effect, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, signal, effect, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PokemonService } from '../../services/pokemon-service';
 import { Pokemon } from '../../models/pokemon';
@@ -8,15 +8,7 @@ import { MovementService } from '../../services/movement-service';
 import { PokemonStatsDialog } from '../pokemon-stats-dialog/pokemon-stats-dialog';
 import { NatureService } from '../../services/nature-service';
 import { Nature } from '../../models/nature';
-
-interface PokemonStats {
-    hp: number;
-    attack: number;
-    defense: number;
-    specialAttack: number;
-    specialDefense: number;
-    speed: number;
-}
+import { PokemonStats } from '../../models/pokemon-stats';
 
 @Component({
     selector: 'app-pokemon-editor-panel',
@@ -29,13 +21,27 @@ export class PokemonEditorPanel {
     private readonly pokemonService = inject(PokemonService);
     private readonly movementService = inject(MovementService);
     private readonly natureService = inject(NatureService);
+    private readonly MIN_TEAM_SLOT = 1;
+    private readonly MAX_TEAM_SLOT = 6;
+    private readonly SLOT_TRANSITION_MS = 300;
 
     private panelOpen = false;
+    private isSlotTransitioning = false;
+    private pendingSlot: number | null = null;
+
+    @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
 
     @Input() set isOpen(value: boolean) {
         this.panelOpen = value;
         if (!value) {
-            this.isNatureSectionExpanded.set(false);
+            this.resetPanelUiState();
+        } else {
+            // Al abrir el panel, cargar y mostrar todos los Pokémon si la búsqueda está vacía
+            this.loadInitialPokemonList();
+            // Hacer focus en el input de búsqueda
+            setTimeout(() => {
+                this.searchInput?.nativeElement?.focus();
+            }, 0);
         }
     }
 
@@ -59,9 +65,9 @@ export class PokemonEditorPanel {
     @Output() createPokemonTeam = new EventEmitter<PostPokemonTeamDto>();
     @Output() changeSlot = new EventEmitter<number>();
 
-    showSearchControls = signal(false);
-    searchPokemonNumber = signal<number | null>(null);
-    searchedPokemon = signal<Pokemon | null>(null);
+    searchQuery = signal<string>('');
+    searchResults = signal<Pokemon[]>([]);
+    selectedPokemonFromSearch = signal<Pokemon | null>(null);
     searchError = signal<string | null>(null);
     allPokemonCache = signal<Pokemon[]>([]);
     animationDirection = signal<'left' | 'right' | 'leftIn' | 'rightIn' | 'none'>('none');
@@ -132,30 +138,66 @@ export class PokemonEditorPanel {
         return this.slot <= 0 || this.slot >= 7;
     }
 
-    constructor() {
-        effect(() => {
-            if (this.showSearchControls()) {
-                this.loadPokemonCache();
-            }
-        });
+    get disablePreviousArrow(): boolean {
+        const effectiveSlot = this.pendingSlot ?? this.slot;
+        return effectiveSlot <= this.MIN_TEAM_SLOT;
+    }
 
-        effect(async () => {
-            const pokemonNumber = this.searchPokemonNumber();
-            if (!pokemonNumber) {
-                this.searchedPokemon.set(null);
-                this.searchError.set(null);
+    get disableNextArrow(): boolean {
+        const effectiveSlot = this.pendingSlot ?? this.slot;
+        return effectiveSlot >= this.MAX_TEAM_SLOT;
+    }
+
+    constructor() {
+        this.loadPokemonCache();
+
+        effect(() => {
+            const query = this.searchQuery();
+            const cache = this.allPokemonCache();
+            
+            if (cache.length === 0) {
                 return;
             }
 
             this.searchError.set(null);
-            const cache = this.allPokemonCache();
-            const found = cache.find(p => p.id === pokemonNumber) ?? null;
 
-            if (!found) {
-                this.searchedPokemon.set(null);
-                this.searchError.set('No se encontró Pokémon con ese número.');
+            // Si está vacío, mostrar todos los pokemon
+            if (!query || query.trim() === '') {
+                this.searchResults.set([...cache].sort((a, b) => a.id - b.id));
+                return;
+            }
+
+            // Intentar convertir a número
+            const numericId = parseInt(query);
+            
+            if (!isNaN(numericId)) {
+                // Búsqueda por ID
+                const found = cache.filter(p => p.id === numericId);
+                if (found.length === 0) {
+                    this.searchError.set('No se encontró Pokémon con ese número.');
+                    this.searchResults.set([]);
+                } else {
+                    this.searchResults.set(found);
+                    // Si solo hay un resultado, seleccionarlo automáticamente
+                    if (found.length === 1) {
+                        this.selectedPokemonFromSearch.set(found[0]);
+                    }
+                }
             } else {
-                this.searchedPokemon.set(found);
+                // Búsqueda por nombre (case-insensitive, contains)
+                const normalizedQuery = query.toLowerCase().trim();
+                const found = cache.filter(p => p.name.toLowerCase().includes(normalizedQuery));
+                
+                if (found.length === 0) {
+                    this.searchError.set('No se encontraron Pokémon con ese nombre.');
+                    this.searchResults.set([]);
+                } else {
+                    this.searchResults.set(found.sort((a, b) => a.id - b.id));
+                    // Si solo hay un resultado, seleccionarlo automáticamente
+                    if (found.length === 1) {
+                        this.selectedPokemonFromSearch.set(found[0]);
+                    }
+                }
             }
         });
 
@@ -198,6 +240,16 @@ export class PokemonEditorPanel {
         this.allPokemonCache.set(allPokemon);
     }
 
+    private async loadInitialPokemonList() {
+        // Asegurar que el cache esté cargado
+        await this.loadPokemonCache();
+        
+        // Si la búsqueda está vacía, mostrar todos los Pokémon
+        if (!this.searchQuery() || this.searchQuery().trim() === '') {
+            this.searchResults.set([...this.allPokemonCache()].sort((a, b) => a.id - b.id));
+        }
+    }
+
     private async loadMovementsCache() {
         if (this.allMovementsCache().length > 0) {
             return;
@@ -224,24 +276,23 @@ export class PokemonEditorPanel {
         this.isLoadingNatures.set(false);
     }
 
-    toggleSearchControls() {
-        this.showSearchControls.update(value => !value);
-        this.searchError.set(null);
-        if (!this.showSearchControls()) {
-            this.searchPokemonNumber.set(null);
-            this.searchedPokemon.set(null);
-        }
-    }
-
-    onSearchNumberInput(event: Event) {
+    onSearchInput(event: Event) {
         const target = event.target as HTMLInputElement | null;
         if (!target) {
-            this.searchPokemonNumber.set(null);
+            this.searchQuery.set('');
             return;
         }
 
-        const value = Number(target.value);
-        this.searchPokemonNumber.set(Number.isNaN(value) || value <= 0 ? null : value);
+        // Limpiar la selección cuando el usuario escribe
+        if (this.selectedPokemonFromSearch()) {
+            this.selectedPokemonFromSearch.set(null);
+        }
+
+        this.searchQuery.set(target.value);
+    }
+
+    selectPokemonFromGrid(pokemon: Pokemon) {
+        this.selectedPokemonFromSearch.set(pokemon);
     }
 
     onNatureChange(event: Event) {
@@ -261,7 +312,7 @@ export class PokemonEditorPanel {
     }
 
     onCreatePokemonTeam() {
-        const foundPokemon = this.searchedPokemon();
+        const foundPokemon = this.selectedPokemonFromSearch();
         if (!foundPokemon) {
             return;
         }
@@ -282,41 +333,72 @@ export class PokemonEditorPanel {
 
     onClose() {
         this.close.emit();
+        this.resetPanelUiState();
+    }
 
-        this.showSearchControls.set(false);
-        this.searchPokemonNumber.set(null);
-        this.searchedPokemon.set(null);
+    private resetPanelUiState() {
+        this.searchQuery.set('');
+        this.searchResults.set([]);
+        this.selectedPokemonFromSearch.set(null);
         this.searchError.set(null);
         this.showStatsDialog.set(false);
         this.currentPokemonStats.set(null);
         this.selectedNatureId.set(this.initialNatureId());
         this.isNatureSectionExpanded.set(false);
+        this.isSlotTransitioning = false;
+        this.pendingSlot = null;
+        this.animationDirection.set('none');
     }
 
     onPreviousSlot() {
-        if (this.slot > -3) {
-            this.animationDirection.set('right');
-            setTimeout(() => {
-                this.changeSlot.emit(this.slot - 1);
-                this.animationDirection.set('rightIn');
-                setTimeout(() => {
-                    this.animationDirection.set('none');
-                }, 300);
-            }, 300);
+        if (this.isSlotTransitioning) {
+            return;
         }
+
+        const currentSlot = this.pendingSlot ?? this.slot;
+        const targetSlot = currentSlot - 1;
+
+        if (targetSlot < this.MIN_TEAM_SLOT) {
+            return;
+        }
+
+        this.runSlotTransition(targetSlot, 'right', 'rightIn');
     }
 
     onNextSlot() {
-        if (this.slot < 10) {
-            this.animationDirection.set('left');
-            setTimeout(() => {
-                this.changeSlot.emit(this.slot + 1);
-                this.animationDirection.set('leftIn');
-                setTimeout(() => {
-                    this.animationDirection.set('none');
-                }, 300);
-            }, 300);
+        if (this.isSlotTransitioning) {
+            return;
         }
+
+        const currentSlot = this.pendingSlot ?? this.slot;
+        const targetSlot = currentSlot + 1;
+
+        if (targetSlot > this.MAX_TEAM_SLOT) {
+            return;
+        }
+
+        this.runSlotTransition(targetSlot, 'left', 'leftIn');
+    }
+
+    private runSlotTransition(
+        targetSlot: number,
+        outDirection: 'left' | 'right',
+        inDirection: 'leftIn' | 'rightIn',
+    ) {
+        this.isSlotTransitioning = true;
+        this.pendingSlot = targetSlot;
+        this.animationDirection.set(outDirection);
+
+        setTimeout(() => {
+            this.changeSlot.emit(targetSlot);
+            this.animationDirection.set(inDirection);
+
+            setTimeout(() => {
+                this.animationDirection.set('none');
+                this.pendingSlot = null;
+                this.isSlotTransitioning = false;
+            }, this.SLOT_TRANSITION_MS);
+        }, this.SLOT_TRANSITION_MS);
     }
 
     async openStatsDialog() {
@@ -324,8 +406,8 @@ export class PokemonEditorPanel {
         let pokemon: Pokemon | null = null;
 
         // Si está buscando, use el Pokémon encontrado
-        if (this.searchedPokemon()) {
-            pokemon = this.searchedPokemon();
+        if (this.selectedPokemonFromSearch()) {
+            pokemon = this.selectedPokemonFromSearch();
         } else if (this.pokemonId) {
             // Si tiene un Pokémon seleccionado, búscalo en el cache
             const cache = this.allPokemonCache();

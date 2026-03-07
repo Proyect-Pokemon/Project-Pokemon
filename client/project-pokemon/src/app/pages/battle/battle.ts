@@ -45,7 +45,6 @@ export class Battle {
     this.battleInfo.set(data);
     this.hpA.set(data.pokemonA.hp);
     this.hpB.set(data.pokemonB.hp);
-    console.log(data);
     this.battle.set(true);
   }
 

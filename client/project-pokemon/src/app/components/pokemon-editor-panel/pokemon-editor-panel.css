@@ -185,13 +185,6 @@
     font-weight: 600;
 }
 
-.easter-egg-subtitle {
-    margin-top: 0.3rem !important;
-    font-size: 0.9rem !important;
-    opacity: 0.9;
-    font-weight: 400 !important;
-}
-
 @keyframes pulse {
     0%, 100% {
         transform: scale(1);
@@ -398,19 +391,101 @@
     background-color: #34495e;
 }
 
-.search-by-number {
-    margin-top: 0.75rem;
+.search-container {
+    margin-top: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
 }
 
-.search-by-number input {
-    width: 180px;
-    border: 1px solid #c8d1da;
+.search-input {
+    width: 100%;
+    max-width: 400px;
+    border: 2px solid #c8d1da;
     border-radius: 8px;
-    padding: 0.55rem 0.7rem;
-    font-size: 0.95rem;
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--action-color);
+}
+
+.pokemon-grid {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.75rem;
+    max-height: 450px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    width: 100%;
+}
+
+.pokemon-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.pokemon-grid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.pokemon-grid::-webkit-scrollbar-thumb {
+    background: #c8d1da;
+    border-radius: 10px;
+}
+
+.pokemon-grid::-webkit-scrollbar-thumb:hover {
+    background: #95a5a6;
+}
+
+.pokemon-grid-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    background-color: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pokemon-grid-item:hover {
+    background-color: #e8f4f8;
+    border-color: var(--action-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pokemon-mini-sprite {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+.pokemon-grid-number {
+    font-size: 0.7rem;
+    color: #95a5a6;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.pokemon-grid-name {
+    font-size: 0.85rem;
+    color: #2c3e50;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 0.15rem;
+    text-transform: capitalize;
+    word-break: break-word;
+    max-width: 100%;
 }
 
 .search-error {
