@@ -96,31 +96,32 @@ export class PokemonStatsDialog {
     }
 
     getStatColor(value: number): string {
-        if (value <= 50) {
-            return '#808080';
+        // Rangos ajustados para nivel 50
+        if (value <= 25) {
+            return '#6B7280'; // Gris - Muy bajo
         }
 
-        if (value <= 150) {
-            return '#C85048';
+        if (value <= 75) {
+            return '#DC2626'; // Rojo - Bajo
         }
 
-        if (value <= 250) {
-            return '#F07F2F';
+        if (value <= 125) {
+            return '#F59E0B'; // Naranja - Medio-bajo
         }
 
-        if (value <= 500) {
-            return '#F9CF2E';
+        if (value <= 175) {
+            return '#FBBF24'; // Amarillo - Medio
         }
 
-        if (value <= 600) {
-            return '#76C850';
+        if (value <= 225) {
+            return '#84CC16'; // Verde lima - Bueno
         }
 
-        if (value <= 1000) {
-            return '#40E0D0';
+        if (value <= 300) {
+            return '#10B981'; // Verde - Muy bueno
         }
 
-        return '#00FFFF';
+        return '#06B6D4'; // Cyan - Excepcional
     }
 
     onOverlayClick() {
