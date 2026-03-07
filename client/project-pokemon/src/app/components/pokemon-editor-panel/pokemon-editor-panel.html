@@ -15,7 +15,29 @@
                 <button type="button" class="pokemon-help-placeholder" aria-label="Estadísticas base" title="Estadísticas base" (click)="openStatsDialog()">
                     ?
                 </button>
-                <h3 class="pokemon-display-name">{{ pokemonDisplayName }}</h3>
+                @if (isEditingNickname()) {
+                    <input
+                        #nicknameInput
+                        type="text"
+                        class="pokemon-display-name-input"
+                        [value]="nicknameDraft()"
+                        (input)="onNicknameInput($event)"
+                        (blur)="onNicknameBlur()"
+                        (keydown)="onNicknameKeydown($event)"
+                        [disabled]="isSavingNickname()"
+                        [attr.maxlength]="MAX_NICKNAME_LENGTH"
+                        autofocus
+                    >
+                } @else {
+                    <h3
+                        class="pokemon-display-name"
+                        [class.nickname-editable]="canEditNickname()"
+                        [class.exact-nickname]="pokemonNickname !== null"
+                        [attr.title]="canEditNickname() ? 'Click para editar nickname' : null"
+                        (click)="onPokemonDisplayNameClick()">
+                        {{ pokemonDisplayName }}
+                    </h3>
+                }
                 @if (isEasterEggSlot) {
                     <div class="easter-egg-message">
                         <p>¡Has encontrado un Easter Egg! 🎉</p>

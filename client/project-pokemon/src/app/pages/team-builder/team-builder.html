@@ -30,9 +30,13 @@
     [pokemonDisplayName]="selectedPokemonDisplayName"
     [pokemonSprite]="selectedPokemonSprite"
     [pokemonId]="selectedPokemonId"
+    [pokemonTeamId]="selectedPokemonTeamId"
+    [pokemonBaseName]="selectedPokemonBaseName"
+    [pokemonNickname]="selectedPokemonNickname"
     [natureId]="selectedNatureId"
     [movementIds]="selectedMovementIds"
     (createPokemonTeam)="handleCreatePokemonTeam($event)"
     (changeSlot)="handleChangeSlot($event)"
+    (nicknameUpdated)="handleNicknameUpdated($event)"
     (close)="closePanel()"
 />
