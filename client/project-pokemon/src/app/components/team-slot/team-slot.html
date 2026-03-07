@@ -14,9 +14,9 @@
                     <button class="pokemon-slot filled" (click)="onAddPokemon(slot.slot)">
                         <div class="pokemon-sprite-container">
                                 @if (slot.pokemon) {
-                                    <img [src]="slot.pokemon.spriteFront" [alt]="slot.pokemon.name" class="pokemon-sprite">
+                                    <img [src]="slot.pokemon.miniSprite" [alt]="slot.pokemon.name" class="pokemon-sprite">
                             }
-                            <span class="pokemon-number">#{{ slot.pokemonId }}</span>
+                            <span class="pokemon-number">#{{ ('00' + slot.pokemonId).slice(-3) }}</span>
                         </div>
                         @if (slot.nickname) {
                             <span class="pokemon-nickname">{{ slot.nickname }}</span>

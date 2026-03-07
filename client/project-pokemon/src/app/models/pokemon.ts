@@ -10,13 +10,13 @@ export interface Pokemon {
     weight: number;
     spriteFront: string;
     spriteBack: string;
-    spriteFrontShiny: string | null;
-    spriteBackShiny: string | null;
+    spriteFrontShiny: string;
+    spriteBackShiny: string;
     spriteFrontFem: string | null;
     spriteBackFem: string | null;
     spriteFrontFemShiny: string | null;
     spriteBackFemShiny: string | null;
-    cry: string | null;
+    miniSprite: string;
     type1: string;
     type2: string | null;
 }

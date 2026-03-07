@@ -179,7 +179,6 @@ export class TeamBuilder {
   private async loadUserTeams() {
     const currentUserId = this.authService.currentUserId();
     if (!currentUserId) {
-      console.log('currentUserId is null, skipping team loading');
       this.teams.set([]);
       return;
     }

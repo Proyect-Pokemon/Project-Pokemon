@@ -1,5 +1,4 @@
 import { inject, Injectable } from '@angular/core';
-import { lastValueFrom } from 'rxjs';
 import { BattleResponse } from '../models/pokemon-api';
 import { ApiService } from './api';
 
