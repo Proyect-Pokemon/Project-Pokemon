@@ -185,13 +185,6 @@
     font-weight: 600;
 }
 
-.easter-egg-subtitle {
-    margin-top: 0.3rem !important;
-    font-size: 0.9rem !important;
-    opacity: 0.9;
-    font-weight: 400 !important;
-}
-
 @keyframes pulse {
     0%, 100% {
         transform: scale(1);

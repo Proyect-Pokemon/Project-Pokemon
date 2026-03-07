@@ -1,14 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-interface PokemonStats {
-    hp: number;
-    attack: number;
-    defense: number;
-    specialAttack: number;
-    specialDefense: number;
-    speed: number;
-}
+import { PokemonStats } from '../../models/pokemon-stats';
 
 @Component({
     selector: 'app-pokemon-stats-dialog',

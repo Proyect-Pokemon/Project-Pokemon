@@ -8,15 +8,7 @@ import { MovementService } from '../../services/movement-service';
 import { PokemonStatsDialog } from '../pokemon-stats-dialog/pokemon-stats-dialog';
 import { NatureService } from '../../services/nature-service';
 import { Nature } from '../../models/nature';
-
-interface PokemonStats {
-    hp: number;
-    attack: number;
-    defense: number;
-    specialAttack: number;
-    specialDefense: number;
-    speed: number;
-}
+import { PokemonStats } from '../../models/pokemon-stats';
 
 @Component({
     selector: 'app-pokemon-editor-panel',
