@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, signal, effect, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, signal, effect, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PokemonService } from '../../services/pokemon-service';
 import { Pokemon } from '../../models/pokemon';
@@ -37,6 +37,8 @@ export class PokemonEditorPanel {
     private isSlotTransitioning = false;
     private pendingSlot: number | null = null;
 
+    @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+
     @Input() set isOpen(value: boolean) {
         this.panelOpen = value;
         if (!value) {
@@ -44,6 +46,10 @@ export class PokemonEditorPanel {
         } else {
             // Al abrir el panel, cargar y mostrar todos los Pokémon si la búsqueda está vacía
             this.loadInitialPokemonList();
+            // Hacer focus en el input de búsqueda
+            setTimeout(() => {
+                this.searchInput?.nativeElement?.focus();
+            }, 0);
         }
     }
 

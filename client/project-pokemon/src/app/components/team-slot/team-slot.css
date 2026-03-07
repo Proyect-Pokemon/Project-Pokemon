@@ -81,6 +81,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease;
     position: relative;
+    overflow: visible;
 }
 
 .pokemon-slot.filled {
@@ -112,6 +113,13 @@
     max-height: 80px;
     position: relative;
     z-index: 2;
+    transform: scale(1.5);
+    image-rendering: pixelated;
+    transition: transform 0.3s ease;
+}
+
+.pokemon-slot.filled:hover .pokemon-sprite {
+    transform: scale(1.5) translateY(-10px);
 }
 
 .pokemon-number {
