@@ -41,7 +41,7 @@ export class Login implements OnInit, OnDestroy {
         this.rememberMeChecked
       );
 
-      if (result.success) {
+      if (result === true) {
 
         const redirectTo =
           this.route.snapshot.queryParams['redirectTo'] || '/battle';
@@ -50,7 +50,7 @@ export class Login implements OnInit, OnDestroy {
         return;
       }
 
-      this.errorMessage.set(result.message || 'Usuario o contraseña incorrectos.');
+      this.errorMessage.set('Usuario o contraseña incorrectos.');
 
     } catch (err: any) {
 

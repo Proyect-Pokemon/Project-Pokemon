@@ -96,14 +96,14 @@ export class Register implements OnInit, OnDestroy {
 
     try {
 
-      const result = await this.authService.register(registerData);
+      const success = await this.authService.register(registerData);
 
-      if (result.success) {
+      if (success) {
         this.router.navigate(['/login']);
         return;
       }
 
-      this.errorMessage.set(result.message || 'No se pudo registrar el usuario.');
+      this.errorMessage.set('No se pudo registrar el usuario.');
 
     } catch (err: any) {
 

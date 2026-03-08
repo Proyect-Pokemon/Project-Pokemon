@@ -1,10 +1,8 @@
-// Servicio de autenticación para manejar el login y el JWT
 import { computed, Injectable, signal } from '@angular/core';
 import { jwtDecode } from 'jwt-decode';
 import { ApiService } from './api';
-import { AuthResponse } from '../models/auth-response';
 import { AuthRequest } from '../models/auth-request';
-import { Result } from '../models/result';
+import { AuthResponse } from '../models/auth-response';
 import { RegisterRequest } from '../models/register-request';
 
 type JwtPayload = {
@@ -18,12 +16,20 @@ type JwtPayload = {
   providedIn: 'root',
 })
 export class AuthService {
+
   private readonly jwtSignal = signal<string | null>(null);
+
+  constructor(private api: ApiService) {
+    // Restaurar sesión
+    const jwt = localStorage.getItem('jwt');
+    if (jwt) {
+      this.setJwt(jwt);
+    }
+  }
+
   private readonly decodedPayload = computed<JwtPayload | null>(() => {
     const token = this.jwtSignal();
-    if (!token) {
-      return null;
-    }
+    if (!token) return null;
 
     try {
       return jwtDecode<JwtPayload>(token);
@@ -33,33 +39,31 @@ export class AuthService {
   });
 
   readonly isAuthenticated = computed(() => !!this.jwtSignal());
-  readonly currentUserId = computed<number | null>(() => {
-    const decoded = this.decodedPayload();
-    if (!decoded || decoded.id === undefined || decoded.id === null) {
-      return null;
-    }
 
-    const userId = Number(decoded.id);
-    return Number.isNaN(userId) ? null : userId;
-  });
-  readonly isAdmin = computed(() => {
+  readonly currentUserId = computed(() => {
     const decoded = this.decodedPayload();
-    return decoded?.role?.toLowerCase() === 'admin';
+    if (!decoded?.id) return null;
+
+    const id = Number(decoded.id);
+    return Number.isNaN(id) ? null : id;
   });
+
+  readonly isAdmin = computed(() =>
+    this.decodedPayload()?.role?.toLowerCase() === 'admin'
+  );
+
   readonly nickname = computed(() => {
     const decoded = this.decodedPayload();
-    const nickname = decoded?.unique_name?.trim();
-    return nickname && nickname.length > 0 ? nickname : 'Usuario';
-  });
-  readonly avatarPath = computed(() => {
-    const decoded = this.decodedPayload();
-    const avatarPath = decoded?.AvatarPath?.trim();
-    return avatarPath && avatarPath.length > 0
-      ? avatarPath
-      : '/assets/avatar-default.png';
+    const name = decoded?.unique_name?.trim();
+    return name && name.length > 0 ? name : 'Usuario';
   });
 
-  // Mantiene compatibilidad con el código existente
+  readonly avatarPath = computed(() => {
+    const decoded = this.decodedPayload();
+    const path = decoded?.AvatarPath?.trim();
+    return path && path.length > 0 ? path : '/assets/avatar-default.png';
+  });
+
   get jwt(): string | null {
     return this.jwtSignal();
   }
@@ -69,44 +73,32 @@ export class AuthService {
     this.api.jwt = value;
   }
 
-  constructor(private api: ApiService) {}
-
-  // Inicializa el JWT desde localStorage si existe
-  initializeJwtFromStorage(): void {
-    const jwtFromStorage = localStorage.getItem('jwt');
-    if (jwtFromStorage) {
-      this.setJwt(jwtFromStorage);
-    }
-  }
-
-  // Establece el JWT que viene del localStorage
   setJwt(jwt: string): void {
     this.jwt = jwt;
   }
-  async login(authData: AuthRequest, rememberMe: boolean = false): Promise<Result<AuthResponse>> {
-    const result = await this.api.post<AuthResponse>('auth/login', authData);
 
-    if (result.success && result.data) {
-      const token = result.data.accessToken;
-      this.jwt = token;
+  async login(
+    authData: AuthRequest,
+    rememberMe: boolean = false
+  ): Promise<boolean> {
 
-      // Se guarda el token en localStorage solo si rememberMe es true
+    const response = await this.api.post<AuthResponse>('auth/login', authData);
+
+    if (response?.accessToken) {
+      this.jwt = response.accessToken;
+
       if (rememberMe) {
-        localStorage.setItem('jwt', token);
+        localStorage.setItem('jwt', response.accessToken);
       }
 
-      return result;
+      return true;
     }
 
-    return result;
+    return false;
   }
 
-  async register(registerData: RegisterRequest): Promise<Result<AuthResponse>> {
-    return await this.api.post<AuthResponse>('auth/register', registerData);
+  async register(registerData: RegisterRequest): Promise<boolean> {
+    await this.api.post('auth/register', registerData);
+    return true;
   }
-
-  getUserIdFromJwt(): number | null {
-    return this.currentUserId();
-  }
-
 }
