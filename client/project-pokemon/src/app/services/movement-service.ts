@@ -9,7 +9,6 @@ export class MovementService {
     private readonly apiService = inject(ApiService);
 
     async getAllMovements(): Promise<Movement[]> {
-        const result = await this.apiService.get<Movement[]>('movement');
-        return result.success && result.data ? result.data : [];
+        return await this.apiService.get<Movement[]>('movement');
     }
 }
