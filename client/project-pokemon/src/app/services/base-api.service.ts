@@ -17,8 +17,7 @@ export class BaseApiService {
    * @returns Array de items o array vacío si hay error
    */
   async getList<T>(endpoint: string): Promise<T[]> {
-    const result = await this.apiService.get<T[]>(endpoint);
-    return result.success && result.data ? result.data : [];
+    return await this.apiService.get<T[]>(endpoint);
   }
 
   /**
@@ -28,8 +27,12 @@ export class BaseApiService {
    * @returns true si la operación fue exitosa, false en caso contrario
    */
   async create<T>(endpoint: string, data: T): Promise<boolean> {
-    const result = await this.apiService.post<T>(endpoint, data);
-    return result.success;
+    try {
+      await this.apiService.post<T>(endpoint, data);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**

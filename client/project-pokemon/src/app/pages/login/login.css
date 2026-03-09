@@ -11,7 +11,9 @@
 .big-container form {
     width: 100%;
     display: flex;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
 }
 
 .container {
@@ -59,6 +61,22 @@
 
 .required {
     color: var(--fighting-color);
+}
+
+.error-global {
+    color: var(--fighting-color);
+    background-color: var(--primary-color);
+    padding: 12px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--fighting-color);
+    font-weight: 500;
+}
+
+.error {
+    color: var(--fighting-color);
+    font-size: 12px;
+    font-weight: 500;
 }
 
 input[type="text"],
