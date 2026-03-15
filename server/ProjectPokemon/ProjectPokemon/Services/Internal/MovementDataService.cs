@@ -29,6 +29,7 @@ namespace ProjectPokemon.Services.Internal {
                 Target = ConvertTarget(move.Target.Name),
                 Priority = move.Priority,
                 EffectChance = move.EffectChance ?? 0,
+                // CritRate = move.Meta.CritRate,
                 Type = System.Enum.Parse<PokeType>(move.Type.Name, true)
             };
 

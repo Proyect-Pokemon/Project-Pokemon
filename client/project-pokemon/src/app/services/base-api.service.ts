@@ -11,6 +11,10 @@ import { ApiService } from './api';
 export class BaseApiService {
   protected apiService = inject(ApiService);
 
+  private hasSuccessFlag(value: unknown): value is { success: boolean } {
+    return typeof value === 'object' && value !== null && 'success' in value && typeof (value as { success?: unknown }).success === 'boolean';
+  }
+
   /**
    * Obtiene una lista de items de la API
    * @param endpoint El endpoint de la API (ej: 'pokemon', 'team')
@@ -42,7 +46,11 @@ export class BaseApiService {
    * @returns true si la operación fue exitosa, false en caso contrario
    */
   async update<T>(endpoint: string, data: T): Promise<boolean> {
-    const result = await this.apiService.put<T>(endpoint, data);
-    return result.success;
+    try {
+      const result = await this.apiService.put<unknown>(endpoint, data);
+      return this.hasSuccessFlag(result) ? result.success : true;
+    } catch {
+      return false;
+    }
   }
 }
