@@ -40,7 +40,7 @@ namespace ProjectPokemon.Services.Internal {
                 Healing = move.Meta.Healing, // Porcentaje de vida que el usuario recupera. PARA MOVIMIENTOS QUE SOLO CURAN
                 Ailment = move.Meta.Ailment.Name,
                 AilmentChance = move.Meta.AilmentChance,
-                Category = move.Meta.Category,
+                Category = move.Meta.Category.Name,
                 Type = System.Enum.Parse<PokeType>(move.Type.Name, true)
             };
 
