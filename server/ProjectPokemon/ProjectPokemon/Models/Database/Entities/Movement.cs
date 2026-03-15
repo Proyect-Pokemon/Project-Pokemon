@@ -17,11 +17,15 @@ public class Movement {
     public int FlinchChance { get; set; } = 0; // Probabilidad de que el movimiento haga retroceder al objetivo
     public int? MaxHits { get; set; } = null; // Número máximo de veces que un movimiento puede golpear en un turno
     public int? MinHits { get; set; } = null; // Número mínimo de veces que un movimiento puede golpear en un turno
-    public int? MaxTurns { get; set; } = null; // Número máximo de turnos que un movimiento puede durar
-    public int? MinTurns { get; set; } = null; // Número mínimo de turnos que un movimiento puede durar
+    public int? MaxTurns { get; set; } = null; // Número máximo de turnos que un movimiento puede durar. como bucle arena o giro fuego
+    public int? MinTurns { get; set; } = null; // Número mínimo de turnos que un movimiento puede durar. como bucle arena o giro fuego
     public int StatChance { get; set; } = 0; // Probabilidad de que el movimiento modifique las estadísticas del objetivo
     public int? Drain { get; set; } = null; // Porcentaje de vida que el usuario recupera con respecto al daño que inflige al objetivo
     public int? Healing { get; set; } = null; // Porcentaje de vida que el movimiento recupera al usuario
+    public string Ailment { get; set; } = "none"; // Estado alterado que el movimiento puede causar al objetivo
+    public string AilmentChance { get; set; } = "0"; // Probabilidad de que el movimiento cause el estado alterado al objetivo
+    public string Category { get; set; } = "damage"; // Categoría del movimiento: daño, estado, unico, etc.
+
 
 
 
