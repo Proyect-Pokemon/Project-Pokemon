@@ -23,7 +23,7 @@ public class Movement {
     public int? Drain { get; set; } = null; // Porcentaje de vida que el usuario recupera con respecto al daño que inflige al objetivo
     public int? Healing { get; set; } = null; // Porcentaje de vida que el movimiento recupera al usuario
     public string Ailment { get; set; } = "none"; // Estado alterado que el movimiento puede causar al objetivo
-    public string AilmentChance { get; set; } = "0"; // Probabilidad de que el movimiento cause el estado alterado al objetivo
+    public int AilmentChance { get; set; } = 0; // Probabilidad de que el movimiento cause el estado alterado al objetivo
     public string Category { get; set; } = "damage"; // Categoría del movimiento: daño, estado, unico, etc.
 
 
