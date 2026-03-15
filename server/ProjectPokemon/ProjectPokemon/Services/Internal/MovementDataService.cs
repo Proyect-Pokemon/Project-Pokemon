@@ -38,7 +38,9 @@ namespace ProjectPokemon.Services.Internal {
                 StatChance = move.Meta.StatChance, // Probabilidad de que cambie una estadística
                 Drain = move.Meta.Drain, // Porcentaje de vida que el usuario se cura con respecto al daño hecho
                 Healing = move.Meta.Healing, // Porcentaje de vida que el usuario recupera. PARA MOVIMIENTOS QUE SOLO CURAN
-
+                Ailment = move.Meta.Ailment.Name,
+                AilmentChance = move.Meta.AilmentChance,
+                Category = move.Meta.Category,
                 Type = System.Enum.Parse<PokeType>(move.Type.Name, true)
             };
 
