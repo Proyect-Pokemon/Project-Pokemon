@@ -29,7 +29,16 @@ namespace ProjectPokemon.Services.Internal {
                 Target = ConvertTarget(move.Target.Name),
                 Priority = move.Priority,
                 EffectChance = move.EffectChance ?? 0,
-                // CritRate = move.Meta.CritRate,
+                CritRate = move.Meta.CritRate,
+                FlinchChance = move.Meta.FlinchChance,
+                MaxHits = move.Meta.MaxHits ?? null,
+                MinHits = move.Meta.MinHits ?? null,
+                MaxTurns = move.Meta.MaxTurns ?? null,
+                MinTurns = move.Meta.MinTurns ?? null,
+                StatChance = move.Meta.StatChance, // Probabilidad de que cambie una estadística
+                Drain = move.Meta.Drain, // Porcentaje de vida que el usuario se cura con respecto al daño hecho
+                Healing = move.Meta.Healing, // Porcentaje de vida que el usuario recupera. PARA MOVIMIENTOS QUE SOLO CURAN
+
                 Type = System.Enum.Parse<PokeType>(move.Type.Name, true)
             };
 
