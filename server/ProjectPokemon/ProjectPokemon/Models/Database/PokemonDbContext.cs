@@ -8,7 +8,6 @@ public class PokemonDbContext : DbContext {
     public DbSet<Movement> Movements { get; set; }
     public DbSet<Nature> Natures { get; set; }
     public DbSet<PokemonMovement> PokemonMovements { get; set; }
-    public DbSet<PokemonBattle> PokemonBattles { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Team> Teams { get; set; } 
     public DbSet<PokemonTeam> PokemonTeams { get; set; }
@@ -21,7 +20,6 @@ public class PokemonDbContext : DbContext {
         ConfigureMovement(modelBuilder);
         ConfigureNature(modelBuilder);
         ConfigurePokemonMovement(modelBuilder);
-        ConfigurePokemonBattle(modelBuilder);
     }
 
     private static void ConfigurePokemon(ModelBuilder modelBuilder) {
@@ -84,45 +82,6 @@ public class PokemonDbContext : DbContext {
                     .HasForeignKey(pm => pm.MovementId)
                     .OnDelete(DeleteBehavior.Cascade);
                     // Si el Movimiento se elimina, se elimina la fila
-        });
-    }
-    private static void ConfigurePokemonBattle(ModelBuilder modelBuilder) {
-        modelBuilder.Entity<PokemonBattle>(entity =>
-        {
-            entity.Property(pb => pb.Status)
-                    .HasConversion<string>()
-                    .HasDefaultValue(PokeStatus.None)
-                    .IsRequired();
-            
-            entity.HasOne(pb => pb.Nature)
-                    .WithMany(n => n.PokemonBattles)
-                    .HasForeignKey(pb => pb.NatureId)
-                    .OnDelete(DeleteBehavior.Restrict); // No se podrá eliminar nature si tiene pokemon relacionados
-            
-            entity.HasOne(pb => pb.Movement1)
-                    .WithMany()
-                    .HasForeignKey(pb => pb.MovementId1)
-                    .OnDelete(DeleteBehavior.Restrict);
-            
-            entity.HasOne(pb => pb.Movement2)
-                    .WithMany()
-                    .HasForeignKey(pb => pb.MovementId2)
-                    .OnDelete(DeleteBehavior.Restrict);
-            
-            entity.HasOne(pb => pb.Movement3)
-                    .WithMany()
-                    .HasForeignKey(pb => pb.MovementId3)
-                    .OnDelete(DeleteBehavior.Restrict);
-            
-            entity.HasOne(pb => pb.Movement4)
-                    .WithMany()
-                    .HasForeignKey(pb => pb.MovementId4)
-                    .OnDelete(DeleteBehavior.Restrict);
-            
-            entity.HasOne(pb => pb.Pokemon)
-                    .WithMany(p => p.PokemonBattles)
-                    .HasForeignKey(pb => pb.PokemonId)
-                    .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
