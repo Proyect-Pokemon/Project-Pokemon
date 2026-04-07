@@ -43,8 +43,6 @@ namespace ProjectPokemon.Services.Internal {
                 Category = move.Meta.Category.Name,
                 Type = System.Enum.Parse<PokeType>(move.Type.Name, true)
             };
-
-
         }
 
         private PokeTarget ConvertTarget(string apiTarget) {
@@ -71,6 +69,5 @@ namespace ProjectPokemon.Services.Internal {
                 "status" => MovementClass.Status
             };
         }
-
     }
 }
