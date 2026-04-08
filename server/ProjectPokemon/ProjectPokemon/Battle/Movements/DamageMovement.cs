@@ -58,7 +58,7 @@ public class DamageMovement : BattleMovement {
     }
 
     protected virtual double GetTypeEffectiveness(PokemonBattle defender) {
-        // TODO: Implementar tabla de tipos
+        // TO DO: Implementar tabla de tipos
         // Debería consultar una matriz de efectividad de tipos
         return 1.0;
     }
