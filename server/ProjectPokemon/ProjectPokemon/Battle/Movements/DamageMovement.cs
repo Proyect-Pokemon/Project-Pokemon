@@ -42,7 +42,7 @@ public class DamageMovement : BattleMovement {
 
         double damage = baseDamage;
         damage *= GetStabModifier(attacker);
-        damage *= GetTypeEffectiveness(defender);
+        damage *= GetEffectiveness(defender);
         damage *= GetRandomModifier();
         damage *= GetCriticalModifier(attacker);
 
@@ -57,10 +57,8 @@ public class DamageMovement : BattleMovement {
         return 1.0;
     }
 
-    protected virtual double GetTypeEffectiveness(PokemonBattle defender) {
-        // TO DO: Implementar tabla de tipos
-        // Debería consultar una matriz de efectividad de tipos
-        return 1.0;
+    protected virtual double GetEffectiveness(PokemonBattle defender) {
+        return TypeEffectivenessChart.GetTypeEffectivenes(Type, defender.Type1, defender.Type2);
     }
 
     // Calcular el modificador aleatorio de máx y mín damage
