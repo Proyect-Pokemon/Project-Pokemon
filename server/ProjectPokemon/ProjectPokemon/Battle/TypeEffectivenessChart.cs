@@ -165,14 +165,7 @@ public static class TypeEffectivenessChart {
         }
     };
 
-    // Efectividad contra un pokemon de un solo tipo
-    private static double GetSingleTypeEffectiveness(PokeType attackType, PokeType defenderType) {
-        if (_chart.TryGetValue(attackType, out var match) && match.TryGetValue(defenderType, out var effectiveness)) {
-            return effectiveness;
-        }
-        return 1.0; // La efectividad es neutra por defecto
-    }
-
+    // Comprobar la efectividad total de un movimiento a un pokemon (tenga uno o dos tipos)
     public static double GetTypeEffectivenes(PokeType attackType, PokeType defenderType1, PokeType? defenderType2 = null) {
         double effectiveness = GetSingleTypeEffectiveness(attackType, defenderType1);
 
@@ -180,5 +173,13 @@ public static class TypeEffectivenessChart {
             effectiveness *= GetSingleTypeEffectiveness(attackType, defenderType2.Value);
         }
         return effectiveness;
+    }
+
+    // Efectividad de un tipo contra un solo tipo
+    private static double GetSingleTypeEffectiveness(PokeType attackType, PokeType defenderType) {
+        if (_chart.TryGetValue(attackType, out var match) && match.TryGetValue(defenderType, out var effectiveness)) {
+            return effectiveness;
+        }
+        return 1.0; // La efectividad es neutra por defecto
     }
 }
