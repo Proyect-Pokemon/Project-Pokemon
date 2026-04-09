@@ -28,6 +28,5 @@ public class Pokemon {
     public required PokeType Type1 { get; set; }
     public PokeType? Type2 { get; set; }
     public ICollection<PokemonMovement> PokemonMovements { get; set; } = new List<PokemonMovement>();
-    public ICollection<PokemonBattle> PokemonBattles { get; set; } = new List<PokemonBattle>();
     public ICollection<PokemonTeam> PokemonTeams { get; set; } = new List<PokemonTeam>();
 }

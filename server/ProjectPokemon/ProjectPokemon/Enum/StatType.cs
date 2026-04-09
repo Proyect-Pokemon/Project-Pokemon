@@ -5,6 +5,8 @@
         SpecialAttack,
         SpecialDefense,
         Speed,
-        Hp
+        Hp,
+        Accuracy,
+        Evasion
     }
 }
