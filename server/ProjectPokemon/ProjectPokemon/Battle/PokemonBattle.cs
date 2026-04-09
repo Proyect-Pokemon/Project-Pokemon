@@ -105,15 +105,15 @@ public class PokemonBattle {
     // Obtiene el modificador de naturaleza para una estadística
     private double GetNatureModifier(StatType boosted, StatType dropped, StatType currentStat) {
         if (boosted == dropped) {
-            return 1.0; // Naturaleza neutra
+            return 1.0; // Naturaleza neutra (sube y baja la misma stat)
         }
-        if (boosted == currentStat) {
+        else if (boosted == currentStat) {
             return 1.1; // +10%
         }
-        if (dropped == currentStat) {
+        else if (dropped == currentStat) {
             return 0.9; // -10%
         }
-        return 1.0; // Sin modificador
+        return 1.0; // Debe tener un return por si ninguno de los anteriores funciona
     }
 
     // Inicializa el HP y los stages del Pokémon al entrar en combate
