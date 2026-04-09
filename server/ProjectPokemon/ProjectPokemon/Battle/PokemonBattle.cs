@@ -71,34 +71,49 @@ public class PokemonBattle {
         if (pokemonTeam.Movement4 != null) Movements.Add(BattleMovementFactory.Create(pokemonTeam.Movement4));
     }
 
-    // Comprueba qué estadísticas tienen que modificarse por la naturaleza.
+    // Calcula las estadísticas del Pokémon
     private void CalculateBaseStats(Pokemon pokemon, Nature nature) {
-        // HP no se ve afectado por Nature
-        MaxHp = pokemon.Hp;
+        // Valores por defecto para competitivo
+        int level = 50;  // Nivel estándar competitivo
+        int iv = 31;     // IVs máximos
+        int ev = 0;      // Sin EVs (o podría ser 252)
 
-        // Aplicar modificadores de Nature a las demás stats
-        BaseAttack = ApplyNatureModifier(pokemon.Attack, nature.StatBoost, nature.StatDrop, StatType.Attack);
-        BaseDefense = ApplyNatureModifier(pokemon.Defense, nature.StatBoost, nature.StatDrop, StatType.Defense);
-        BaseSpecialAttack = ApplyNatureModifier(pokemon.SpecialAttack, nature.StatBoost, nature.StatDrop, StatType.SpecialAttack);
-        BaseSpecialDefense = ApplyNatureModifier(pokemon.SpecialDefense, nature.StatBoost, nature.StatDrop, StatType.SpecialDefense);
-        BaseSpeed = ApplyNatureModifier(pokemon.Speed, nature.StatBoost, nature.StatDrop, StatType.Speed);
+        // Fórmula para calcular la vida
+        // HP = floor(((2 * Base) + IV + floor(EV/4)) * Nivel / 100) + Nivel + 10
+        MaxHp = (int)Math.Floor(((2 * pokemon.Hp + iv + (ev / 4.0)) * level) / 100) + level + 10;
+
+        // Fórmula para el resto de stats
+        // Stat = floor((floor(((2 * Base) + IV + floor(EV/4)) * Nivel / 100) + 5) * Naturaleza)
+        BaseAttack = CalculateStat(pokemon.Attack, level, iv, ev, nature.StatBoost, nature.StatDrop, StatType.Attack);
+        BaseDefense = CalculateStat(pokemon.Defense, level, iv, ev, nature.StatBoost, nature.StatDrop, StatType.Defense);
+        BaseSpecialAttack = CalculateStat(pokemon.SpecialAttack, level, iv, ev, nature.StatBoost, nature.StatDrop, StatType.SpecialAttack);
+        BaseSpecialDefense = CalculateStat(pokemon.SpecialDefense, level, iv, ev, nature.StatBoost, nature.StatDrop, StatType.SpecialDefense);
+        BaseSpeed = CalculateStat(pokemon.Speed, level, iv, ev, nature.StatBoost, nature.StatDrop, StatType.Speed);
     }
 
-    // Aplica el modificador de la naturaleza a la estadística correspondiente. +10% o -10%
-    private int ApplyNatureModifier(int baseStat, StatType boosted, StatType dropped, StatType currentStat) {
-        double modifier = 1.0;
+    // Calcula una estadística usando la fórmula oficial de Pokémon
+    private int CalculateStat(int baseStat, int level, int iv, int ev, StatType natureBoosted, StatType natureDropped, StatType currentStat) {
+        // Cálculo base: floor(((2 × Base) + IV + floor(EV/4)) × Nivel / 100) + 5
+        int statValue = (int)Math.Floor(((2 * baseStat + iv + (ev / 4.0)) * level) / 100) + 5;
 
+        // Aplicar modificador de naturaleza
+        double natureModifier = GetNatureModifier(natureBoosted, natureDropped, currentStat);
+
+        return (int)Math.Floor(statValue * natureModifier);
+    }
+
+    // Obtiene el modificador de naturaleza para una estadística
+    private double GetNatureModifier(StatType boosted, StatType dropped, StatType currentStat) {
         if (boosted == dropped) {
-            modifier = 1.0;
+            return 1.0; // Naturaleza neutra
         }
-        else if (boosted == currentStat) {
-            modifier = 1.1; // +10%
+        if (boosted == currentStat) {
+            return 1.1; // +10%
         }
-        else if (dropped == currentStat) {
-            modifier = 0.9; // -10%
+        if (dropped == currentStat) {
+            return 0.9; // -10%
         }
-
-        return (int)Math.Floor(baseStat * modifier);
+        return 1.0; // Sin modificador
     }
 
     // Inicializa el HP y los stages del Pokémon al entrar en combate
