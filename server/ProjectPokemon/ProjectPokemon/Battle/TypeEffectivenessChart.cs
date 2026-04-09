@@ -166,7 +166,7 @@ public static class TypeEffectivenessChart {
     };
 
     // Comprobar la efectividad total de un movimiento a un pokemon (tenga uno o dos tipos)
-    public static double GetTypeEffectivenes(PokeType attackType, PokeType defenderType1, PokeType? defenderType2 = null) {
+    public static double GetTypeEffectiveness(PokeType attackType, PokeType defenderType1, PokeType? defenderType2 = null) {
         double effectiveness = GetSingleTypeEffectiveness(attackType, defenderType1);
 
         if (defenderType2.HasValue) {

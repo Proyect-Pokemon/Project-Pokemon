@@ -41,9 +41,14 @@ public abstract class BattleMovement : Movement {
             return true;
         }
 
+        // Calcular el modificador por stages (precisión del atacante y evasión del defensor)
+        int stageModifier = attacker.AccuracyStage - defender.EvasionStage;
+        double accuracyMultiplier = PokemonBattle.GetAccuracyEvasionStageMultiplier(stageModifier);
+
+        double finalAccuracy = Accuracy.Value * accuracyMultiplier;
+
         Random random = new Random();
-        int roll = random.Next(1, 101);
-        return roll <= Accuracy;
+        return random.Next(0, 100) < finalAccuracy;
     }
 
     // Realizar el movimiento. Método abstracto que cada tipo de movimiento implementará diferente

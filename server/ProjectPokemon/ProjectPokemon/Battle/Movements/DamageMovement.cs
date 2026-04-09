@@ -30,9 +30,12 @@ public class DamageMovement : BattleMovement {
     }
 
     public virtual int CalculateDamage(PokemonBattle attacker, PokemonBattle defender) {
-        // Averiguar si el movimiento es físico o especial, y usar el stat que corresponda
-        int attackStat = MovementClass == MovementClass.Physical ? attacker.CurrentAttack : attacker.CurrentSpecialAttack;
-        int defenseStat = MovementClass == MovementClass.Physical ? defender.CurrentDefense : defender.CurrentSpecialDefense;
+        // Averiguar si el movimiento es físico o especial, y usar el stat que corresponda con stages aplicados
+        StatType attackStatType = MovementClass == MovementClass.Physical ? StatType.Attack : StatType.SpecialAttack;
+        StatType defenseStatType = MovementClass == MovementClass.Physical ? StatType.Defense : StatType.SpecialDefense;
+
+        int attackStat = attacker.GetModifiedStat(attackStatType);
+        int defenseStat = defender.GetModifiedStat(defenseStatType);
 
         // Calcular el daño base
         int level = 50;
@@ -58,7 +61,7 @@ public class DamageMovement : BattleMovement {
     }
 
     protected virtual double GetEffectiveness(PokemonBattle defender) {
-        return TypeEffectivenessChart.GetTypeEffectivenes(Type, defender.Type1, defender.Type2);
+        return TypeEffectivenessChart.GetTypeEffectiveness(Type, defender.Type1, defender.Type2);
     }
 
     // Calcular el modificador aleatorio de máx y mín damage

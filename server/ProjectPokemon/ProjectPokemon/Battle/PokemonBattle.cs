@@ -20,19 +20,21 @@ public class PokemonBattle {
 
     // Estadísticas base con la naturaleza aplicada
     public int MaxHp { get; private set; }
+    public int CurrentHp { get; set; }
     public int BaseAttack { get; private set; }
     public int BaseDefense { get; private set; }
     public int BaseSpecialAttack { get; private set; }
     public int BaseSpecialDefense { get; private set; }
     public int BaseSpeed { get; private set; }
 
-    // Estadísticas actuales durante el combate
-    public int CurrentHp { get; set; }
-    public int CurrentAttack { get; set; }
-    public int CurrentDefense { get; set; }
-    public int CurrentSpecialAttack { get; set; }
-    public int CurrentSpecialDefense { get; set; }
-    public int CurrentSpeed { get; set; }
+    // Stages de modificación temporal (-6 a +6, se resetean al cambiar de Pokémon)
+    public int AttackStage { get; set; }
+    public int DefenseStage { get; set; }
+    public int SpecialAttackStage { get; set; }
+    public int SpecialDefenseStage { get; set; }
+    public int SpeedStage { get; set; }
+    public int AccuracyStage { get; set; }
+    public int EvasionStage { get; set; }
 
     // Estado alterado actual
     public PokeStatus Status { get; set; }
@@ -58,8 +60,8 @@ public class PokemonBattle {
         // Calcular estadísticas base aplicando Nature
         CalculateBaseStats(pokemonTeam.Pokemon, pokemonTeam.Nature);
 
-        // Inicializar estadísticas actuales
-        ResetCurrentStats();
+        // Inicializar HP y stages
+        InitializeBattleStats();
 
         // Convertir movimientos usando el factory para crear el tipo correcto
         Movements = new List<BattleMovement>();
@@ -69,7 +71,7 @@ public class PokemonBattle {
         if (pokemonTeam.Movement4 != null) Movements.Add(BattleMovementFactory.Create(pokemonTeam.Movement4));
     }
 
-    // Comprueba qué las estadísticas tienen que modificarse por la naturaleza.
+    // Comprueba qué estadísticas tienen que modificarse por la naturaleza.
     private void CalculateBaseStats(Pokemon pokemon, Nature nature) {
         // HP no se ve afectado por Nature
         MaxHp = pokemon.Hp;
@@ -86,7 +88,10 @@ public class PokemonBattle {
     private int ApplyNatureModifier(int baseStat, StatType boosted, StatType dropped, StatType currentStat) {
         double modifier = 1.0;
 
-        if (boosted == currentStat) {
+        if (boosted == dropped) {
+            modifier = 1.0;
+        }
+        else if (boosted == currentStat) {
             modifier = 1.1; // +10%
         }
         else if (dropped == currentStat) {
@@ -96,15 +101,21 @@ public class PokemonBattle {
         return (int)Math.Floor(baseStat * modifier);
     }
 
-    // Reinicia las estadísticas del pokemon a sus valores base.
-    // Por ejemplo, se usaría cuando el pokemon sale del combate
-    private void ResetCurrentStats() {
+    // Inicializa el HP y los stages del Pokémon al entrar en combate
+    private void InitializeBattleStats() {
         CurrentHp = MaxHp;
-        CurrentAttack = BaseAttack;
-        CurrentDefense = BaseDefense;
-        CurrentSpecialAttack = BaseSpecialAttack;
-        CurrentSpecialDefense = BaseSpecialDefense;
-        CurrentSpeed = BaseSpeed;
+        ResetStages();
+    }
+
+    // Reinicia todos los stages a 0
+    public void ResetStages() {
+        AttackStage = 0;
+        DefenseStage = 0;
+        SpecialAttackStage = 0;
+        SpecialDefenseStage = 0;
+        SpeedStage = 0;
+        AccuracyStage = 0;
+        EvasionStage = 0;
     }
 
     // Cálculo del daño que recibe el pokemon
@@ -155,5 +166,100 @@ public class PokemonBattle {
 
     public void ClearSecondaryStatuses() {
         SecondaryStatuses = PokeSecondaryStatus.None;
+    }
+
+    // Modifica un stage específico (limitado entre -6 y +6)
+    public void ModifyStage(StatType stat, int change) {
+        switch (stat) {
+            case StatType.Attack:
+                AttackStage = Math.Clamp(AttackStage + change, -6, 6);
+                break;
+            case StatType.Defense:
+                DefenseStage = Math.Clamp(DefenseStage + change, -6, 6);
+                break;
+            case StatType.SpecialAttack:
+                SpecialAttackStage = Math.Clamp(SpecialAttackStage + change, -6, 6);
+                break;
+            case StatType.SpecialDefense:
+                SpecialDefenseStage = Math.Clamp(SpecialDefenseStage + change, -6, 6);
+                break;
+            case StatType.Speed:
+                SpeedStage = Math.Clamp(SpeedStage + change, -6, 6);
+                break;
+            case StatType.Accuracy:
+                AccuracyStage = Math.Clamp(AccuracyStage + change, -6, 6);
+                break;
+            case StatType.Evasion:
+                EvasionStage = Math.Clamp(EvasionStage + change, -6, 6);
+                break;
+        }
+    }
+
+    // Obtiene el multiplicador de stage para estadísticas normales (-6 a +6)
+    // Attack, Defense, SpecialAttack, SpecialDefense, Speed
+    public static double GetStatStageMultiplier(int stage) {
+        stage = Math.Clamp(stage, -6, 6);
+
+        return stage switch {
+            -6 => 0.25,
+            -5 => 0.29,
+            -4 => 0.33,
+            -3 => 0.4,
+            -2 => 0.5,
+            -1 => 0.67,
+            0 => 1.0,
+            1 => 1.5,
+            2 => 2.0,
+            3 => 2.5,
+            4 => 3.0,
+            5 => 3.5,
+            6 => 4.0,
+            _ => 1.0
+        };
+    }
+
+    // Obtiene el multiplicador de stage para Accuracy/Evasion (-6 a +6)
+    public static double GetAccuracyEvasionStageMultiplier(int stage) {
+        stage = Math.Clamp(stage, -6, 6);
+
+        return stage switch {
+            -6 => 0.33,
+            -5 => 0.38,
+            -4 => 0.43,
+            -3 => 0.5,
+            -2 => 0.6,
+            -1 => 0.75,
+            0 => 1.0,
+            1 => 1.33,
+            2 => 1.67,
+            3 => 2.0,
+            4 => 2.33,
+            5 => 2.67,
+            6 => 3.0,
+            _ => 1.0
+        };
+    }
+
+    // Obtiene el valor real de una estadística aplicando sus modificadores (stages)
+    public int GetModifiedStat(StatType stat) {
+        int baseStat = stat switch {
+            StatType.Attack => BaseAttack,
+            StatType.Defense => BaseDefense,
+            StatType.SpecialAttack => BaseSpecialAttack,
+            StatType.SpecialDefense => BaseSpecialDefense,
+            StatType.Speed => BaseSpeed,
+            _ => throw new ArgumentException($"No se puede obtener stat efectivo de {stat}")
+        };
+
+        int stage = stat switch {
+            StatType.Attack => AttackStage,
+            StatType.Defense => DefenseStage,
+            StatType.SpecialAttack => SpecialAttackStage,
+            StatType.SpecialDefense => SpecialDefenseStage,
+            StatType.Speed => SpeedStage,
+            _ => 0
+        };
+
+        return (int)Math.Floor(baseStat * GetStatStageMultiplier(stage));
     }
 }
