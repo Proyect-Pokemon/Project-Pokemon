@@ -1,9 +1,9 @@
 <div class="battle-mode-selector">
-    <div class="container">
+    <div class="container" [class.is-leaving]="isLeaving()">
         <h1 class="title">Elige un modo de combate</h1>
 
-        <div class="modes-container">
-            <button type="button" class="mode-button mode-cpu" (click)="goToVsMachine()">
+        <div class="modes-container" [class.is-leaving]="isLeaving()">
+            <button type="button" class="mode-button mode-cpu" [disabled]="isLeaving()" (click)="goToVsMachine()">
                 <span>VS. CPU</span>
             </button>
 

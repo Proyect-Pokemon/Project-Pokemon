@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -10,8 +10,14 @@ import { Router } from '@angular/router';
 })
 export class BattleModeSelect {
   private router = inject(Router);
+  isLeaving = signal(false);
 
   goToVsMachine(): void {
-    void this.router.navigate(['/battle-select']);
+    if (this.isLeaving()) return;
+
+    this.isLeaving.set(true);
+    setTimeout(() => {
+      void this.router.navigate(['/battle-select']);
+    }, 300);
   }
 }
