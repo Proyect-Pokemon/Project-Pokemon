@@ -1,0 +1,67 @@
+.team-selector {
+    width: min(900px, 92%);
+    margin: 2rem auto;
+    padding: 1.5rem;
+    border-radius: 14px;
+    background: linear-gradient(165deg, #f8fbff 0%, #ecf8ef 100%);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.team-selector h1 {
+    margin: 0 0 1rem 0;
+    font-size: 1.6rem;
+}
+
+.team-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.8rem;
+}
+
+.team-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    border: 2px solid #b8cad8;
+    border-radius: 12px;
+    padding: 0.9rem;
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: transform 120ms ease, border-color 120ms ease;
+}
+
+.team-card:hover {
+    transform: translateY(-2px);
+    border-color: #5e96bf;
+}
+
+.team-card.selected {
+    border-color: #1f6da4;
+    box-shadow: 0 0 0 2px rgba(31, 109, 164, 0.15);
+}
+
+.team-name {
+    font-weight: 700;
+}
+
+.team-id {
+    color: #4f6472;
+    font-size: 0.9rem;
+}
+
+.start-battle-btn {
+    margin-top: 1rem;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.1rem;
+    background-color: #1f6da4;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.start-battle-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}

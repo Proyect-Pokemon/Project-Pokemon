@@ -1,0 +1,96 @@
+.battle-mode-selector {
+    position: relative;
+    width: 100%;
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0094ae 0%, #002426 100%);
+    background-image: 
+        repeating-linear-gradient(0deg, transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
+        repeating-linear-gradient(90deg, transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
+        linear-gradient(135deg, #0094ae 0%, #002426 100%);
+    font-family: 'Arial Black', sans-serif;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.title {
+    font-size: 1.75rem;
+    color: #ffffff;
+    margin: 0;
+    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+    letter-spacing: 2px;
+}
+
+.modes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+    align-items: stretch;
+    width: 100%;
+    max-width: 600px;
+    padding: 0 1rem;
+}
+
+.mode-button {
+    position: relative;
+    padding: 2rem 3rem;
+    border: 5px solid #2d2d2d;
+    background: linear-gradient(90deg, #ffffff 0%, #e8dff5 100%);
+    color: #2d2d2d;
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transform: skewX(-8deg);
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.2);
+    transition: all 100ms ease;
+    text-transform: uppercase;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mode-button:not(:disabled):hover {
+    transform: skewX(-8deg) translateY(-4px);
+    box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.3);
+}
+
+.mode-button:not(:disabled):active {
+    transform: skewX(-8deg) translateY(-1px);
+    box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.2);
+}
+
+.mode-cpu {
+    background-color: #d4c5f0;
+    margin-left: -2rem;
+}
+
+.mode-online {
+    background-color: #d4c5f0;
+    margin-right: -2rem;
+}
+
+.mode-friend {
+    background-color: #d4c5f0;
+    margin-left: -2rem;
+}
+
+.mode-button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.mode-button span {
+    display: block;
+    text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.3);
+}

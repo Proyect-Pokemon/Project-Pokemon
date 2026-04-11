@@ -1,0 +1,30 @@
+<section class="team-selector">
+    <h1>Elige tu equipo para combatir</h1>
+
+    @if (isLoadingTeams()) {
+        <p>Cargando equipos...</p>
+    } @else if (teams().length === 0) {
+        <p>No tienes equipos creados. Crea uno en Team Builder para empezar.</p>
+    } @else {
+        <div class="team-list">
+            @for (team of teams(); track team.id) {
+                <button
+                    type="button"
+                    class="team-card"
+                    [class.selected]="selectedTeamId() === team.id"
+                    (click)="selectTeam(team.id)">
+                    <span class="team-name">{{ team.name }}</span>
+                    <span class="team-id">Equipo #{{ team.id }}</span>
+                </button>
+            }
+        </div>
+
+        <button
+            type="button"
+            class="start-battle-btn"
+            [disabled]="selectedTeamId() === null"
+            (click)="startBattle()">
+            Empezar combate
+        </button>
+    }
+</section>

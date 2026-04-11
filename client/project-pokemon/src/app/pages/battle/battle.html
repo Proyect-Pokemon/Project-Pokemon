@@ -1,4 +1,6 @@
-@if (battle()) {
+@if (isLoadingBattle()) {
+    <div>Cargando combate...</div>
+} @else {
     <div id="canvas">
         <div class="enemy">
             <app-life-bar
@@ -41,6 +43,4 @@
             ></app-finish-battle-dialog>
         }
     </div>
-} @else {
-    <div>Cargando combate...</div>
 }
