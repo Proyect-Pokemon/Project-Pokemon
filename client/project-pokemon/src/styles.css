@@ -1,4 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&display=swap');
+@font-face {
+    font-family: 'Satoshi';
+    src: url('/assets/fonts/Satoshi-Variable.woff2') format('woff2');
+    font-weight: 300 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Satoshi';
+    src: url('/assets/fonts/Satoshi-VariableItalic.woff2') format('woff2');
+    font-weight: 300 900;
+    font-style: italic;
+    font-display: swap;
+}
+
 :root {
     --primary-color: #F0F0F8;
     --secondary-color: #1B1227;
@@ -34,7 +49,7 @@ h5 { font-size: 14px; }
 
 body {
     margin: 0;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Satoshi', sans-serif;
 }
 
 button {

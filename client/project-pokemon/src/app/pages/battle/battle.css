@@ -55,3 +55,18 @@
     margin-right: 10px;
     position: relative;
 }
+
+@media (max-width: 800px) {
+    #canvas {
+        width: 96%;
+        padding: 18px 12px 0 12px;
+    }
+
+    .enemy img {
+        width: 28%;
+    }
+
+    .ally img {
+        width: 30%;
+    }
+}

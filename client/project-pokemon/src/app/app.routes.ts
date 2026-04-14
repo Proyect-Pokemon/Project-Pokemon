@@ -7,13 +7,17 @@ import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { TeamBuilder } from './pages/team-builder/team-builder';
 import { Battle } from './pages/battle/battle';
+import { BattleSelect } from './pages/battle-select/battle-select';
+import { BattleModeSelect } from './pages/battle-mode-select/battle-mode-select';
 import { redirectionGuard } from './guards/redirection-guard';
 import { adminGuard } from './guards/admin-guard';
 
 export const routes: Routes = [
     { path: 'about', component: About },
     { path: 'admin-panel', component: AdminPanel, canActivate: [redirectionGuard, adminGuard] },
-    { path: 'battle', component: Battle },
+    { path: 'battle', component: BattleModeSelect, canActivate: [redirectionGuard] },
+    { path: 'battle-select', component: BattleSelect, canActivate: [redirectionGuard] },
+    { path: 'battle/fight', component: Battle, canActivate: [redirectionGuard] },
     { path: 'friends', component: Friends, canActivate: [redirectionGuard] },
     { path: 'login', component: Login },
     { path: 'profile', component: Profile, canActivate: [redirectionGuard] },
