@@ -172,6 +172,25 @@ export class TeamBuilder {
     this.closePanel();
   }
 
+  handleMovementsUpdated(data: { pokemonTeamId: number; movementIds: (number | null)[] }): void {
+    this.selectedMovementIds = data.movementIds;
+    this.teams.update(teams => teams.map(team => ({
+      ...team,
+      pokemons: team.pokemons.map(pokemon =>
+        pokemon.id === data.pokemonTeamId
+          ? {
+              ...pokemon,
+              movementId1: data.movementIds[0] ?? pokemon.movementId1,
+              movementId2: data.movementIds[1] ?? null,
+              movementId3: data.movementIds[2] ?? null,
+              movementId4: data.movementIds[3] ?? null,
+            }
+          : pokemon
+      ),
+    })));
+    // TODO: Guardar en la API cuando el endpoint de actualización de movimientos esté disponible
+  }
+
   canAddMoreTeams(): boolean {
     return this.authService.currentUserId() !== null && this.teams().length < this.MAX_TEAMS;
   }

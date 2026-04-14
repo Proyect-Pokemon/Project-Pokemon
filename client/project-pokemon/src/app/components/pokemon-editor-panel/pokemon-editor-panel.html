@@ -30,7 +30,11 @@
                 (nicknameUpdated)="nicknameUpdated.emit($event)">
             </app-pokemon-preview>
 
-            <app-pokemon-moves-grid [movements]="movements()"></app-pokemon-moves-grid>
+            <app-pokemon-moves-grid
+                [movements]="movements()"
+                [allMovements]="allMovementsCache()"
+                (movementChanged)="onMovementChanged($event)">
+            </app-pokemon-moves-grid>
         } @else {
             <div class="empty-pokemon-preview" aria-label="Slot vacío">
                 <app-pokemon-search-panel

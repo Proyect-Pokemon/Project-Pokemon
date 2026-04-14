@@ -2,9 +2,79 @@
     <h3 class="moves-title">Movimientos</h3>
     <div class="moves-grid">
         @for (movement of movements; track $index) {
-            <button class="move-button" [class.empty]="!movement">
-                <span class="move-name">{{ movement?.name ?? 'Sin movimiento' }}</span>
+            <button
+                class="move-button"
+                [class.empty]="!movement"
+                [class]="movement ? 'move-button ' + getTypeClass(movement.type) : 'move-button empty'"
+                (click)="onMoveButtonClick($index)">
+                @if (movement) {
+                    <span class="move-slot-row">
+                        <span class="move-type-icon-wrapper">
+                            <img class="move-type-icon"
+                                [src]="getTypeIconSrc(movement.type)"
+                                [alt]="movement.type"
+                                (load)="onTypeIconLoad($event)"
+                                (error)="onTypeIconError($event)" />
+                        </span>
+                        <span class="move-name">{{ movement.name }}</span>
+                        <span class="move-pp-badge">{{ movement.pp }} PP</span>
+                    </span>
+                } @else {
+                    <span class="move-name">Sin movimiento</span>
+                }
             </button>
         }
     </div>
 </div>
+
+@if (openPickerIndex() !== null) {
+    <div class="picker-backdrop" (click)="closePicker()"></div>
+
+    <div class="picker-panel">
+        <div class="picker-header">
+            <span>Slot {{ (openPickerIndex() ?? 0) + 1 }} — Seleccionar movimiento</span>
+            <button class="picker-close-btn" (click)="closePicker()">✕</button>
+        </div>
+
+        <div class="picker-search-wrapper">
+            <input
+                class="picker-search"
+                type="text"
+                placeholder="Buscar por nombre o tipo..."
+                [value]="pickerSearchQuery()"
+                (input)="pickerSearchQuery.set($any($event.target).value)" />
+        </div>
+
+        <div class="picker-list">
+            <div class="move-option remove-option" (click)="onSelectMovement(null)">
+                <span class="remove-label">— Quitar movimiento</span>
+            </div>
+            @for (move of filteredMovements(); track move.id) {
+                <div class="move-option"
+                    [ngClass]="getTypeClass(move.type)"
+                    (click)="onSelectMovement(move)"
+                    [title]="move.description">
+                    <div class="move-option-left">
+                        <span class="move-option-type-icon-wrapper">
+                            <img class="move-option-type-icon"
+                                [src]="getTypeIconSrc(move.type)"
+                                [alt]="move.type"
+                                (error)="onTypeIconError($event)" />
+                        </span>
+                        <span class="move-option-type-badge" [ngClass]="getTypeClass(move.type)">{{ move.type }}</span>
+                        <span class="move-option-name">{{ move.name }}</span>
+                    </div>
+                    <div class="move-option-right">
+                        <span class="move-option-class">{{ getClassLabel(move.movementClass) }}</span>
+                        <span class="move-option-stat">POT: {{ move.power ?? '—' }}</span>
+                        <span class="move-option-stat">PREC: {{ move.accuracy !== null ? (move.accuracy + '%') : '—' }}</span>
+                        <span class="move-option-stat pp">PP: {{ move.pp }}</span>
+                    </div>
+                </div>
+            }
+            @if (filteredMovements().length === 0) {
+                <div class="picker-empty">No se encontraron movimientos.</div>
+            }
+        </div>
+    </div>
+}

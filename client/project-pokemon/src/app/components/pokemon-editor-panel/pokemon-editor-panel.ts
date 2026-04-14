@@ -65,6 +65,7 @@ export class PokemonEditorPanel {
     @Output() createPokemonTeam = new EventEmitter<PostPokemonTeamDto>();
     @Output() changeSlot = new EventEmitter<number>();
     @Output() nicknameUpdated = new EventEmitter<{ pokemonTeamId: number, nickname: string | null }>();
+    @Output() movementsUpdated = new EventEmitter<{ pokemonTeamId: number, movementIds: (number | null)[] }>();
 
     animationDirection = signal<'left' | 'right' | 'leftIn' | 'rightIn' | 'none'>('none');
     movements = signal<(Movement | null)[]>([null, null, null, null]);
@@ -118,7 +119,18 @@ export class PokemonEditorPanel {
         this.selectedNatureId.set(natureId);
     }
 
+    onMovementChanged(data: { index: number; movementId: number | null }): void {
+        const ids = [...this.movementIdsSignal()];
+        ids[data.index] = data.movementId;
+        this.movementIdsSignal.set(ids);
+
+        if (this.pokemonTeamId !== null) {
+            this.movementsUpdated.emit({ pokemonTeamId: this.pokemonTeamId, movementIds: ids });
+        }
+    }
+
     onPokemonSelected(pokemon: Pokemon) {
+        const ids = this.movementIdsSignal();
         this.createPokemonTeam.emit({
             nickname: null,
             shiny: false,
@@ -126,10 +138,10 @@ export class PokemonEditorPanel {
             teamId: this.teamId,
             pokemonId: pokemon.id,
             natureId: this.selectedNatureId(),
-            movementId1: 1,
-            movementId2: null,
-            movementId3: null,
-            movementId4: null,
+            movementId1: ids[0] ?? 1,
+            movementId2: ids[1] ?? null,
+            movementId3: ids[2] ?? null,
+            movementId4: ids[3] ?? null,
         });
     }
 
