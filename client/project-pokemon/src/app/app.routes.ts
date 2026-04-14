@@ -6,6 +6,7 @@ import { Friends } from './pages/friends/friends';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { TeamBuilder } from './pages/team-builder/team-builder';
+import { TeamEdit } from './pages/team-edit/team-edit';
 import { Battle } from './pages/battle/battle';
 import { BattleSelect } from './pages/battle-select/battle-select';
 import { BattleModeSelect } from './pages/battle-mode-select/battle-mode-select';
@@ -23,5 +24,6 @@ export const routes: Routes = [
     { path: 'profile', component: Profile, canActivate: [redirectionGuard] },
     { path: 'register', component: Register },
     { path: 'team-builder', component: TeamBuilder, canActivate: [redirectionGuard] },
+    { path: 'team-builder/:id', component: TeamEdit, canActivate: [redirectionGuard] },
     { path: '**', redirectTo: 'login', pathMatch: 'full' }
 ];

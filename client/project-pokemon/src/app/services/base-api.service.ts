@@ -53,4 +53,13 @@ export class BaseApiService {
       return false;
     }
   }
+
+  async delete(endpoint: string): Promise<boolean> {
+    try {
+      await this.apiService.delete(endpoint);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

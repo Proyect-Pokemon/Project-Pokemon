@@ -4,6 +4,7 @@ export interface GetAllPokemonTeamDto {
     id: number;
     nickname: string | null;
     shiny: boolean;
+    sex: string | null;
     slot: number;
     teamId: number;
     pokemonId: number;
@@ -18,6 +19,7 @@ export interface PokemonTeam {
     id: number;
     nickname: string | null;
     shiny: boolean;
+    sex: string | null;
     slot: number;
     teamId: number;
     pokemonId: number;

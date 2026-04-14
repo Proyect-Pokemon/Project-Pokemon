@@ -13,4 +13,12 @@ export class TeamService extends BaseApiService {
   async addTeam(dto: PostTeamDto): Promise<boolean> {
     return this.create<PostTeamDto>('team', dto);
   }
+
+  async deleteTeam(teamId: number): Promise<boolean> {
+    return this.delete(`team/${teamId}`);
+  }
+
+  async renameTeam(teamId: number, name: string): Promise<boolean> {
+    return this.update(`team/${teamId}`, { name });
+  }
 }

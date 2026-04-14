@@ -1,5 +1,11 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
 .team-select-page {
-    min-height: 85vh;
+    flex: 1;
     width: 100%;
     display: flex;
     align-items: center;
