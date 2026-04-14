@@ -19,7 +19,7 @@ export class PokemonNatureSelector {
         this.selectedNatureId.set(normalizedNatureId);
     }
 
-    @Output() natureChanged = new EventEmitter<number>();
+    @Output() natureChanged = new EventEmitter<Nature>();
 
     selectedNatureId = signal(1);
     isLoadingNatures = signal(false);
@@ -90,9 +90,14 @@ export class PokemonNatureSelector {
                 return;
             }
 
+            let resolvedId = selectedNatureId;
             if (!natures.some(nature => nature.id === selectedNatureId)) {
-                this.selectedNatureId.set(natures[0].id);
+                resolvedId = natures[0].id;
+                this.selectedNatureId.set(resolvedId);
             }
+
+            const nature = natures.find(n => n.id === resolvedId) ?? natures[0];
+            this.natureChanged.emit(nature);
         });
     }
 
@@ -123,7 +128,7 @@ export class PokemonNatureSelector {
         const value = Number(target.value);
         if (!Number.isNaN(value) && value > 0) {
             this.selectedNatureId.set(value);
-            this.natureChanged.emit(value);
+            // The effect will emit the updated Nature object
         }
     }
 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Pokemon } from '../../models/pokemon';
 import { PostPokemonTeamDto } from '../../models/pokemon-team';
 import { Movement } from '../../models/move';
+import { Nature } from '../../models/nature';
 import { MovementService } from '../../services/movement-service';
 import { PokemonService } from '../../services/pokemon-service';
 import { PokemonStatsDialog } from '../pokemon-stats-dialog/pokemon-stats-dialog';
@@ -74,6 +75,7 @@ export class PokemonEditorPanel {
     showStatsDialog = signal(false);
     currentPokemonStats = signal<PokemonStats | null>(null);
     selectedNatureId = signal(1);
+    selectedNature = signal<Nature | null>(null);
 
     get isEasterEggSlot(): boolean {
         return this.slot <= 0 || this.slot >= 7;
@@ -115,8 +117,9 @@ export class PokemonEditorPanel {
         this.allMovementsCache.set(allMovements);
     }
 
-    onSelectedNatureChanged(natureId: number) {
-        this.selectedNatureId.set(natureId);
+    onSelectedNatureChanged(nature: Nature) {
+        this.selectedNatureId.set(nature.id);
+        this.selectedNature.set(nature);
     }
 
     onMovementChanged(data: { index: number; movementId: number | null }): void {
@@ -154,6 +157,7 @@ export class PokemonEditorPanel {
         this.searchPanel?.reset();
         this.showStatsDialog.set(false);
         this.currentPokemonStats.set(null);
+        this.selectedNature.set(null);
         this.isSlotTransitioning = false;
         this.pendingSlot = null;
         this.animationDirection.set('none');
