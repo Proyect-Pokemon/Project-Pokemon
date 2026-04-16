@@ -1,10 +1,11 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ViewChild, ElementRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Team, GetTeamDto } from '../../models/team';
 import { PokemonTeam, GetAllPokemonTeamDto } from '../../models/pokemon-team';
 import { Movement } from '../../models/move';
 import { Nature } from '../../models/nature';
+import { Pokemon } from '../../models/pokemon';
 import { TeamService } from '../../services/team-service';
 import { PokemonTeamService } from '../../services/pokemon-team-service';
 import { PokemonService } from '../../services/pokemon-service';
@@ -19,6 +20,8 @@ import { NatureService } from '../../services/nature-service';
   styleUrls: ['./team-edit.css'],
 })
 export class TeamEdit {
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private teamService = inject(TeamService);
@@ -32,6 +35,11 @@ export class TeamEdit {
   allMovements = signal<Movement[]>([]);
   selectedSlot = signal(1);
   isLoading = signal(true);
+  searchQuery = signal('');
+  searchResults = signal<Pokemon[]>([]);
+  selectedPokemonFromSearch = signal<Pokemon | null>(null);
+  searchError = signal<string | null>(null);
+  allPokemonCache = signal<Pokemon[]>([]);
 
   readonly MAX_SLOTS = 6;
 
@@ -81,6 +89,15 @@ export class TeamEdit {
     return result;
   });
 
+  nextAvailableSlot = computed<number | null>(() => {
+    const currentSlots = this.slots();
+    const firstEmptyIndex = currentSlots.findIndex(slot => slot === null);
+    if (firstEmptyIndex === -1) {
+      return null;
+    }
+    return firstEmptyIndex + 1;
+  });
+
   displayName = computed<string | null>(() => {
     const pt = this.selectedPokemonTeam();
     if (!pt) return null;
@@ -97,6 +114,15 @@ export class TeamEdit {
   });
 
   constructor() {
+    effect(() => {
+      if (!this.isCurrentSlotAddable()) {
+        return;
+      }
+
+      this.updateSearchResults();
+      this.focusSearchInput();
+    });
+
     const teamId = Number(this.route.snapshot.paramMap.get('id'));
     if (!teamId) {
       this.router.navigate(['/team-builder']);
@@ -105,7 +131,7 @@ export class TeamEdit {
     }
   }
 
-  private async loadData(teamId: number) {
+  private async loadData(teamId: number, preferredSlot: number | null = null) {
     this.isLoading.set(true);
 
     const [allTeams, allPokemonTeams, allPokemons, natures, movements] = await Promise.all([
@@ -123,6 +149,7 @@ export class TeamEdit {
     }
 
     const pokemonMap = new Map(allPokemons.map(p => [p.id, p]));
+    this.allPokemonCache.set(allPokemons);
     const pokemons: PokemonTeam[] = allPokemonTeams
       .filter((pt: GetAllPokemonTeamDto) => pt.teamId === teamId)
       .map((pt: GetAllPokemonTeamDto): PokemonTeam => ({
@@ -145,10 +172,161 @@ export class TeamEdit {
     this.allNatures.set(natures);
     this.allMovements.set(movements);
 
-    const firstFilledSlot = pokemons.sort((a, b) => a.slot - b.slot)[0]?.slot ?? 1;
-    this.selectedSlot.set(firstFilledSlot);
+    const firstFilledSlot = [...pokemons].sort((a, b) => a.slot - b.slot)[0]?.slot ?? 1;
+    const nextSelectedSlot = preferredSlot && preferredSlot >= 1 && preferredSlot <= this.MAX_SLOTS
+      ? preferredSlot
+      : firstFilledSlot;
+    this.selectedSlot.set(nextSelectedSlot);
 
     this.isLoading.set(false);
+
+    this.tryPrepareSearchPanel();
+  }
+
+  isSlotSelectable(slotNumber: number): boolean {
+    const slot = this.slots()[slotNumber - 1];
+    if (slot !== null) {
+      return true;
+    }
+    return this.nextAvailableSlot() === slotNumber;
+  }
+
+  isNextAvailableSlot(slotNumber: number): boolean {
+    const slot = this.slots()[slotNumber - 1];
+    return slot === null && this.nextAvailableSlot() === slotNumber;
+  }
+
+  isCurrentSlotAddable(): boolean {
+    return this.selectedPokemonTeam() === null && this.nextAvailableSlot() === this.selectedSlot();
+  }
+
+  onSlotSelect(slotNumber: number) {
+    if (!this.isSlotSelectable(slotNumber)) {
+      return;
+    }
+
+    this.selectedSlot.set(slotNumber);
+    this.tryPrepareSearchPanel();
+  }
+
+  async onPokemonSelected(pokemon: Pokemon) {
+    const currentTeam = this.team();
+    if (!currentTeam || !this.isCurrentSlotAddable()) {
+      return;
+    }
+
+    const targetSlot = this.selectedSlot();
+
+    const created = await this.pokemonTeamService.addPokemonTeam({
+      nickname: null,
+      shiny: false,
+      slot: targetSlot,
+      teamId: currentTeam.id,
+      pokemonId: pokemon.id,
+      natureId: 1,
+      movementId1: 1,
+      movementId2: null,
+      movementId3: null,
+      movementId4: null,
+    });
+
+    if (!created) {
+      return;
+    }
+
+    await this.loadData(currentTeam.id, targetSlot);
+  }
+
+  private tryPrepareSearchPanel() {
+    if (!this.isCurrentSlotAddable()) {
+      return;
+    }
+
+    setTimeout(() => {
+      this.updateSearchResults();
+      this.focusSearchInput();
+    }, 0);
+  }
+
+  onSearchInput(event: Event) {
+    const target = event.target as HTMLInputElement | null;
+    this.searchQuery.set(target?.value ?? '');
+    this.selectedPokemonFromSearch.set(null);
+    this.updateSearchResults();
+  }
+
+  selectPokemonFromGrid(pokemon: Pokemon) {
+    this.selectedPokemonFromSearch.set(pokemon);
+  }
+
+  async onAddPokemonFromSearch() {
+    const pokemon = this.selectedPokemonFromSearch();
+    if (!pokemon) {
+      return;
+    }
+
+    await this.onPokemonSelected(pokemon);
+    this.resetSearchState();
+  }
+
+  private updateSearchResults() {
+    const cache = this.allPokemonCache();
+    if (!cache.length) {
+      return;
+    }
+
+    const query = this.searchQuery().trim();
+    this.searchError.set(null);
+
+    if (!query) {
+      this.searchResults.set([...cache].sort((a, b) => a.id - b.id));
+      return;
+    }
+
+    const numericId = Number(query);
+    if (!Number.isNaN(numericId)) {
+      const foundById = cache.filter(p => p.id === numericId);
+      if (!foundById.length) {
+        this.searchError.set('No se encontró Pokémon con ese número.');
+        this.searchResults.set([]);
+        return;
+      }
+
+      this.searchResults.set(foundById);
+      if (foundById.length === 1) {
+        this.selectedPokemonFromSearch.set(foundById[0]);
+      }
+      return;
+    }
+
+    const normalizedQuery = query.toLowerCase();
+    const foundByName = cache
+      .filter(p => p.name.toLowerCase().includes(normalizedQuery))
+      .sort((a, b) => a.id - b.id);
+
+    if (!foundByName.length) {
+      this.searchError.set('No se encontraron Pokémon con ese nombre.');
+      this.searchResults.set([]);
+      return;
+    }
+
+    this.searchResults.set(foundByName);
+    if (foundByName.length === 1) {
+      this.selectedPokemonFromSearch.set(foundByName[0]);
+    }
+  }
+
+  private resetSearchState() {
+    this.searchQuery.set('');
+    this.searchResults.set([]);
+    this.selectedPokemonFromSearch.set(null);
+    this.searchError.set(null);
+  }
+
+  private focusSearchInput() {
+    setTimeout(() => {
+      this.searchInput?.nativeElement.focus();
+    }, 0);
   }
 
   getStatValue(key: string): number | string {

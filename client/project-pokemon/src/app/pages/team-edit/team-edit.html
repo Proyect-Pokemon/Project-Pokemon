@@ -17,6 +17,7 @@
         <div class="main-area">
 
             <!-- ── Left: Stats panel ───────────────────────────────── -->
+            @if (selectedPokemonTeam()) {
             <div class="stats-panel card">
 
                 <div class="pokemon-header">
@@ -71,25 +72,90 @@
                     <span class="nature-value">{{ natureName() }}</span>
                 </div>
             </div>
+            }
 
             <!-- ── Center: Sprite area ────────────────────────────── -->
             <div class="sprite-area">
-                <div class="sprite-container">
-                    <span class="pokemon-number">#{{ padId(selectedPokemonTeam()?.pokemonId) }}</span>
-                    @if (selectedSprite(); as sprite) {
-                        <img
-                            [src]="sprite"
-                            [alt]="displayName() ?? 'Pokémon'"
-                            class="pokemon-sprite"
-                        />
-                    } @else {
+                <ng-container *ngIf="selectedPokemonTeam(); else emptySelectedSlot">
+                    <div class="sprite-container">
+                        <span class="pokemon-number">#{{ padId(selectedPokemonTeam()?.pokemonId) }}</span>
+                        @if (selectedSprite(); as sprite) {
+                            <img
+                                [src]="sprite"
+                                [alt]="displayName() ?? 'Pokémon'"
+                                class="pokemon-sprite"
+                            />
+                        } @else {
+                            <div class="empty-slot-placeholder">?</div>
+                        }
+                    </div>
+                    <button class="edit-pokemon-btn">Editar Pokémon</button>
+                </ng-container>
+
+                <ng-template #emptySelectedSlot>
+                    <ng-container *ngIf="isCurrentSlotAddable(); else unavailableSlotPlaceholder">
+                        <div class="add-pokemon-panel">
+                            <div class="search-container">
+                                <input
+                                    #searchInput
+                                    type="text"
+                                    placeholder="Buscar por nombre o número"
+                                    [value]="searchQuery()"
+                                    (input)="onSearchInput($event)"
+                                    class="search-input"
+                                >
+                            </div>
+
+                            @if (searchError()) {
+                                <p class="search-error">{{ searchError() }}</p>
+                            }
+
+                            @if (selectedPokemonFromSearch()) {
+                                <div class="selected-pokemon-preview">
+                                    <h3 class="pokemon-display-name">{{ selectedPokemonFromSearch()?.name }}</h3>
+                                    <div class="pokemon-sprite-container">
+                                        <img
+                                            [src]="selectedPokemonFromSearch()?.spriteFront"
+                                            [alt]="selectedPokemonFromSearch()?.name"
+                                            class="pokemon-preview-sprite"
+                                        >
+                                        @if (selectedPokemonFromSearch()?.id) {
+                                            <span class="pokemon-search-number">#{{ ('00' + selectedPokemonFromSearch()?.id).slice(-3) }}</span>
+                                        }
+                                    </div>
+                                </div>
+                                <button class="add-pokemon-button" (click)="onAddPokemonFromSearch()">
+                                    Añadir a equipo
+                                </button>
+                            }
+
+                            @if (searchResults().length > 0 && !selectedPokemonFromSearch()) {
+                                <div class="pokemon-grid">
+                                    @for (pokemon of searchResults(); track pokemon.id) {
+                                        <button
+                                            class="pokemon-grid-item"
+                                            (click)="selectPokemonFromGrid(pokemon)"
+                                        >
+                                            <img [src]="pokemon.miniSprite" [alt]="pokemon.name" class="pokemon-grid-sprite">
+                                            <span class="pokemon-grid-number">#{{ ('00' + pokemon.id).slice(-3) }}</span>
+                                            <span class="pokemon-grid-name">{{ pokemon.name }}</span>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </ng-container>
+                </ng-template>
+
+                <ng-template #unavailableSlotPlaceholder>
+                    <div class="sprite-container">
                         <div class="empty-slot-placeholder">?</div>
-                    }
-                </div>
-                <button class="edit-pokemon-btn">Editar Pokémon</button>
+                    </div>
+                </ng-template>
             </div>
 
             <!-- ── Right: Moves panel ─────────────────────────────── -->
+            @if (selectedPokemonTeam()) {
             <div class="moves-panel card">
                 <h3 class="moves-title">Movimientos</h3>
                 <div class="moves-list">
@@ -110,6 +176,7 @@
                     }
                 </div>
             </div>
+            }
 
         </div>
 
@@ -119,7 +186,10 @@
                 <button
                     class="slot-btn"
                     [class.active]="selectedSlot() === $index + 1"
-                    (click)="selectedSlot.set($index + 1)"
+                    [class.addable]="isNextAvailableSlot($index + 1)"
+                    [class.locked]="!isSlotSelectable($index + 1)"
+                    [disabled]="!isSlotSelectable($index + 1)"
+                    (click)="onSlotSelect($index + 1)"
                 >
                     @if (slot !== null && slot.pokemon !== null) {
                         <img
@@ -127,6 +197,8 @@
                             [alt]="slot.pokemon.name"
                             class="slot-mini-sprite"
                         />
+                    } @else if (isNextAvailableSlot($index + 1)) {
+                        <span class="slot-plus">+</span>
                     }
                 </button>
             }
