@@ -64,7 +64,16 @@ export class TeamEdit {
 
   natureName = computed<string>(() => {
     const n = this.selectedNature();
-    return n ? this.capitalize(n.name) : '—';
+    if (!n) return '—';
+    const key = n.name.toLowerCase().replace(/[\s_\-]/g, '');
+    const esNames: Record<string, string> = {
+      hardy: 'Fuerte', bold: 'Osada', modest: 'Modesta', calm: 'Serena', timid: 'Miedosa',
+      lonely: 'Huraña', docile: 'Dócil', mild: 'Afable', gentle: 'Amable', hasty: 'Activa',
+      adamant: 'Firme', impish: 'Agitada', bashful: 'Tímida', careful: 'Cauta', jolly: 'Alegre',
+      naughty: 'Pícara', lax: 'Floja', rash: 'Alocada', quirky: 'Rara', naive: 'Ingenua',
+      brave: 'Audaz', relaxed: 'Plácida', quiet: 'Mansa', sassy: 'Grosera', serious: 'Seria',
+    };
+    return esNames[key] ?? this.capitalize(n.name);
   });
 
   selectedMovements = computed<(Movement | null)[]>(() => {
@@ -396,5 +405,15 @@ export class TeamEdit {
 
   goBack() {
     this.router.navigate(['/team-builder']);
+  }
+
+  goToPokemonEdit() {
+    const currentTeam = this.team();
+    const selectedPokemonTeam = this.selectedPokemonTeam();
+    if (!currentTeam || !selectedPokemonTeam) {
+      return;
+    }
+
+    this.router.navigate(['/team-builder', currentTeam.id, 'pokemon', selectedPokemonTeam.id, 'edit']);
   }
 }

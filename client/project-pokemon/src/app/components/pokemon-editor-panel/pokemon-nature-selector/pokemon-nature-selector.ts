@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, signal, computed, effect } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NatureService } from '../../../services/nature-service';
 import { Nature } from '../../../models/nature';
@@ -11,6 +11,8 @@ import { Nature } from '../../../models/nature';
     styleUrls: ['./pokemon-nature-selector.css'],
 })
 export class PokemonNatureSelector {
+    @ViewChild('natureSelect') natureSelect?: ElementRef<HTMLSelectElement>;
+
     private readonly natureService = inject(NatureService);
 
     @Input() set natureId(value: number | null) {
@@ -24,7 +26,6 @@ export class PokemonNatureSelector {
     selectedNatureId = signal(1);
     isLoadingNatures = signal(false);
     natureError = signal<string | null>(null);
-    isNatureSectionExpanded = signal(false);
     allNaturesCache = signal<Nature[]>([]);
     private initialNatureId = signal(1);
 
@@ -133,7 +134,30 @@ export class PokemonNatureSelector {
     }
 
     toggleNatureSection() {
-        this.isNatureSectionExpanded.update(value => !value);
+        if (this.isLoadingNatures() || this.natureError()) {
+            return;
+        }
+
+        this.openNaturePicker();
+    }
+
+    private openNaturePicker() {
+        // Open the native select in the same interaction flow.
+        setTimeout(() => {
+            const select = this.natureSelect?.nativeElement;
+            if (!select) {
+                return;
+            }
+
+            select.focus();
+            const pickerCapable = select as HTMLSelectElement & { showPicker?: () => void };
+            if (typeof pickerCapable.showPicker === 'function') {
+                pickerCapable.showPicker();
+                return;
+            }
+
+            select.click();
+        }, 0);
     }
 
     getNatureDescriptor(nature: Nature): string {
@@ -150,7 +174,7 @@ export class PokemonNatureSelector {
     }
 
     getNatureName(nature: Nature): string {
-        const normalizedName = nature.name.toLowerCase();
+        const normalizedName = nature.name.toLowerCase().replace(/[\s_\-]/g, '');
         return this.natureNames[normalizedName] ?? nature.name;
     }
 
@@ -168,6 +192,5 @@ export class PokemonNatureSelector {
 
     resetNatureSelection() {
         this.selectedNatureId.set(this.initialNatureId());
-        this.isNatureSectionExpanded.set(false);
     }
 }

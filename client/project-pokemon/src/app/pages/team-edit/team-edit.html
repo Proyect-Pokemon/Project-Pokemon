@@ -2,7 +2,7 @@
 
     <!-- Header -->
     <div class="page-header">
-        <button class="back-btn" (click)="goBack()">← Volver</button>
+        <div class="header-spacer"></div>
         <h1 class="team-title">{{ team()?.name ?? '' }}</h1>
         <div class="header-spacer"></div>
     </div>
@@ -23,9 +23,9 @@
                 <div class="pokemon-header">
                     <span class="pokemon-name-display">{{ displayName() ?? '—' }}</span>
                     @if (selectedPokemonTeam()?.sex === 'H') {
-                        <span class="gender-badge female">♀</span>
+                        <span class="gender-badge female"><img src="assets/icons/UI/female.svg" alt="Hembra" class="gender-icon" /></span>
                     } @else if (selectedPokemonTeam()?.sex === 'M') {
-                        <span class="gender-badge male">♂</span>
+                        <span class="gender-badge male"><img src="assets/icons/UI/male.svg" alt="Macho" class="gender-icon" /></span>
                     }
                 </div>
 
@@ -89,7 +89,7 @@
                             <div class="empty-slot-placeholder">?</div>
                         }
                     </div>
-                    <button class="edit-pokemon-btn">Editar Pokémon</button>
+                    <button class="edit-pokemon-btn" (click)="goToPokemonEdit()">Editar Pokémon</button>
                 </ng-container>
 
                 <ng-template #emptySelectedSlot>

@@ -27,8 +27,9 @@
 
 .moves-title {
     margin: 0 0 1rem 0;
-    font-size: 1.2rem;
-    font-weight: 600;
+    font-size: 1.75rem;
+    font-weight: normal;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     color: #2c3e50;
     text-align: center;
 }
@@ -109,7 +110,7 @@
 }
 
 .move-pp-badge {
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     font-weight: 500;
     color: #555;
     white-space: nowrap;
@@ -150,7 +151,7 @@
     background-color: var(--fighting-color);
     color: #fff;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     flex-shrink: 0;
 }
 
@@ -235,7 +236,7 @@
 }
 
 .remove-label {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: #888;
     font-style: italic;
 }
@@ -267,7 +268,7 @@
 }
 
 .move-option-type-badge {
-    font-size: 0.7rem;
+    font-size: 0.9rem;
     font-weight: 600;
     padding: 1px 6px;
     border-radius: 10px;
@@ -279,7 +280,7 @@
 }
 
 .move-option-name {
-    font-size: 0.88rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: #2c3e50;
     white-space: nowrap;
@@ -295,7 +296,7 @@
 }
 
 .move-option-class {
-    font-size: 0.72rem;
+    font-size: 0.9rem;
     font-weight: 500;
     color: #555;
     background: rgba(0,0,0,0.06);
@@ -305,7 +306,7 @@
 }
 
 .move-option-stat {
-    font-size: 0.72rem;
+    font-size: 0.9rem;
     color: #666;
     white-space: nowrap;
 }
