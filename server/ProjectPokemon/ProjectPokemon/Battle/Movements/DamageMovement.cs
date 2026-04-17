@@ -9,8 +9,7 @@ namespace ProjectPokemon.Battle.Movements;
 
 public class DamageMovement : BattleMovement {
 
-    [SetsRequiredMembers]
-    public DamageMovement(Movement movement) : base(movement) {}
+    public DamageMovement(Movement movement) : base(movement) { }
 
     // Realizar el movimiento. Devuelve el daño realizado al defensor
     public override void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {

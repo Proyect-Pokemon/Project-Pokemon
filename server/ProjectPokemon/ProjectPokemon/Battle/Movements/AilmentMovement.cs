@@ -1,13 +1,12 @@
 ﻿using ProjectPokemon.Enum;
 using ProjectPokemon.Models.Database.Entities;
-using System.Diagnostics.CodeAnalysis;
 
 namespace ProjectPokemon.Battle.Movements;
 
 // Categoría "Ailment"
 // Movimientos que solo aplican estado alterado (primario o secundario)
 public class AilmentMovement : BattleMovement {
-    [SetsRequiredMembers]
+
     public AilmentMovement(Movement movement) : base(movement) { }
 
     public override void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {

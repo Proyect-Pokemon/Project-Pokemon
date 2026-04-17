@@ -1,7 +1,8 @@
 ﻿using ProjectPokemon.Enum;
+using ProjectPokemon.Models.Shared;
 
 namespace ProjectPokemon.Models.Database.Entities; 
-public class Movement {
+public class Movement : IMovement {
     public int Id { get; set; }
     public required string Name { get; set; }
     public required string Description { get; set; }
