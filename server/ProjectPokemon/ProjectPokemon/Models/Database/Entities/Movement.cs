@@ -27,9 +27,6 @@ public class Movement : IMovement {
     public int AilmentChance { get; set; } = 0; // Probabilidad de que el movimiento cause el estado alterado al objetivo
     public string Category { get; set; } = "damage"; // Categoría del movimiento: daño, estado, unico, etc.
 
-
-
-
     // Relaciones
     public ICollection<PokemonMovement> PokemonMovements { get; set; } = new List<PokemonMovement>();
 }
