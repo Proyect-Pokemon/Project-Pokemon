@@ -263,7 +263,7 @@ public class PokemonBattle {
             StatType.SpecialAttack => BaseSpecialAttack,
             StatType.SpecialDefense => BaseSpecialDefense,
             StatType.Speed => BaseSpeed,
-            _ => throw new ArgumentException($"No se puede obtener stat efectivo de {stat}")
+            _ => throw new ArgumentException($"No se puede obtener stat real de {stat}")
         };
 
         int stage = stat switch {

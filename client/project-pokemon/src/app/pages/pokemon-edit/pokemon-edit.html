@@ -1,0 +1,77 @@
+<div class="page">
+    <div class="page-header">
+        <button class="back-btn" (click)="goBack()">← Volver</button>
+        <h1 class="page-title">Editar Pokémon</h1>
+        <div class="header-spacer"></div>
+    </div>
+
+    @if (isLoading()) {
+        <div class="loading-state">
+            <div class="loading-spinner"></div>
+        </div>
+    } @else {
+        <div class="editor-layout">
+            <div class="left-panel">
+                <div class="control-block">
+                    <div class="option-row">
+                        <span class="option-label">Shiny</span>
+                        <button class="toggle-btn" [class.active]="isShiny()" (click)="isShiny.set(!isShiny())">
+                            {{ isShiny() ? 'Si' : 'No' }}
+                        </button>
+                    </div>
+
+                    <div class="option-row">
+                        <span class="option-label">Sexo</span>
+                        <div class="sex-buttons">
+                            <button class="sex-btn sex-btn--male" [class.active]="selectedSex() === 'M'" (click)="setSex('M')" title="Macho">
+                                <img src="assets/icons/UI/male.svg" alt="Macho" class="sex-icon" />
+                            </button>
+                            <button class="sex-btn sex-btn--female" [class.active]="selectedSex() === 'H'" (click)="setSex('H')" title="Hembra">
+                                <img src="assets/icons/UI/female.svg" alt="Hembra" class="sex-icon" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nature-block">
+                    <app-pokemon-nature-selector
+                        [natureId]="selectedNatureId()"
+                        (natureChanged)="onNatureChanged($event)">
+                    </app-pokemon-nature-selector>
+                </div>
+
+                <div class="moves-wrapper">
+                    <app-pokemon-moves-grid
+                        [movements]="selectedMovements()"
+                        [allMovements]="allMovements()"
+                        (movementChanged)="onMovementChanged($event)">
+                    </app-pokemon-moves-grid>
+                </div>
+
+                <div class="actions">
+                    <button class="save-btn" (click)="savePokemonSettings()" [disabled]="isSaving()">
+                        {{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}
+                    </button>
+                </div>
+
+                @if (saveMessage()) {
+                    <p class="save-message">{{ saveMessage() }}</p>
+                }
+            </div>
+
+            <div class="right-preview">
+                <div class="pokemon-preview">
+                    <span class="pokemon-name">{{ displayName() }}</span>
+                    <div class="sprite-container">
+                        @if (spriteUrl(); as sprite) {
+                            <img [src]="sprite" [alt]="displayName()" class="sprite" />
+                        } @else {
+                            <div class="sprite-placeholder">?</div>
+                        }
+                        <span class="pokemon-id">#{{ ('00' + (selectedPokemon()?.id ?? 0)).slice(-3) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

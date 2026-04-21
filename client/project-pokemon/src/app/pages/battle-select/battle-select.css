@@ -1,5 +1,11 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
 .team-select-page {
-    min-height: 85vh;
+    flex: 1;
     width: 100%;
     display: flex;
     align-items: center;
@@ -31,7 +37,7 @@
     margin: 0;
     font-size: 1.75rem;
     color: #ffffff;
-    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.35);
     letter-spacing: 2px;
 }
 
@@ -135,7 +141,7 @@
     border-radius: 8px;
     padding: 0.6rem 0.65rem;
     text-align: left;
-    font-size: 0.93rem;
+    font-size: 0.9rem;
     font-weight: 700;
     color: #e4f6ff;
     background: rgba(82, 142, 161, 0.35);

@@ -1,7 +1,8 @@
 ﻿using ProjectPokemon.Enum;
+using ProjectPokemon.Models.Shared;
 
 namespace ProjectPokemon.Models.Database.Entities; 
-public class Movement {
+public class Movement : IMovement {
     public int Id { get; set; }
     public required string Name { get; set; }
     public required string Description { get; set; }
@@ -25,9 +26,6 @@ public class Movement {
     public string Ailment { get; set; } = "none"; // Estado alterado que el movimiento puede causar al objetivo
     public int AilmentChance { get; set; } = 0; // Probabilidad de que el movimiento cause el estado alterado al objetivo
     public string Category { get; set; } = "damage"; // Categoría del movimiento: daño, estado, unico, etc.
-
-
-
 
     // Relaciones
     public ICollection<PokemonMovement> PokemonMovements { get; set; } = new List<PokemonMovement>();
