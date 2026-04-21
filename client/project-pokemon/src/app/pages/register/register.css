@@ -1,8 +1,14 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
 .big-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    flex: 1;
     background-image: url('/assets/login-background.jpg');
     background-size: contain;
     padding: 20px;

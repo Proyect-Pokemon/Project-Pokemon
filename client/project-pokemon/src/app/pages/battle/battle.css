@@ -1,3 +1,9 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
 #canvas {
     position: relative;
     background-image: url(/assets/battlegrounds/battleground-grass.png);
@@ -54,4 +60,19 @@
     margin-left: 10px;
     margin-right: 10px;
     position: relative;
+}
+
+@media (max-width: 800px) {
+    #canvas {
+        width: 96%;
+        padding: 18px 12px 0 12px;
+    }
+
+    .enemy img {
+        width: 28%;
+    }
+
+    .ally img {
+        width: 30%;
+    }
 }

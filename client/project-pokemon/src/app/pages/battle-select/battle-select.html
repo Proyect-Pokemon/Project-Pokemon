@@ -1,0 +1,45 @@
+<div class="team-select-page" (click)="closeTeamMenu()">
+    <section class="team-selector" (click)="closeTeamMenu()">
+        <header class="selector-header">
+            <h1>Elige un equipo</h1>
+            <p class="mode-label">Modo VS. CPU</p>
+        </header>
+
+        @if (isLoadingTeams()) {
+            <p class="state-message">Cargando equipos...</p>
+        } @else if (teams().length === 0) {
+            <p class="state-message">No tienes equipos creados. Crea uno en Team Builder para empezar.</p>
+        } @else {
+            <div class="team-columns">
+                @for (team of teams(); track team.id) {
+                    <article
+                        class="team-column"
+                        [style.--i]="$index"
+                        [class.selected]="selectedTeamId() === team.id"
+                        (click)="openTeamMenu(team.id, $event)">
+                        <h2 class="team-name">{{ team.name }}</h2>
+
+                        @if (contextMenuTeamId() === team.id) {
+                            <div class="team-context-menu" (click)="$event.stopPropagation()">
+                                <button type="button" class="menu-item" (click)="viewTeamDetails(team.id, $event)">Ver detalles</button>
+                                <button type="button" class="menu-item menu-item-primary" (click)="startBattle(team.id, $event)">Empezar combate</button>
+                                <button type="button" class="menu-item menu-item-cancel" (click)="closeTeamMenu()">Cancelar</button>
+                            </div>
+                        }
+
+                        <div class="slot-list">
+                            @for (slot of team.slots; track $index) {
+                                <div class="slot-item">
+                                    <span class="slot-name">{{ slot.displayName }}</span>
+                                    @if (slot.sprite) {
+                                        <img [src]="slot.sprite" [alt]="slot.displayName" class="slot-sprite" />
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</div>

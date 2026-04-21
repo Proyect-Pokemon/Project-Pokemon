@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Pokemon } from '../../models/pokemon';
 import { PostPokemonTeamDto } from '../../models/pokemon-team';
 import { Movement } from '../../models/move';
+import { Nature } from '../../models/nature';
 import { MovementService } from '../../services/movement-service';
 import { PokemonService } from '../../services/pokemon-service';
 import { PokemonStatsDialog } from '../pokemon-stats-dialog/pokemon-stats-dialog';
@@ -65,6 +66,7 @@ export class PokemonEditorPanel {
     @Output() createPokemonTeam = new EventEmitter<PostPokemonTeamDto>();
     @Output() changeSlot = new EventEmitter<number>();
     @Output() nicknameUpdated = new EventEmitter<{ pokemonTeamId: number, nickname: string | null }>();
+    @Output() movementsUpdated = new EventEmitter<{ pokemonTeamId: number, movementIds: (number | null)[] }>();
 
     animationDirection = signal<'left' | 'right' | 'leftIn' | 'rightIn' | 'none'>('none');
     movements = signal<(Movement | null)[]>([null, null, null, null]);
@@ -73,6 +75,7 @@ export class PokemonEditorPanel {
     showStatsDialog = signal(false);
     currentPokemonStats = signal<PokemonStats | null>(null);
     selectedNatureId = signal(1);
+    selectedNature = signal<Nature | null>(null);
 
     get isEasterEggSlot(): boolean {
         return this.slot <= 0 || this.slot >= 7;
@@ -114,11 +117,23 @@ export class PokemonEditorPanel {
         this.allMovementsCache.set(allMovements);
     }
 
-    onSelectedNatureChanged(natureId: number) {
-        this.selectedNatureId.set(natureId);
+    onSelectedNatureChanged(nature: Nature) {
+        this.selectedNatureId.set(nature.id);
+        this.selectedNature.set(nature);
+    }
+
+    onMovementChanged(data: { index: number; movementId: number | null }): void {
+        const ids = [...this.movementIdsSignal()];
+        ids[data.index] = data.movementId;
+        this.movementIdsSignal.set(ids);
+
+        if (this.pokemonTeamId !== null) {
+            this.movementsUpdated.emit({ pokemonTeamId: this.pokemonTeamId, movementIds: ids });
+        }
     }
 
     onPokemonSelected(pokemon: Pokemon) {
+        const ids = this.movementIdsSignal();
         this.createPokemonTeam.emit({
             nickname: null,
             shiny: false,
@@ -126,10 +141,10 @@ export class PokemonEditorPanel {
             teamId: this.teamId,
             pokemonId: pokemon.id,
             natureId: this.selectedNatureId(),
-            movementId1: 1,
-            movementId2: null,
-            movementId3: null,
-            movementId4: null,
+            movementId1: ids[0] ?? 1,
+            movementId2: ids[1] ?? null,
+            movementId3: ids[2] ?? null,
+            movementId4: ids[3] ?? null,
         });
     }
 
@@ -142,6 +157,7 @@ export class PokemonEditorPanel {
         this.searchPanel?.reset();
         this.showStatsDialog.set(false);
         this.currentPokemonStats.set(null);
+        this.selectedNature.set(null);
         this.isSlotTransitioning = false;
         this.pendingSlot = null;
         this.animationDirection.set('none');

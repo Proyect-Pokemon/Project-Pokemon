@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, signal, computed, effect } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NatureService } from '../../../services/nature-service';
 import { Nature } from '../../../models/nature';
@@ -11,6 +11,8 @@ import { Nature } from '../../../models/nature';
     styleUrls: ['./pokemon-nature-selector.css'],
 })
 export class PokemonNatureSelector {
+    @ViewChild('natureSelect') natureSelect?: ElementRef<HTMLSelectElement>;
+
     private readonly natureService = inject(NatureService);
 
     @Input() set natureId(value: number | null) {
@@ -19,12 +21,11 @@ export class PokemonNatureSelector {
         this.selectedNatureId.set(normalizedNatureId);
     }
 
-    @Output() natureChanged = new EventEmitter<number>();
+    @Output() natureChanged = new EventEmitter<Nature>();
 
     selectedNatureId = signal(1);
     isLoadingNatures = signal(false);
     natureError = signal<string | null>(null);
-    isNatureSectionExpanded = signal(false);
     allNaturesCache = signal<Nature[]>([]);
     private initialNatureId = signal(1);
 
@@ -90,9 +91,14 @@ export class PokemonNatureSelector {
                 return;
             }
 
+            let resolvedId = selectedNatureId;
             if (!natures.some(nature => nature.id === selectedNatureId)) {
-                this.selectedNatureId.set(natures[0].id);
+                resolvedId = natures[0].id;
+                this.selectedNatureId.set(resolvedId);
             }
+
+            const nature = natures.find(n => n.id === resolvedId) ?? natures[0];
+            this.natureChanged.emit(nature);
         });
     }
 
@@ -123,12 +129,35 @@ export class PokemonNatureSelector {
         const value = Number(target.value);
         if (!Number.isNaN(value) && value > 0) {
             this.selectedNatureId.set(value);
-            this.natureChanged.emit(value);
+            // The effect will emit the updated Nature object
         }
     }
 
     toggleNatureSection() {
-        this.isNatureSectionExpanded.update(value => !value);
+        if (this.isLoadingNatures() || this.natureError()) {
+            return;
+        }
+
+        this.openNaturePicker();
+    }
+
+    private openNaturePicker() {
+        // Open the native select in the same interaction flow.
+        setTimeout(() => {
+            const select = this.natureSelect?.nativeElement;
+            if (!select) {
+                return;
+            }
+
+            select.focus();
+            const pickerCapable = select as HTMLSelectElement & { showPicker?: () => void };
+            if (typeof pickerCapable.showPicker === 'function') {
+                pickerCapable.showPicker();
+                return;
+            }
+
+            select.click();
+        }, 0);
     }
 
     getNatureDescriptor(nature: Nature): string {
@@ -145,7 +174,7 @@ export class PokemonNatureSelector {
     }
 
     getNatureName(nature: Nature): string {
-        const normalizedName = nature.name.toLowerCase();
+        const normalizedName = nature.name.toLowerCase().replace(/[\s_\-]/g, '');
         return this.natureNames[normalizedName] ?? nature.name;
     }
 
@@ -163,6 +192,5 @@ export class PokemonNatureSelector {
 
     resetNatureSelection() {
         this.selectedNatureId.set(this.initialNatureId());
-        this.isNatureSectionExpanded.set(false);
     }
 }

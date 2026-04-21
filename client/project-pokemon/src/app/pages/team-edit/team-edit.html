@@ -1,0 +1,209 @@
+<div class="page">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-spacer"></div>
+        <h1 class="team-title">{{ team()?.name ?? '' }}</h1>
+        <div class="header-spacer"></div>
+    </div>
+
+    @if (isLoading()) {
+        <div class="loading-state">
+            <div class="loading-spinner"></div>
+        </div>
+    } @else {
+
+        <!-- Main 3-column layout -->
+        <div class="main-area">
+
+            <!-- ── Left: Stats panel ───────────────────────────────── -->
+            @if (selectedPokemonTeam()) {
+            <div class="stats-panel card">
+
+                <div class="pokemon-header">
+                    <span class="pokemon-name-display">{{ displayName() ?? '—' }}</span>
+                    @if (selectedPokemonTeam()?.sex === 'H') {
+                        <span class="gender-badge female"><img src="assets/icons/UI/female.svg" alt="Hembra" class="gender-icon" /></span>
+                    } @else if (selectedPokemonTeam()?.sex === 'M') {
+                        <span class="gender-badge male"><img src="assets/icons/UI/male.svg" alt="Macho" class="gender-icon" /></span>
+                    }
+                </div>
+
+                @if (selectedPokemonTeam()?.pokemon; as pk) {
+                    <div class="types">
+                        <div class="type-badge" [ngClass]="getTypeClass(pk.type1)">
+                            <span class="type-icon-wrapper">
+                                @if (getTypeIconSrc(pk.type1); as iconSrc) {
+                                    <img class="type-icon" [src]="iconSrc" [alt]="pk.type1" />
+                                }
+                            </span>
+                        </div>
+                        @if (pk.type2) {
+                            <div class="type-badge" [ngClass]="getTypeClass(pk.type2)">
+                                <span class="type-icon-wrapper">
+                                    @if (getTypeIconSrc(pk.type2); as iconSrc) {
+                                        <img class="type-icon" [src]="iconSrc" [alt]="pk.type2" />
+                                    }
+                                </span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <div class="stats-table">
+                    @for (row of statRows; track row.key) {
+                        <div
+                            class="stat-row"
+                            [class.boosted]="getNatureArrow(row.natureKey) === '▲'"
+                            [class.dropped]="getNatureArrow(row.natureKey) === '▼'"
+                        >
+                            <span class="stat-label">{{ row.label }}</span>
+                            <span class="stat-arrow">
+                                @if (getNatureArrow(row.natureKey) === '▲') { ▲ }
+                                @else if (getNatureArrow(row.natureKey) === '▼') { ▼ }
+                            </span>
+                            <span class="stat-value">{{ getStatValue(row.key) }}</span>
+                        </div>
+                    }
+                </div>
+
+                <div class="nature-row">
+                    <span class="nature-label">Naturaleza</span>
+                    <span class="nature-value">{{ natureName() }}</span>
+                </div>
+            </div>
+            }
+
+            <!-- ── Center: Sprite area ────────────────────────────── -->
+            <div class="sprite-area">
+                <ng-container *ngIf="selectedPokemonTeam(); else emptySelectedSlot">
+                    <div class="sprite-container">
+                        <span class="pokemon-number">#{{ padId(selectedPokemonTeam()?.pokemonId) }}</span>
+                        @if (selectedSprite(); as sprite) {
+                            <img
+                                [src]="sprite"
+                                [alt]="displayName() ?? 'Pokémon'"
+                                class="pokemon-sprite"
+                            />
+                        } @else {
+                            <div class="empty-slot-placeholder">?</div>
+                        }
+                    </div>
+                    <button class="edit-pokemon-btn" (click)="goToPokemonEdit()">Editar Pokémon</button>
+                </ng-container>
+
+                <ng-template #emptySelectedSlot>
+                    <ng-container *ngIf="isCurrentSlotAddable(); else unavailableSlotPlaceholder">
+                        <div class="add-pokemon-panel">
+                            <div class="search-container">
+                                <input
+                                    #searchInput
+                                    type="text"
+                                    placeholder="Buscar por nombre o número"
+                                    [value]="searchQuery()"
+                                    (input)="onSearchInput($event)"
+                                    class="search-input"
+                                >
+                            </div>
+
+                            @if (searchError()) {
+                                <p class="search-error">{{ searchError() }}</p>
+                            }
+
+                            @if (selectedPokemonFromSearch()) {
+                                <div class="selected-pokemon-preview">
+                                    <h3 class="pokemon-display-name">{{ selectedPokemonFromSearch()?.name }}</h3>
+                                    <div class="pokemon-sprite-container">
+                                        <img
+                                            [src]="selectedPokemonFromSearch()?.spriteFront"
+                                            [alt]="selectedPokemonFromSearch()?.name"
+                                            class="pokemon-preview-sprite"
+                                        >
+                                        @if (selectedPokemonFromSearch()?.id) {
+                                            <span class="pokemon-search-number">#{{ ('00' + selectedPokemonFromSearch()?.id).slice(-3) }}</span>
+                                        }
+                                    </div>
+                                </div>
+                                <button class="add-pokemon-button" (click)="onAddPokemonFromSearch()">
+                                    Añadir a equipo
+                                </button>
+                            }
+
+                            @if (searchResults().length > 0 && !selectedPokemonFromSearch()) {
+                                <div class="pokemon-grid">
+                                    @for (pokemon of searchResults(); track pokemon.id) {
+                                        <button
+                                            class="pokemon-grid-item"
+                                            (click)="selectPokemonFromGrid(pokemon)"
+                                        >
+                                            <img [src]="pokemon.miniSprite" [alt]="pokemon.name" class="pokemon-grid-sprite">
+                                            <span class="pokemon-grid-number">#{{ ('00' + pokemon.id).slice(-3) }}</span>
+                                            <span class="pokemon-grid-name">{{ pokemon.name }}</span>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </ng-container>
+                </ng-template>
+
+                <ng-template #unavailableSlotPlaceholder>
+                    <div class="sprite-container">
+                        <div class="empty-slot-placeholder">?</div>
+                    </div>
+                </ng-template>
+            </div>
+
+            <!-- ── Right: Moves panel ─────────────────────────────── -->
+            @if (selectedPokemonTeam()) {
+            <div class="moves-panel card">
+                <h3 class="moves-title">Movimientos</h3>
+                <div class="moves-list">
+                    @for (move of selectedMovements(); track $index) {
+                        @if (move) {
+                            <div class="move-entry" [ngClass]="getTypeClass(move.type)">
+                                <span class="move-type-icon-wrapper">
+                                    @if (getTypeIconSrc(move.type); as iconSrc) {
+                                        <img class="move-type-icon" [src]="iconSrc" [alt]="move.type" />
+                                    }
+                                </span>
+                                <span class="move-name">{{ move.name }}</span>
+                                <span class="move-pp">{{ move.pp }} PP</span>
+                            </div>
+                        } @else {
+                            <div class="move-entry empty"></div>
+                        }
+                    }
+                </div>
+            </div>
+            }
+
+        </div>
+
+        <!-- Bottom slot bar -->
+        <div class="slot-bar">
+            @for (slot of slots(); track $index) {
+                <button
+                    class="slot-btn"
+                    [class.active]="selectedSlot() === $index + 1"
+                    [class.addable]="isNextAvailableSlot($index + 1)"
+                    [class.locked]="!isSlotSelectable($index + 1)"
+                    [disabled]="!isSlotSelectable($index + 1)"
+                    (click)="onSlotSelect($index + 1)"
+                >
+                    @if (slot !== null && slot.pokemon !== null) {
+                        <img
+                            [src]="slot.pokemon.miniSprite"
+                            [alt]="slot.pokemon.name"
+                            class="slot-mini-sprite"
+                        />
+                    } @else if (isNextAvailableSlot($index + 1)) {
+                        <span class="slot-plus">+</span>
+                    }
+                </button>
+            }
+        </div>
+
+    }
+
+</div>

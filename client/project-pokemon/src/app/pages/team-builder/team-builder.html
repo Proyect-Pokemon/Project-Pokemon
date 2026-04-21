@@ -1,48 +1,68 @@
-<div class="team-builder-container">
-    <div class="teams-section">
-        <h1>Crear equipos</h1>
-        
-        <div class="teams-list">
+<div class="page">
+    <h1 class="page-title">Editor de equipos</h1>
+
+    <div class="teams-list">
         @if (isLoadingTeams()) {
-            <app-team-slot-skeleton />
-            <app-team-slot-skeleton />
-            <app-team-slot-skeleton />
+            @for (i of [1, 2, 3]; track i) {
+                <div class="team-card skeleton">
+                    <div class="skeleton-name"></div>
+                    <div class="skeleton-slots">
+                        @for (s of [1,2,3,4,5,6]; track s) {
+                            <div class="skeleton-slot"></div>
+                        }
+                    </div>
+                    <div class="skeleton-actions">
+                        <div class="skeleton-btn"></div>
+                        <div class="skeleton-btn"></div>
+                    </div>
+                </div>
+            }
         } @else {
             @for (team of teams(); track team.id) {
-                <app-team-slot 
-                [team]="team"
-                (toggleExpand)="toggleTeamExpansion($event)"
-                (nameChange)="updateTeamName($event)"
-                (addPokemon)="handleAddPokemon($event)"
-                />
+                <div class="team-card">
+                    @if (editingTeamId === team.id) {
+                        <input
+                            class="team-name-input"
+                            [value]="team.name"
+                            maxlength="12"
+                            (blur)="saveTeamName($event, team.id)"
+                            (keydown.enter)="saveTeamName($event, team.id)"
+                            autofocus
+                        />
+                    } @else {
+                        <span class="team-name" (click)="startEditingName(team.id)">{{ team.name }}</span>
+                    }
+
+                    <div class="pokemon-slots">
+                        @for (slot of getPokemonSlots(team); track $index) {
+                            <div class="pokemon-slot" [class.filled]="slot !== null">
+                                @if (slot !== null && slot.pokemon !== null) {
+                                    <img
+                                        [src]="slot.pokemon.miniSprite"
+                                        [alt]="slot.pokemon.name"
+                                        class="mini-sprite"
+                                    />
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="team-actions">
+                        <button class="action-btn edit-btn" (click)="editTeam(team.id)" title="Editar equipo">
+                            <span class="action-icon edit-icon"></span>
+                        </button>
+                        <button class="action-btn delete-btn" (click)="deleteTeam(team.id)" title="Eliminar equipo">
+                            <span class="action-icon delete-icon"></span>
+                        </button>
+                    </div>
+                </div>
             }
-            
+
             @if (canAddMoreTeams()) {
-                <button class="add-team-button" (click)="addTeam()">
-                <span class="plus-icon">+</span>
-                <span>Añadir Equipo</span>
+                <button class="add-team-btn" (click)="addTeam()" [disabled]="isCreatingTeam">
+                    +
                 </button>
             }
         }
-        </div>
     </div>
 </div>
-
-<!-- Panel editor de pokémon -->
-<app-pokemon-editor-panel
-    [isOpen]="isPanelOpen"
-    [teamId]="selectedTeamId"
-    [slot]="selectedSlot"
-    [pokemonDisplayName]="selectedPokemonDisplayName"
-    [pokemonSprite]="selectedPokemonSprite"
-    [pokemonId]="selectedPokemonId"
-    [pokemonTeamId]="selectedPokemonTeamId"
-    [pokemonBaseName]="selectedPokemonBaseName"
-    [pokemonNickname]="selectedPokemonNickname"
-    [natureId]="selectedNatureId"
-    [movementIds]="selectedMovementIds"
-    (createPokemonTeam)="handleCreatePokemonTeam($event)"
-    (changeSlot)="handleChangeSlot($event)"
-    (nicknameUpdated)="handleNicknameUpdated($event)"
-    (close)="closePanel()"
-/>
