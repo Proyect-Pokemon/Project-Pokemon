@@ -1,4 +1,9 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
+
+interface ChatMessage {
+  from: string;
+  content: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +15,9 @@ export class SocketService {
   private shouldReconnect = true;
   private reconnectAttempts = 0;
   private maxReconnectDelay = 30000; // 30s
+
+  // Signal para notificar cuando llega un mensaje de chat
+  onChatMessage = signal<ChatMessage | null>(null);
 
   constructor() {
     window.addEventListener("online", () => {
@@ -84,6 +92,7 @@ export class SocketService {
         if (message.type === 'chat') {
           const { from, content } = message.data;
           console.log(`Mensaje de ${from}: ${content}`);
+          this.onChatMessage.set({ from, content });
         }
 
         if (message.type === 'battle') {
@@ -100,6 +109,25 @@ export class SocketService {
     this.socket.onerror = (err) => {
       console.error('WebSocket error', err);
     };
+  }
+
+  /** Envía un mensaje de chat a través del WebSocket */
+  sendChatMessage(content: string) {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      console.error('WebSocket no está conectado');
+      return;
+    }
+
+    const message = {
+      type: 'chat',
+      data: { content }
+    };
+
+    try {
+      this.socket.send(JSON.stringify(message));
+    } catch (err) {
+      console.error('Error al enviar mensaje de chat', err);
+    }
   }
 
   /** Cierra WS y evita reconexiones automáticas */

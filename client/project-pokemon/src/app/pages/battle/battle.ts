@@ -7,12 +7,14 @@ import { CommonModule, TitleCasePipe } from '@angular/common';
 import { BattleLogOverlay } from '../../components/battle-log-overlay/battle-log-overlay';
 import { FinishBattleDialog } from '../../components/finish-battle-dialog/finish-battle-dialog';
 import { LifeBar } from '../../components/life-bar/life-bar';
+import { BattleChat } from '../../components/battle-chat/battle-chat';
 import { BattleTurnResponse } from '../../models/battle-turn';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-battle',
-  imports: [MovementButton, BattleLogOverlay, FinishBattleDialog, LifeBar, CommonModule],
+  imports: [MovementButton, BattleLogOverlay, FinishBattleDialog, LifeBar, BattleChat, CommonModule],
   providers: [TitleCasePipe],
   templateUrl: './battle.html',
   styleUrl: './battle.css',
@@ -39,7 +41,10 @@ export class Battle {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private titleCasePipe = inject(TitleCasePipe);
+  private authService = inject(AuthService);
   private currentTeamId: number | null = null;
+
+  currentUsername = this.authService.nickname;
 
   async ngOnInit(): Promise<void> {
     const teamIdParam = this.route.snapshot.queryParamMap.get('teamId');

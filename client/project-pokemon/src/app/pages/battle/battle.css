@@ -4,6 +4,13 @@
     flex: 1;
 }
 
+.battle-container {
+    display: flex;
+    gap: 10px;
+    height: 100%;
+    padding: 10px;
+}
+
 #canvas {
     position: relative;
     background-image: url(/assets/battlegrounds/battleground-grass.png);
@@ -18,6 +25,13 @@
     margin: auto;
     padding: 30px 30px 0px 30px;
     gap: 20px;
+    border-radius: 8px;
+}
+
+app-battle-chat {
+    width: 30%;
+    max-height: 80vh;
+    display: flex;
 }
 
 .enemy {
@@ -60,6 +74,21 @@
     margin-left: 10px;
     margin-right: 10px;
     position: relative;
+}
+
+@media (max-width: 1200px) {
+    .battle-container {
+        flex-direction: column;
+    }
+
+    #canvas {
+        width: 100%;
+    }
+
+    app-battle-chat {
+        width: 100%;
+        min-height: 300px;
+    }
 }
 
 @media (max-width: 800px) {

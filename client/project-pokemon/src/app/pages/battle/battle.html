@@ -1,46 +1,53 @@
 @if (isLoadingBattle()) {
     <div>Cargando combate...</div>
 } @else {
-    <div id="canvas">
-        <div class="enemy">
-            <app-life-bar
-                [pokemonName]="battleInfo()!.pokemonB.name"
-                [currentHp]="hpB()"
-                [maxHp]="battleInfo()!.pokemonB.hp">
-            </app-life-bar>
-            <img [src]="battleInfo()!.pokemonB.sprite">
-        </div>
-        <div class="ally">
-            <img [src]="battleInfo()!.pokemonA.sprite">
-            <app-life-bar
-                [pokemonName]="battleInfo()!.pokemonA.name"
-                [currentHp]="hpA()"
-                [maxHp]="battleInfo()!.pokemonA.hp"
-                [showHp]="true">
-            </app-life-bar>
-        </div>
-        <div id="moves">
-            @for (move of battleInfo()!.pokemonA.moves; track $index) {
-                <app-movement-button 
-                    [move]="move" 
-                    [disabled]="move.currentPp === 0 || showLogOverlay()"
-                    (moveClicked)="attack($event)">
-                </app-movement-button>
+    <div class="battle-container">
+        <div id="canvas">
+            <div class="enemy">
+                <app-life-bar
+                    [pokemonName]="battleInfo()!.pokemonB.name"
+                    [currentHp]="hpB()"
+                    [maxHp]="battleInfo()!.pokemonB.hp">
+                </app-life-bar>
+                <img [src]="battleInfo()!.pokemonB.sprite">
+            </div>
+            <div class="ally">
+                <img [src]="battleInfo()!.pokemonA.sprite">
+                <app-life-bar
+                    [pokemonName]="battleInfo()!.pokemonA.name"
+                    [currentHp]="hpA()"
+                    [maxHp]="battleInfo()!.pokemonA.hp"
+                    [showHp]="true">
+                </app-life-bar>
+            </div>
+            <div id="moves">
+                @for (move of battleInfo()!.pokemonA.moves; track $index) {
+                    <app-movement-button 
+                        [move]="move" 
+                        [disabled]="move.currentPp === 0 || showLogOverlay()"
+                        (moveClicked)="attack($event)">
+                    </app-movement-button>
+                }
+            </div>
+            <app-battle-log-overlay 
+                [log]="battleLog()" 
+                [visible]="showLogOverlay()"
+                (lineChanged)="onLineChanged($event)">
+            </app-battle-log-overlay>
+            @if (showFinishDialog()) {
+                <app-finish-battle-dialog
+                    [hpA]="hpA()"
+                    [hpB]="hpB()"
+                    [pokemonAName]="battleInfo()!.pokemonA.name"
+                    [pokemonBName]="battleInfo()!.pokemonB.name"
+                    (retry)="onRetryBattle()"
+                ></app-finish-battle-dialog>
             }
         </div>
-        <app-battle-log-overlay 
-            [log]="battleLog()" 
-            [visible]="showLogOverlay()"
-            (lineChanged)="onLineChanged($event)">
-        </app-battle-log-overlay>
-        @if (showFinishDialog()) {
-            <app-finish-battle-dialog
-                [hpA]="hpA()"
-                [hpB]="hpB()"
-                [pokemonAName]="battleInfo()!.pokemonA.name"
-                [pokemonBName]="battleInfo()!.pokemonB.name"
-                (retry)="onRetryBattle()"
-            ></app-finish-battle-dialog>
-        }
+
+        <app-battle-chat 
+            [currentUsername]="currentUsername()"
+            #chatComponent>
+        </app-battle-chat>
     </div>
 }
