@@ -1,8 +1,8 @@
 ﻿using ProjectPokemon.Enum;
 using ProjectPokemon.Models.Database.Entities;
-using ProjectPokemon.Battle.Movements;
+using ProjectPokemon.Models.Battle.Movements;
 
-namespace ProjectPokemon.Battle;
+namespace ProjectPokemon.Models.Battle;
 
 /// <summary>
 /// Representa un Pokémon durante el combate activo.

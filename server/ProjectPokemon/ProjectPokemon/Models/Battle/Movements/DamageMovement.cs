@@ -1,8 +1,7 @@
 ﻿using ProjectPokemon.Enum;
 using ProjectPokemon.Models.Database.Entities;
-using System.Diagnostics.CodeAnalysis;
 
-namespace ProjectPokemon.Battle.Movements;
+namespace ProjectPokemon.Models.Battle.Movements;
 
 // Movimientos de categoría "Damage".
 // Inflingen daño directo al oponente.

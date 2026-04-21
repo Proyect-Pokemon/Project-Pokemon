@@ -1,6 +1,6 @@
 ﻿using ProjectPokemon.Enum;
 
-namespace ProjectPokemon.Battle;
+namespace ProjectPokemon.Models.Battle;
 
 // Tabla de efectividad de tipos
 // Contiene los multiplicadores de daño de cuánto afecta un tipo a otros.

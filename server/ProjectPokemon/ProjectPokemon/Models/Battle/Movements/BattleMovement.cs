@@ -1,9 +1,7 @@
 ﻿using ProjectPokemon.Enum;
-using ProjectPokemon.Models.Database.Entities;
-using ProjectPokemon.Models.Shared;
-using System.Diagnostics.CodeAnalysis;
 
-namespace ProjectPokemon.Battle.Movements; 
+namespace ProjectPokemon.Models.Battle.Movements;
+
 public abstract class BattleMovement : IMovement {
     public int CurrentPp { get; set; }
     public int Id { get; }

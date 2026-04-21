@@ -1,7 +1,7 @@
 ﻿using ProjectPokemon.Enum;
 using ProjectPokemon.Models.Database.Entities;
 
-namespace ProjectPokemon.Battle.Movements;
+namespace ProjectPokemon.Models.Battle.Movements;
 
 // Categoría "Ailment"
 // Movimientos que solo aplican estado alterado (primario o secundario)

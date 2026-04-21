@@ -1,6 +1,6 @@
 using ProjectPokemon.Models.Database.Entities;
 
-namespace ProjectPokemon.Battle.Movements;
+namespace ProjectPokemon.Models.Battle.Movements;
 
 // Factory para crear la instancia correcta de BattleMovement según la categoría del movimiento.
 public static class BattleMovementFactory {
