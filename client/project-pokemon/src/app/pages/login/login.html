@@ -29,7 +29,7 @@
                 </div>
 
                 <div class="div-input">
-                    <input class="btn" type="submit" value="Iniciar sesión">
+                    <input class="btn" type="submit" value="Iniciar sesión" [disabled]="!canSubmit()">
                     <span class="small-text">
                         ¿No tienes cuenta?
                         <a routerLink="/register">Registrarse</a>

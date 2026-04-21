@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { RouterLink, Router, ActivatedRoute } from "@angular/router";
 import { AuthRequest } from '../../models/auth-request';
 import { AuthService } from '../../services/auth';
@@ -19,13 +19,19 @@ export class Login implements OnInit, OnDestroy {
 
   errorMessage = signal('');
 
-  constructor(
-    private authService: AuthService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) { }
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  canSubmit(): boolean {
+    return this.nickname.trim().length > 0 && this.password.trim().length > 0;
+  }
 
   async submit() {
+
+    if (!this.canSubmit()) {
+      return;
+    }
 
     this.errorMessage.set('');
 
