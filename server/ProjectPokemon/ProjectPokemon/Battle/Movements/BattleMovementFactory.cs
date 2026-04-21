@@ -23,7 +23,7 @@ public static class BattleMovementFactory {
         // - "force-switch": ForceSwitchMovement (movimientos que fuerzan cambio de pokémon)
         // - "heal": HealMovement (movimientos que solo curan)
         // - "net-good-stats": StatChangeMovement (movimientos que cambian stats)
-        // - "ohko": OhkoMovement (movimientos de un golpe)
+        // - "ohko": OhkoMovement (movimientos fulminantes)
         // - "unique": UniqueMovement (movimientos especiales únicos)
         // - "whole-field-effect": WholeFieldEffectMovement (efectos de campo globales)
         // Por ahora, devolver DamageMovement como fallback
