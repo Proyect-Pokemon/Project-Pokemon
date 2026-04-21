@@ -7,7 +7,8 @@
                 <app-life-bar
                     [pokemonName]="battleInfo()!.pokemonB.name"
                     [currentHp]="hpB()"
-                    [maxHp]="battleInfo()!.pokemonB.hp">
+                    [maxHp]="battleInfo()!.pokemonB.hp"
+                    status="Burned">
                 </app-life-bar>
                 <img [src]="battleInfo()!.pokemonB.sprite">
             </div>
@@ -24,7 +25,7 @@
                 @for (move of battleInfo()!.pokemonA.moves; track $index) {
                     <app-movement-button 
                         [move]="move" 
-                        [disabled]="move.currentPp === 0 || showLogOverlay()"
+                        [disabled]="move.currentPp === 0 || showLogOverlay() || attacksDisabled()"
                         (moveClicked)="attack($event)">
                     </app-movement-button>
                 }
@@ -40,7 +41,6 @@
                     [hpB]="hpB()"
                     [pokemonAName]="battleInfo()!.pokemonA.name"
                     [pokemonBName]="battleInfo()!.pokemonB.name"
-                    (retry)="onRetryBattle()"
                 ></app-finish-battle-dialog>
             }
         </div>
