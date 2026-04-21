@@ -5,7 +5,7 @@ import { inject, Injectable } from '@angular/core';
 })
 export class SocketService {
 
-  private socket?: WebSocket;
+  private socket: WebSocket | null = null;
   private jwt?: string;
   private shouldReconnect = true;
   private reconnectAttempts = 0;
@@ -48,7 +48,7 @@ export class SocketService {
   /** Función que ejecuta al cerrar el socket */
   private socketOnClose = () => {
     console.log("WebSocket cerrado");
-    this.socket = undefined;
+    this.socket = null;
     this.attemptReconnect();
   }
 
@@ -63,7 +63,7 @@ export class SocketService {
       try {
         this.socket.close();
       } catch { }
-      this.socket = undefined;
+      this.socket = null;
     }
 
     const wsUrl = `wss://${location.hostname}:7185/ws?access_token=${jwt}`;
@@ -77,10 +77,19 @@ export class SocketService {
       this.reconnectAttempts = 0;
     };
 
-    this.socket.onmessage = (event) => { //Génerico, cambiar
+    this.socket.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
-        console.log("WS message:", message);
+
+        if (message.type === 'chat') {
+          const { from, content } = message.data;
+          console.log(`Mensaje de ${from}: ${content}`);
+        }
+
+        if (message.type === 'battle') {
+          // Todavía nada...
+        }
+
       } catch (err) {
         console.error('Error parsing WS message', err);
       }
@@ -101,6 +110,6 @@ export class SocketService {
       this.socket.close();
     }
 
-    this.socket = undefined;
+    this.socket = null;
   }
 }
