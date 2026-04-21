@@ -134,13 +134,20 @@ input[type="password"]:focus {
     margin-bottom: 10px;
 }
 
-.btn:hover {
+.btn:not(:disabled):hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
-.btn:active {
+.btn:not(:disabled):active {
     transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
 
 .error, .error-global {
