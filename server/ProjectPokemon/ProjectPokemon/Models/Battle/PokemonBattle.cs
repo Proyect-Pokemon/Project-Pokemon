@@ -17,6 +17,7 @@ public class PokemonBattle {
     public PokeType? Type2 { get; private set; }
     public bool Shiny { get; private set; }
     public char? Sex { get; private set; }
+    public int Slot { get; private set;  }
 
     // Estadísticas base con la naturaleza aplicada
     public int MaxHp { get; private set; }
