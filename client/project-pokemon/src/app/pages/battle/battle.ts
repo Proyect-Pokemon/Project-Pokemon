@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { BattleService } from '../../services/battle-service';
-import { BattleResponse } from '../../models/pokemon-api';
+import { BattleResponse } from '../../models/battle/pokemon-api';
 import { BattleMove } from '../../models/move';
 import { MovementButton } from '../../components/movement-button/movement-button';
 import { CommonModule, TitleCasePipe } from '@angular/common';
