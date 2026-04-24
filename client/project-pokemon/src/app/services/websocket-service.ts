@@ -74,7 +74,7 @@ export class SocketService {
       this.socket = null;
     }
 
-    const wsUrl = `wss://${location.hostname}:7185/ws?access_token=${jwt}`;
+    const wsUrl = `wss://${location.hostname}:7277/ws?access_token=${jwt}`;
 
     console.log('Intentando conectar WS a', wsUrl);
 

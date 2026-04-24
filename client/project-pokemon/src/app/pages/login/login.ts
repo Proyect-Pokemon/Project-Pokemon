@@ -3,6 +3,7 @@ import { RouterLink, Router, ActivatedRoute } from "@angular/router";
 import { AuthRequest } from '../../models/auth-request';
 import { AuthService } from '../../services/auth';
 import { FormsModule } from '@angular/forms';
+import { SocketService } from '../../services/websocket-service';
 
 @Component({
   selector: 'app-login',
@@ -22,6 +23,7 @@ export class Login implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private readonly socketService = inject(SocketService);
 
   canSubmit(): boolean {
     return this.nickname.trim().length > 0 && this.password.trim().length > 0;
@@ -48,7 +50,9 @@ export class Login implements OnInit, OnDestroy {
       );
 
       if (result === true) {
-
+        const jwt = this.authService.jwt;
+        if (jwt) this.socketService.connect(jwt);
+        
         const redirectTo =
           this.route.snapshot.queryParams['redirectTo'] || '/battle';
 
