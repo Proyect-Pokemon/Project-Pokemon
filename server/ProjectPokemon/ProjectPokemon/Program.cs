@@ -172,7 +172,7 @@ public class Program
             finally
             {
                 // Eliminar conexión del manager
-                wsManager.RemoveConnection(userId);
+                await wsManager.RemoveConnection(userId);
 
                 // Cerrar socket si todavía está abierto
                 if (socket.State == WebSocketState.Open)
