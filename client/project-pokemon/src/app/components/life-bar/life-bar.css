@@ -1,45 +1,119 @@
 .pokemon-info {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    background: linear-gradient(to bottom, var(--primary-color), grey);
-    padding: 10px;
-    border: solid 5px var(--secondary-color);
-    border-radius: 10px;
+    gap: 8px;
+    min-width: min(320px, 100%);
+    padding: 16px 18px 14px;
+    background: transparent;
+    border: none;
+    border-radius: 22px;
+    box-shadow: none;
+    backdrop-filter: none;
 }
 
 .info-header {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
+}
+
+.name-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.pokemon-name {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
+}
+
+.status-tag {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--fire-color), #ff4500);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+.status-fire {
+    background: linear-gradient(135deg, var(--fire-color), #d94d1f);
+}
+
+.status-ice {
+    background: linear-gradient(135deg, var(--ice-color), #7ab0ad);
+}
+
+.status-poison {
+    background: linear-gradient(135deg, var(--poison-color), #7b2d7f);
+}
+
+.status-flying {
+    background: linear-gradient(135deg, var(--flying-color), #8b7bc7);
+}
+
+.status-electric {
+    background: linear-gradient(135deg, var(--electric-color), #e6b800);
 }
 
 .hp-display {
     align-self: flex-end;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
+}
+
+.hp-display.subtle {
+    font-size: 0.95rem;
+    opacity: 0.7;
 }
 
 .life-bar {
-	background: linear-gradient(to bottom, var(--secondary-color), grey);
-	width: 15vw;
-	height: 2.5vh;
-    border: solid 3px var(--secondary-color);
-    border-radius: 5px;
+	background: transparent;
+	width: 100%;
+	height: 16px;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .health {
 	height: 100%;
 	transition: background-color 0.3s ease, width 0.3s ease;
-    border-radius: 3px;
+    border-radius: 8px;
 }
 
 .health.green {
-	background: linear-gradient(to bottom, var(--grass-color), green);
+	background: #4caf50;
 }
 
 .health.yellow {
-	background: linear-gradient(to bottom, var(--electric-color), var(--fire-color));
+	background: #ffb300;
 }
 
 .health.red {
-	background: linear-gradient(to bottom, var(--fire-color), red);
+	background: #f44336;
+}
+
+@media (max-width: 900px) {
+    .pokemon-info {
+        min-width: 0;
+        width: min(100%, 320px);
+        padding: 14px 16px 12px;
+    }
+
+    .pokemon-name {
+        font-size: 1.2rem;
+    }
+
+    .hp-display {
+        font-size: 1rem;
+    }
 }
