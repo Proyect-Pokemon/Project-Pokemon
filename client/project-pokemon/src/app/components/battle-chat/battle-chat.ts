@@ -5,7 +5,6 @@ import { SocketService } from '../../services/websocket-service';
 interface ChatMessage {
   from: string;
   content: string;
-  isOwn: boolean;
 }
 
 @Component({
@@ -28,7 +27,7 @@ export class BattleChat {
     effect(() => {
       const message = this.socketService.onChatMessage();
       if (message) {
-        this.addMessage(message.from, message.content, false);
+        this.addMessage(message.from, message.content);
       }
     });
   }
@@ -40,7 +39,6 @@ export class BattleChat {
     this.messages.update(msgs => [...msgs, {
       from: this.currentUsername,
       content: content.trim(),
-      isOwn: true
     }]);
 
     // Enviar el mensaje a través del WebSocket
@@ -50,8 +48,8 @@ export class BattleChat {
     this.scrollToBottom();
   }
 
-  addMessage(from: string, content: string, isOwn: boolean = false) {
-    this.messages.update(msgs => [...msgs, { from, content, isOwn }]);
+  addMessage(from: string, content: string) {
+    this.messages.update(msgs => [...msgs, { from, content}]);
     this.scrollToBottom();
   }
 
