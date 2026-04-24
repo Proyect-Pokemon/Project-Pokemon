@@ -2,10 +2,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using ProjectPokemon.Hubs;
 using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Database.Repositories;
-using ProjectPokemon.Services;
 using ProjectPokemon.Services.Auth;
 using ProjectPokemon.Services.Internal;
 using Swashbuckle.AspNetCore.Filters;
@@ -49,12 +47,6 @@ public class Program
         builder.Services.AddScoped<DataLoader>();
         builder.Services.AddScoped<PokemonDataService>();
         builder.Services.AddScoped<MovementDataService>();
-
-        builder.Services.AddSingleton<BattleSessionManager>();
-        builder.Services.AddScoped<BattleService>();
-
-        // SignalR
-        builder.Services.AddSignalR();
 
         // Auth & JWT
         builder.Services.AddScoped<TokenService>();
@@ -114,12 +106,11 @@ public class Program
                       .AllowAnyMethod());
         }
 
-        app.UseHttpsRedirection();              // redirige HTTP a HTTPS
-        app.UseStaticFiles();                   // permite servir archivos desde wwwroot
-        app.UseAuthentication();                // middleware de autenticacion
-        app.UseAuthorization();                 // middleware de autorizacion
-        app.MapControllers();                   // mapea los endpoints de los controladores
-        app.MapHub<BattleHub>("/battlehub");    // Mapear el hub de SignalR
+        app.UseHttpsRedirection();   // redirige HTTP a HTTPS
+        app.UseStaticFiles();        // permite servir archivos desde wwwroot
+        app.UseAuthentication();     // middleware de autenticacion
+        app.UseAuthorization();      // middleware de autorizacion
+        app.MapControllers();        // mapea los endpoints de los controladores
 
         // Llamar al método antes de ejecutar la app
         await SeedDatabase(app.Services);
