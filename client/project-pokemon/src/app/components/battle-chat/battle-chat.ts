@@ -5,6 +5,7 @@ import { SocketService } from '../../services/websocket-service';
 interface ChatMessage {
   from: string;
   content: string;
+  isOwn: boolean;
 }
 
 @Component({
@@ -16,6 +17,7 @@ interface ChatMessage {
 export class BattleChat {
   @Input() currentUsername: string = 'Usuario';
   @Input() isDisabled: boolean = false;
+  @Input() battleId: string | null = null;
 
   messages = signal<ChatMessage[]>([]);
   isInputDisabled = signal(false);
@@ -26,7 +28,7 @@ export class BattleChat {
     // Escuchar mensajes del WebSocket
     effect(() => {
       const message = this.socketService.onChatMessage();
-      if (message) {
+      if (message && this.battleId && message.battleId === this.battleId) {
         this.addMessage(message.from, message.content);
       }
     });
@@ -39,17 +41,23 @@ export class BattleChat {
     this.messages.update(msgs => [...msgs, {
       from: this.currentUsername,
       content: content.trim(),
+      isOwn: true,
     }]);
 
     // Enviar el mensaje a través del WebSocket
-    this.socketService.sendChatMessage(content.trim());
+    this.socketService.sendChatMessage(content.trim(), this.battleId ?? undefined);
 
     // Scroll al final
     this.scrollToBottom();
   }
 
   addMessage(from: string, content: string) {
-    this.messages.update(msgs => [...msgs, { from, content}]);
+    const isOwn = from.trim().toLowerCase() === this.currentUsername.trim().toLowerCase();
+    if (isOwn) {
+      return;
+    }
+
+    this.messages.update(msgs => [...msgs, { from, content, isOwn }]);
     this.scrollToBottom();
   }
 

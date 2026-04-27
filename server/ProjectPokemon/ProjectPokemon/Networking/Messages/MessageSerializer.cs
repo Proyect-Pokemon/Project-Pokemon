@@ -43,6 +43,8 @@ public static class MessageSerializer {
 
         return action switch {
             LobbyAction.JoinLobby => Deserialize<JoinLobbyRequest>(jsonElement),
+            LobbyAction.SearchBattle => Deserialize<SearchBattleRequest>(jsonElement),
+            LobbyAction.CancelSearch => Deserialize<CancelSearchRequest>(jsonElement),
             _ => throw new Exception("Cannot read lobby message from client"),
         };
     }

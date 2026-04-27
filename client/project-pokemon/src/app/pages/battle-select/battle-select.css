@@ -59,6 +59,38 @@
     animation: fade-in 420ms ease-out 120ms forwards;
 }
 
+.searching-box {
+    margin: 1.2rem auto 0;
+    max-width: 620px;
+    background: rgba(6, 37, 49, 0.78);
+    border: 1px solid rgba(147, 224, 246, 0.5);
+    border-radius: 16px;
+    padding: 1.2rem;
+    text-align: center;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.searching-box h2 {
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+.searching-box p {
+    margin: 0.6rem 0 0;
+    opacity: 0.95;
+}
+
+.cancel-search-btn {
+    margin-top: 1rem;
+    border: none;
+    border-radius: 10px;
+    padding: 0.6rem 1rem;
+    background: linear-gradient(90deg, #ffffff 0%, #fde7e7 100%);
+    color: #10495e;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .team-columns {
     display: flex;
     gap: 1.5rem;

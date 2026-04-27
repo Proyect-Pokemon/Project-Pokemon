@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
+using Microsoft.Extensions.DependencyInjection;
 using ProjectPokemon.Networking.Clients;
 using ProjectPokemon.Networking.Messages;
 using ProjectPokemon.Networking.Messages.Battle;
@@ -14,21 +15,31 @@ public class Network {
     private readonly IDictionary<Guid, Client> _clients = new ConcurrentDictionary<Guid, Client>();
     private readonly IDictionary<string, HashSet<Guid>> _battleClients = new ConcurrentDictionary<string, HashSet<Guid>>(); // battleId -> clientIds
     private readonly BattleSessionManager _sessionManager;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly Matchmaking _matchmaking;
     private readonly ILogger<Network> _logger;
 
-    public Network(BattleSessionManager sessionManager, ILogger<Network> logger) {
+    public Network(BattleSessionManager sessionManager, IServiceScopeFactory scopeFactory, ILogger<Network> logger) {
         _sessionManager = sessionManager;
+        _scopeFactory = scopeFactory;
+        _matchmaking = new Matchmaking();
         _logger = logger;
+
+        // Suscribirse al evento de emparejamiento
+        _matchmaking.Matched += OnPlayersMatched;
     }
 
-    public Task ConnectAsync(WebSocket webSocket) {
+    public Task ConnectAsync(WebSocket webSocket, int? userId = null, string? username = null) {
         Guid clientId = Guid.NewGuid();
-        Client client = new Client(clientId, webSocket);
+        Client client = new Client(clientId, webSocket) {
+            UserId = userId,
+            Username = username
+        };
         client.MessageReceived += OnClientMessageReceived;
         client.Disconnected += OnClientDisconnected;
         _clients.Add(clientId, client);
 
-        _logger.LogInformation($"Cliente {clientId} conectado");
+        _logger.LogInformation($"Cliente {clientId} conectado (userId={userId})");
 
         return client.KeepListenAsync();
     }
@@ -74,6 +85,14 @@ public class Network {
                     await HandleJoinLobby(client, joinLobby);
                     break;
 
+                case SearchBattleRequest searchRequest:
+                    await HandleSearchBattle(client, searchRequest);
+                    break;
+
+                case CancelSearchRequest cancelRequest:
+                    await HandleCancelSearch(client, cancelRequest);
+                    break;
+
                 default:
                     _logger.LogWarning($"Mensaje no reconocido de cliente {client.ClientId}");
                     break;
@@ -86,31 +105,34 @@ public class Network {
 
     private async Task HandleStartBattle(Client client, StartBattleRequest request) {
         try {
-            // TODO: Obtener userId real del cliente autenticado
-            int userId = client.UserId ?? 1; // Placeholder
-
-            // Crear batalla usando BattleService
-            var battleService = new BattleService(
-                null!, // TODO: Inyectar dependencias correctamente
-                _sessionManager,
-                _logger as ILogger<BattleService>
-            );
-
-            // TODO: Por ahora crear batalla solo necesita userId y teamId
-            // En el futuro: soportar PvP cuando request.OpponentUserId != null
+            int userId = client.UserId ?? 1;
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            BattleService battleService = scope.ServiceProvider.GetRequiredService<BattleService>();
 
             _logger.LogInformation($"Cliente {client.ClientId} solicitó iniciar batalla con equipo {request.TeamId}");
 
-            // Por ahora, enviar respuesta exitosa sin crear batalla real (TODO)
+            Models.Battle.BattleSession? session = await battleService.StartBattleAsync(userId, request.TeamId);
+            if (session is null) {
+                await client.SendAsync(new StartBattleResponse {
+                    Action = BattleAction.StartBattle,
+                    BattleId = string.Empty,
+                    InitialState = new BattleSnapshot {
+                        BattleId = string.Empty,
+                        Turn = 0,
+                        PlayerSide = new BattleSideSnapshot { Team = new(), ActiveSlot = 0 },
+                        OpponentSide = new BattleSideSnapshot { Team = new(), ActiveSlot = 0 }
+                    },
+                    Success = false,
+                    ErrorMessage = "No se pudo crear la batalla"
+                });
+
+                return;
+            }
+
             var response = new StartBattleResponse {
                 Action = BattleAction.StartBattle,
-                BattleId = Guid.NewGuid().ToString(),
-                InitialState = new BattleSnapshot {
-                    BattleId = Guid.NewGuid().ToString(),
-                    Turn = 1,
-                    PlayerSide = new BattleSideSnapshot { Team = new(), ActiveSlot = 0 },
-                    OpponentSide = new BattleSideSnapshot { Team = new(), ActiveSlot = 0 }
-                },
+                BattleId = session.BattleId,
+                InitialState = CreateBattleSnapshot(session),
                 Success = true
             };
 
@@ -145,7 +167,7 @@ public class Network {
         // TODO: Obtener lista real de amigos online
         var response = new JoinLobbyResponse {
             Action = LobbyAction.JoinLobby,
-            Username = $"User_{client.UserId ?? 0}",
+            Username = client.Username ?? $"User_{client.UserId ?? 0}",
             OnlineFriends = new List<OnlineFriend>()
         };
 
@@ -185,7 +207,7 @@ public class Network {
         var response = new ChatMessageReceived {
             BattleId = chatMessage.BattleId,
             Content = chatMessage.Content,
-            SenderName = chatMessage.SenderName ?? "Jugador",
+            SenderName = chatMessage.SenderName ?? client.Username ?? $"User_{client.UserId ?? 0}",
             Timestamp = DateTime.UtcNow
         };
 
@@ -197,12 +219,106 @@ public class Network {
         client.Disconnected -= OnClientDisconnected;
         _clients.Remove(client.ClientId);
 
+        // Eliminar de la cola de matchmaking si estaba buscando
+        _matchmaking.Leave(client);
+
         // Limpiar de todas las batallas
         foreach (var battleClients in _battleClients.Values) {
             battleClients.Remove(client.ClientId);
         }
 
         _logger.LogInformation($"Cliente {client.ClientId} desconectado");
+    }
+
+    // Handler para búsqueda de batalla
+    private async Task HandleSearchBattle(Client client, SearchBattleRequest request) {
+        _logger.LogInformation($"Cliente {client.ClientId} busca batalla con equipo {request.TeamId}");
+
+        // Validar que el usuario tenga el equipo
+        // TODO: Validar con base de datos que el equipo existe y pertenece al usuario
+
+        // Unir a la cola de matchmaking
+        _matchmaking.Join(client, request.TeamId);
+
+        // Enviar respuesta de que está buscando
+        var response = new SearchBattleResponse {
+            Action = LobbyAction.SearchBattle,
+            Success = true,
+            Message = "Buscando rival..."
+        };
+
+        await client.SendAsync(response);
+    }
+
+    // Handler para cancelar búsqueda
+    private async Task HandleCancelSearch(Client client, CancelSearchRequest request) {
+        _logger.LogInformation($"Cliente {client.ClientId} canceló búsqueda de batalla");
+
+        bool wasInQueue = _matchmaking.Leave(client);
+
+        var response = new CancelSearchResponse {
+            Action = LobbyAction.CancelSearch,
+            Success = wasInQueue
+        };
+
+        await client.SendAsync(response);
+    }
+
+    // Evento que se dispara cuando dos jugadores son emparejados
+    private async void OnPlayersMatched(Client player1, Client player2, int team1Id, int team2Id) {
+        try {
+            _logger.LogInformation($"Emparejamiento: {player1.ClientId} vs {player2.ClientId}");
+
+            // Crear la batalla
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            BattleService battleService = scope.ServiceProvider.GetRequiredService<BattleService>();
+
+            var session = await battleService.StartBattleAsync(
+                player1.UserId ?? 1, 
+                team1Id
+            );
+
+            if (session == null) {
+                _logger.LogError("Error al crear sesión de batalla");
+                return;
+            }
+
+            // Unir ambos jugadores a la sala de batalla
+            JoinBattle(player1.ClientId, session.BattleId);
+            JoinBattle(player2.ClientId, session.BattleId);
+
+            // Notificar a ambos jugadores que se encontró rival
+            var notification1 = new BattleMatchedNotification {
+                Action = LobbyAction.SearchBattle,
+                BattleId = session.BattleId,
+                OpponentUsername = player2.Username ?? $"User_{player2.UserId ?? 0}",
+                OpponentUserId = player2.UserId ?? 0
+            };
+
+            var notification2 = new BattleMatchedNotification {
+                Action = LobbyAction.SearchBattle,
+                BattleId = session.BattleId,
+                OpponentUsername = player1.Username ?? $"User_{player1.UserId ?? 0}",
+                OpponentUserId = player1.UserId ?? 0
+            };
+
+            await player1.SendAsync(notification1);
+            await player2.SendAsync(notification2);
+
+            // Enviar estado inicial de la batalla a ambos
+            var initialState = new BattleStateUpdate {
+                Action = BattleAction.StartBattle,
+                Battle = CreateBattleSnapshot(session),
+                Messages = new List<string> { "¡La batalla comienza!" },
+                RequiresSwitch = false,
+                WinnerSide = null
+            };
+
+            await BroadcastToBattleAsync(session.BattleId, initialState);
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Error en emparejamiento de jugadores");
+        }
     }
 
     private BattleSnapshot CreateBattleSnapshot(Models.Battle.BattleSession battle) {

@@ -4,10 +4,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Database.Repositories;
+using ProjectPokemon.Networking;
 using ProjectPokemon.Services.Auth;
 using ProjectPokemon.Services.Internal;
 using Swashbuckle.AspNetCore.Filters;
-using System.Net.WebSockets;
 using System.Security.Claims;
 using System.Text;
 
@@ -91,8 +91,6 @@ public class Program
                };
            });
 
-        builder.Services.AddSingleton<WebSocketManager>();
-
         // Swagger
         builder.Services.AddSwaggerGen(options =>
         {
@@ -141,8 +139,7 @@ public class Program
                 return;
             }
 
-            // Autenticación del usuario
-            var userId = context.User.FindFirst("id")?.Value;
+            string? userId = context.User.FindFirst("id")?.Value;
             var userNickname = context.User.FindFirst(ClaimTypes.Name)?.Value;
             if (userId is null)
             {
@@ -150,52 +147,15 @@ public class Program
                 return;
             }
 
-            var wsManager = context.RequestServices.GetRequiredService<WebSocketManager>();
-
-            // Aceptar la nueva conexión
+            int? parsedUserId = int.TryParse(userId, out int userIdValue) ? userIdValue : null;
+            var network = context.RequestServices.GetRequiredService<Network>();
             var socket = await context.WebSockets.AcceptWebSocketAsync();
 
-            // Agregar la conexión al manager, cerrando la anterior si existía
-            await wsManager.AddConnection(userId, socket); // tiene que ser await?
+            app.Logger.LogInformation("[WS] Conectado usuario={UserId} nick={Nickname}", parsedUserId, userNickname);
 
-            Console.WriteLine($"WebSocket conectado para usuario {userId} {userNickname}");
+            await network.ConnectAsync(socket, parsedUserId, userNickname);
 
-            var buffer = new byte[1024];
-            try
-            {
-                while (socket.State == WebSocketState.Open)
-                {
-                    var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-
-                    // Si el cliente cierra el WS
-                    if (result.MessageType == WebSocketMessageType.Close)
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error WebSocket usuario {userId} {userNickname}: {ex.Message}");
-            }
-            finally
-            {
-                // Eliminar conexión del manager
-                await wsManager.RemoveConnection(userId);
-
-                // Cerrar socket si todavía está abierto
-                if (socket.State == WebSocketState.Open)
-                {
-                    try
-                    {
-                        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed", CancellationToken.None);
-                    }
-                    catch
-                    {
-                        // Ignorar errores si ya se cerró
-                    }
-                }
-
-                Console.WriteLine($"WebSocket desconectado para usuario {userId} {userNickname}");
-            }
+            app.Logger.LogInformation("[WS] Desconectado usuario={UserId} nick={Nickname}", parsedUserId, userNickname);
         });
 
         app.MapControllers();        // mapea los endpoints de los controladores

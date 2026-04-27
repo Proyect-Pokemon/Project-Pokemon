@@ -45,9 +45,12 @@
             }
         </div>
 
-        <app-battle-chat 
-            [currentUsername]="currentUsername()"
-            #chatComponent>
-        </app-battle-chat>
+        @if (mode() === 'online') {
+            <app-battle-chat 
+                [currentUsername]="currentUsername()"
+                [battleId]="battleId()"
+                #chatComponent>
+            </app-battle-chat>
+        }
     </div>
 }

@@ -23,3 +23,31 @@ public class OnlineFriend {
     public required string Username { get; set; }
     public required string Status { get; set; } // "online", "in_battle", "away"
 }
+
+// Cliente solicita buscar combate
+public class SearchBattleRequest : LobbyMessage {
+    public required int TeamId { get; set; }
+}
+
+// Servidor notifica que está buscando combate
+public class SearchBattleResponse : LobbyMessage {
+    public bool Success { get; set; }
+    public string? Message { get; set; }
+}
+
+// Servidor notifica que se canceló la búsqueda
+public class CancelSearchRequest : LobbyMessage {
+    // No necesita datos adicionales
+}
+
+// Respuesta al cancelar búsqueda
+public class CancelSearchResponse : LobbyMessage {
+    public bool Success { get; set; }
+}
+
+// Servidor notifica que se encontró un rival y empieza la batalla
+public class BattleMatchedNotification : LobbyMessage {
+    public required string BattleId { get; set; }
+    public required string OpponentUsername { get; set; }
+    public int OpponentUserId { get; set; }
+}

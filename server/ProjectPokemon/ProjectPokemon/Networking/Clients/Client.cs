@@ -10,6 +10,7 @@ public class Client {
 
     public Guid ClientId { get; }
     public int? UserId { get; set; } // Se asigna después de autenticación
+    public string? Username { get; set; }
 
     // Eventos para notificar cuando se recibe un mensaje o se desconecta
     public event Action<Client, IMessage>? MessageReceived;
