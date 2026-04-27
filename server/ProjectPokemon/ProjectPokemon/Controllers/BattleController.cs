@@ -1,101 +1,103 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProjectPokemon.Models.Database;
+using ProjectPokemon.Services;
+using ProjectPokemon.Networking.Messages.Battle;
 
-// Este controlador devolverá Pokemon A y Pokemon B, con sus respectivos movimientos para el combate
 namespace ProjectPokemon.Controllers {
+    // [DEPRECATED] Este controlador está obsoleto.
+    // Las batallas ahora se inician a través de WebSocket enviando StartBattleRequest.
+    // Ver: ProjectPokemon/Networking/Messages/Battle/BattleMessage.cs
     [Route("api/[controller]")]
     [ApiController]
+    [Obsolete("Use WebSocket messages instead. Send StartBattleRequest via WebSocket connection.")]
     public class BattleController : ControllerBase {
+        private readonly BattleService _battleService;
+        private readonly BattleSessionManager _sessionManager;
 
-        // Inyectar la BD
-        private readonly PokemonDbContext _context;
-        public BattleController(PokemonDbContext context) {
-            _context = context;
+        public BattleController(BattleService battleService, BattleSessionManager sessionManager) {
+            _battleService = battleService;
+            _sessionManager = sessionManager;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetBattle() {
-            // PokemonA, el pokemon del usuario
-            var usersPokemon = await _context.Pokemons.FirstAsync(p => p.Id == 1);
-            var opponentsPokemon = await _context.Pokemons.FirstAsync(p => p.Id == 23);
+        /// <summary>
+        /// Inicia una nueva batalla
+        /// </summary>
+        [HttpPost("start")]
+        public async Task<IActionResult> StartBattle([FromBody] StartBattleRequest request) {
+            // TODO: Obtener userId del token JWT
+            int userId = request.UserId;
 
-            var usersMoves = await _context.Movements
-                .Where(m => new[] { 15, 53, 12, 34 }.Contains(m.Id))
-                .ToListAsync();
+            var session = await _battleService.StartBattleAsync(userId, request.TeamId);
 
-            var opponentsMoves = await _context.Movements
-                .Where(m => new[] { 16, 52, 11, 32 }.Contains(m.Id))
-                .ToListAsync();
+            if (session == null) {
+                return BadRequest(new { error = "No se pudo iniciar la batalla" });
+            }
 
-            var user = new {
-                name = usersPokemon.Name,
-                sprite = usersPokemon.SpriteBack,
-                hp = CalculateHp(usersPokemon.Hp),
-                currentHp = CalculateHp(usersPokemon.Hp),
-                atk = CalculateStat(usersPokemon.Attack),
-                def = CalculateStat(usersPokemon.Defense),
-                spa = CalculateStat(usersPokemon.SpecialAttack),
-                spd = CalculateStat(usersPokemon.SpecialDefense),
-                spe = CalculateStat(usersPokemon.Speed),
-                type1 = usersPokemon.Type1,
-                type2 = usersPokemon.Type2,
-                moves = usersMoves.Select(m => new {
-                    name = m.Name,
-                    description = m.Description,
-                    pp = m.Pp,
-                    power = m.Power,
-                    accuracy = m.Accuracy,
-                    moveClass = m.MovementClass,
-                    currentPp = m.Pp,
-                    type = m.Type
-                })
+            var response = new {
+                battleId = session.BattleId,
+                playerSide = new {
+                    team = session.PlayerSide.Team.Select(p => new {
+                        pokemonId = p.PokemonId,
+                        name = p.Name,
+                        nickname = p.Nickname,
+                        slot = p.Slot,
+                        currentHp = p.CurrentHp,
+                        maxHp = p.MaxHp,
+                        isFainted = p.IsFainted()
+                    }),
+                    activeSlot = session.PlayerSide.ActiveSlot
+                },
+                opponentSide = new {
+                    team = session.OpponentSide.Team.Select(p => new {
+                        pokemonId = p.PokemonId,
+                        name = p.Name,
+                        slot = p.Slot,
+                        currentHp = p.CurrentHp,
+                        maxHp = p.MaxHp,
+                        isFainted = p.IsFainted()
+                    }),
+                    activeSlot = session.OpponentSide.ActiveSlot
+                }
             };
 
-            var opponent = new {
-                name = opponentsPokemon.Name,
-                sprite = opponentsPokemon.SpriteFront,
-                hp = CalculateHp(opponentsPokemon.Hp),
-                currentHp = CalculateHp(opponentsPokemon.Hp),
-                atk = CalculateStat(opponentsPokemon.Attack),
-                def = CalculateStat(opponentsPokemon.Defense),
-                spa = CalculateStat(opponentsPokemon.SpecialAttack),
-                spd = CalculateStat(opponentsPokemon.SpecialDefense),
-                spe = CalculateStat(opponentsPokemon.Speed),
-                type1 = opponentsPokemon.Type1,
-                type2 = opponentsPokemon.Type2,
-                moves = opponentsMoves.Select(m => new {
-                    name = m.Name,
-                    description = m.Description,
-                    pp = m.Pp,
-                    power = m.Power,
-                    accuracy = m.Accuracy,
-                    moveClass = m.MovementClass,
-                    currentPp = m.Pp,
-                    type = m.Type
-                })
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Obtiene el estado actual de una batalla
+        /// </summary>
+        [HttpGet("{battleId}")]
+        public IActionResult GetBattle(string battleId) {
+            var battle = _sessionManager.GetBattle(battleId);
+
+            if (battle == null) {
+                return NotFound(new { error = "Batalla no encontrada" });
+            }
+
+            var response = new {
+                battleId = battle.BattleId,
+                turn = battle.Turn,
+                winnerSide = battle.WinnerSide,
+                playerSide = new {
+                    team = battle.PlayerSide.Team.Select(p => new {
+                        pokemonId = p.PokemonId,
+                        name = p.Name,
+                        nickname = p.Nickname,
+                        slot = p.Slot,
+                        currentHp = p.CurrentHp,
+                        maxHp = p.MaxHp,
+                        isFainted = p.IsFainted()
+                    }),
+                    activeSlot = battle.PlayerSide.ActiveSlot
+                }
             };
 
-            // Devuelve los datos de los pokemon de usuario y el contrincante
-            return Ok(new { PokemonA = user, PokemonB = opponent });
-        }
-
-        private int CalculateHp(int baseHp) {
-            int level = 50; // Es el nivel estándar en competitivo
-            int iv = 31; // IV máximos
-            int ev = 0; // Sin EV o podemos cambiar a 252, que es el máximo
-
-            return (int)Math.Floor(((2 * baseHp + iv + (ev / 4.0)) * level) / 100) + level + 10;
-        }
-
-        private int CalculateStat(int stat) {
-            int level = 50;
-            int iv = 31;
-            int ev = 0;
-
-            int nature = 100; // La naturaleza la dejamos de momento neutra en todos los casos
-
-            return (int)Math.Floor((((2 * stat + iv + (ev / 4.0)) * level) / 100) + 5) * (nature / 100);
+            return Ok(response);
         }
     }
+
+    public class StartBattleRequest {
+        public required int UserId { get; set; }
+        public required int TeamId { get; set; }
+    }
 }
+

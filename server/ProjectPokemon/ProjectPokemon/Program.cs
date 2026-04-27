@@ -53,6 +53,12 @@ public class Program
         builder.Services.AddScoped<TokenService>();
         builder.Services.AddScoped<AuthService>();
 
+        // Battle Services - WebSocket Nativo
+        builder.Services.AddSingleton<ProjectPokemon.Services.BattleSessionManager>();
+        builder.Services.AddScoped<ProjectPokemon.Services.BattleService>();
+        builder.Services.AddSingleton<ProjectPokemon.Networking.Network>();
+        builder.Services.AddScoped<ProjectPokemon.Middlewares.WebSocketMiddleware>();
+
         builder.Services.AddAuthentication()
            .AddJwtBearer(options =>
            {
@@ -121,11 +127,12 @@ public class Program
         app.UseHttpsRedirection();   // redirige HTTP a HTTPS
         app.UseStaticFiles();        // permite servir archivos desde wwwroot
 
+        // WebSocket Middleware debe ir ANTES de autenticación
+        app.UseWebSockets();
+        app.UseMiddleware<ProjectPokemon.Middlewares.WebSocketMiddleware>();
+
         app.UseAuthentication();     // middleware de autenticacion
         app.UseAuthorization();      // middleware de autorizacion
-
-        // WebSockets
-        app.UseWebSockets();
         app.Map("/ws", async context =>
         {
             if (!context.WebSockets.IsWebSocketRequest)
