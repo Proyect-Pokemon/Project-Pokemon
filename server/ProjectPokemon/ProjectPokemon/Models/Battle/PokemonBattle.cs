@@ -18,6 +18,8 @@ public class PokemonBattle {
     public bool Shiny { get; private set; }
     public char? Sex { get; private set; }
     public int Slot { get; set; }
+    public string SpriteFront { get; private set; }
+    public string SpriteBack { get; private set; }
 
     // Estadísticas base con la naturaleza aplicada
     public int MaxHp { get; private set; }
@@ -56,6 +58,8 @@ public class PokemonBattle {
         Shiny = pokemonTeam.Shiny;
         Sex = pokemonTeam.Sex;
         Slot = pokemonTeam.Slot;
+        SpriteFront = ResolveSpriteFront(pokemonTeam.Pokemon, pokemonTeam.Shiny, pokemonTeam.Sex);
+        SpriteBack = ResolveSpriteBack(pokemonTeam.Pokemon, pokemonTeam.Shiny, pokemonTeam.Sex);
         Status = PokeStatus.None;
         SecondaryStatuses = PokeSecondaryStatus.None;
 
@@ -71,6 +75,30 @@ public class PokemonBattle {
         if (pokemonTeam.Movement2 != null) Movements.Add(BattleMovementFactory.Create(pokemonTeam.Movement2));
         if (pokemonTeam.Movement3 != null) Movements.Add(BattleMovementFactory.Create(pokemonTeam.Movement3));
         if (pokemonTeam.Movement4 != null) Movements.Add(BattleMovementFactory.Create(pokemonTeam.Movement4));
+    }
+
+    private static string ResolveSpriteFront(Pokemon pokemon, bool shiny, char? sex) {
+        bool female = sex.HasValue && char.ToLowerInvariant(sex.Value) == 'f';
+
+        if (shiny) {
+            if (female && !string.IsNullOrWhiteSpace(pokemon.SpriteFrontFemShiny)) return pokemon.SpriteFrontFemShiny;
+            return pokemon.SpriteFrontShiny;
+        }
+
+        if (female && !string.IsNullOrWhiteSpace(pokemon.SpriteFrontFem)) return pokemon.SpriteFrontFem;
+        return pokemon.SpriteFront;
+    }
+
+    private static string ResolveSpriteBack(Pokemon pokemon, bool shiny, char? sex) {
+        bool female = sex.HasValue && char.ToLowerInvariant(sex.Value) == 'f';
+
+        if (shiny) {
+            if (female && !string.IsNullOrWhiteSpace(pokemon.SpriteBackFemShiny)) return pokemon.SpriteBackFemShiny;
+            return pokemon.SpriteBackShiny;
+        }
+
+        if (female && !string.IsNullOrWhiteSpace(pokemon.SpriteBackFem)) return pokemon.SpriteBackFem;
+        return pokemon.SpriteBack;
     }
 
     // Calcula las estadísticas del Pokémon

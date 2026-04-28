@@ -135,7 +135,7 @@ export class Battle {
     return {
       pokemonA: {
         name: playerPokemon?.nickname || playerPokemon?.name || 'Pokemon',
-        sprite: playerPokemon?.spriteBack || playerPokemon?.spriteFront || '/assets/error/no-image.png',
+        sprite: playerPokemon?.spriteBack || playerPokemon?.spriteFront || '/assets/error/missing-no.png',
         hp: playerPokemon?.currentHp ?? 0,
         atk: playerPokemon?.attack ?? 0,
         def: playerPokemon?.defense ?? 0,
@@ -157,7 +157,7 @@ export class Battle {
       },
       pokemonB: {
         name: opponentPokemon?.nickname || opponentPokemon?.name || 'Pokemon',
-        sprite: opponentPokemon?.spriteFront || opponentPokemon?.spriteBack || '/assets/error/no-image.png',
+        sprite: opponentPokemon?.spriteFront || opponentPokemon?.spriteBack || '/assets/error/missing-no.png',
         hp: opponentPokemon?.currentHp ?? 0,
         atk: opponentPokemon?.attack ?? 0,
         def: opponentPokemon?.defense ?? 0,

@@ -11,8 +11,9 @@ public class BattleSession {
     public List<string> BattleLog { get; set; } = new();
     public string? WinnerSide { get; set; } = null;
 
-    // Conectar usuario con la batalla
+    // Player1 = PlayerSide, Player2 = OpponentSide
     public required int PlayerUserId { get; set; }
+    public int? Player2UserId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

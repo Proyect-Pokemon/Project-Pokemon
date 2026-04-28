@@ -184,16 +184,24 @@ public class Network {
         // TODO: Procesar la acción (attack, switch, etc.)
         battle.BattleLog.Add($"Acción recibida: {actionRequest.Action}");
 
-        // Enviar actualización de estado a todos los clientes de la batalla
-        var update = new BattleStateUpdate {
-            Action = actionRequest.Action,
-            Battle = CreateBattleSnapshot(battle),
-            Messages = new List<string> { $"Procesando acción: {actionRequest.Action}" },
-            RequiresSwitch = false,
-            WinnerSide = battle.WinnerSide
-        };
+        // Enviar actualización personalizada a cada jugador de la batalla
+        if (!_battleClients.TryGetValue(actionRequest.BattleId, out var clientIds)) return;
 
-        await BroadcastToBattleAsync(actionRequest.BattleId, update);
+        var tasks = clientIds
+            .Where(id => _clients.ContainsKey(id))
+            .Select(id => {
+                int perspectiveUserId = _clients[id].UserId ?? battle.PlayerUserId;
+                var update = new BattleStateUpdate {
+                    Action = actionRequest.Action,
+                    Battle = CreateBattleSnapshot(battle, perspectiveUserId),
+                    Messages = new List<string> { $"Procesando acción: {actionRequest.Action}" },
+                    RequiresSwitch = false,
+                    WinnerSide = battle.WinnerSide
+                };
+                return _clients[id].SendAsync(update);
+            });
+
+        await Task.WhenAll(tasks);
     }
 
     private async Task HandleChatMessage(Client client, ChatMessage chatMessage) {
@@ -269,17 +277,19 @@ public class Network {
         try {
             _logger.LogInformation($"Emparejamiento: {player1.ClientId} vs {player2.ClientId}");
 
-            // Crear la batalla
+            // Crear la batalla PvP con los equipos reales de ambos jugadores
             using IServiceScope scope = _scopeFactory.CreateScope();
             BattleService battleService = scope.ServiceProvider.GetRequiredService<BattleService>();
 
-            var session = await battleService.StartBattleAsync(
-                player1.UserId ?? 1, 
-                team1Id
+            var session = await battleService.StartPvPBattleAsync(
+                player1.UserId ?? 1,
+                team1Id,
+                player2.UserId ?? 2,
+                team2Id
             );
 
             if (session == null) {
-                _logger.LogError("Error al crear sesión de batalla");
+                _logger.LogError("Error al crear sesión de batalla PvP");
                 return;
             }
 
@@ -305,35 +315,56 @@ public class Network {
             await player1.SendAsync(notification1);
             await player2.SendAsync(notification2);
 
-            // Enviar estado inicial de la batalla a ambos
-            var initialState = new BattleStateUpdate {
+            // Enviar estado inicial personalizado: cada jugador ve sus pokemon como "playerSide"
+            var stateForPlayer1 = new BattleStateUpdate {
                 Action = BattleAction.StartBattle,
-                Battle = CreateBattleSnapshot(session),
+                Battle = CreateBattleSnapshot(session, player1.UserId ?? 1),
                 Messages = new List<string> { "¡La batalla comienza!" },
                 RequiresSwitch = false,
                 WinnerSide = null
             };
 
-            await BroadcastToBattleAsync(session.BattleId, initialState);
+            var stateForPlayer2 = new BattleStateUpdate {
+                Action = BattleAction.StartBattle,
+                Battle = CreateBattleSnapshot(session, player2.UserId ?? 2),
+                Messages = new List<string> { "¡La batalla comienza!" },
+                RequiresSwitch = false,
+                WinnerSide = null
+            };
+
+            await player1.SendAsync(stateForPlayer1);
+            await player2.SendAsync(stateForPlayer2);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Error en emparejamiento de jugadores");
         }
     }
 
-    private BattleSnapshot CreateBattleSnapshot(Models.Battle.BattleSession battle) {
+    // Snapshot desde la perspectiva de un jugador concreto (sus Pokémon en playerSide)
+    private BattleSnapshot CreateBattleSnapshot(Models.Battle.BattleSession battle, int perspectiveUserId) {
+        // Player1 siempre es PlayerSide, Player2 es OpponentSide
+        bool isPlayer1 = battle.PlayerUserId == perspectiveUserId;
+
+        var mySide = isPlayer1 ? battle.PlayerSide : battle.OpponentSide;
+        var theirSide = isPlayer1 ? battle.OpponentSide : battle.PlayerSide;
+
         return new BattleSnapshot {
             BattleId = battle.BattleId,
             Turn = battle.Turn,
             PlayerSide = new BattleSideSnapshot {
-                Team = battle.PlayerSide.Team.Select(p => CreatePokemonSnapshot(p, true)).ToList(),
-                ActiveSlot = battle.PlayerSide.ActiveSlot
+                Team = mySide.Team.Select(p => CreatePokemonSnapshot(p, true)).ToList(),
+                ActiveSlot = mySide.ActiveSlot
             },
             OpponentSide = new BattleSideSnapshot {
-                Team = battle.OpponentSide.Team.Select(p => CreatePokemonSnapshot(p, false)).ToList(),
-                ActiveSlot = battle.OpponentSide.ActiveSlot
+                Team = theirSide.Team.Select(p => CreatePokemonSnapshot(p, false)).ToList(),
+                ActiveSlot = theirSide.ActiveSlot
             }
         };
+    }
+
+    // Overload sin perspectiva (para modo CPU, player1 siempre es el jugador)
+    private BattleSnapshot CreateBattleSnapshot(Models.Battle.BattleSession battle) {
+        return CreateBattleSnapshot(battle, battle.PlayerUserId);
     }
 
     private PokemonSnapshot CreatePokemonSnapshot(Models.Battle.PokemonBattle pokemon, bool isPlayerSide) {
@@ -346,8 +377,8 @@ public class Network {
             MaxHp = pokemon.MaxHp,
             IsFainted = pokemon.IsFainted(),
             Status = pokemon.Status.ToString(),
-            SpriteFront = null, // TODO: Obtener del Pokemon entity
-            SpriteBack = null,
+            SpriteFront = pokemon.SpriteFront,
+            SpriteBack = pokemon.SpriteBack,
             Shiny = pokemon.Shiny,
             Movements = pokemon.Movements.Select(m => new MovementSnapshot {
                 Name = m.Name,
