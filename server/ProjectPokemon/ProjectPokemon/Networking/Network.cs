@@ -31,7 +31,7 @@ public class Network {
 
     public Task ConnectAsync(WebSocket webSocket, int? userId = null, string? username = null) {
         Guid clientId = Guid.NewGuid();
-        Client client = new Client(clientId, webSocket) {
+        Client client = new(clientId, webSocket) {
             UserId = userId,
             Username = username
         };
