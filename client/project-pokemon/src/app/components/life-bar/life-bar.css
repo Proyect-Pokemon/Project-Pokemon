@@ -77,17 +77,23 @@
 }
 
 .life-bar {
-	background: transparent;
+	background: linear-gradient(180deg, rgba(9, 20, 38, 0.95), rgba(6, 13, 28, 0.95));
 	width: 100%;
-	height: 16px;
-    border-radius: 8px;
+	height: 18px;
+    padding: 2px;
+    border-radius: 999px;
+    border: 1px solid rgba(150, 205, 255, 0.34);
+    box-shadow:
+        inset 0 2px 5px rgba(0, 0, 0, 0.45),
+        inset 0 -2px 4px rgba(133, 198, 255, 0.08),
+        0 3px 10px rgba(2, 8, 19, 0.28);
     overflow: hidden;
 }
 
 .health {
 	height: 100%;
 	transition: background-color 0.3s ease, width 0.3s ease;
-    border-radius: 8px;
+    border-radius: 999px;
 }
 
 .health.green {

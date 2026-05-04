@@ -13,7 +13,7 @@
                     [pokemonName]="battleInfo()!.pokemonB.name"
                     [currentHp]="hpB()"
                     [maxHp]="battleInfo()!.pokemonB.maxHp"
-                    status="Burned">
+                    [status]="battleInfo()!.pokemonB.statusCondition ?? ''">
                 </app-life-bar>
                 <img [src]="battleInfo()!.pokemonB.sprite">
             </div>
@@ -23,6 +23,7 @@
                     [pokemonName]="battleInfo()!.pokemonA.name"
                     [currentHp]="hpA()"
                     [maxHp]="battleInfo()!.pokemonA.maxHp"
+                    [status]="battleInfo()!.pokemonA.statusCondition ?? ''"
                     [showHp]="true">
                 </app-life-bar>
             </div>

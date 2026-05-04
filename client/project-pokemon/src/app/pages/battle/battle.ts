@@ -277,6 +277,7 @@ export class Battle {
       pokemonA: {
         name: playerPokemon?.nickname || playerPokemon?.name || 'Pokemon',
         sprite: playerPokemon?.spriteBack || playerPokemon?.spriteFront || this.FALLBACK_SPRITE,
+        statusCondition: playerPokemon?.statusCondition ?? null,
         currentHp: playerPokemon?.currentHp ?? 0,
         maxHp: playerPokemon?.maxHp ?? 0,
         atk: playerPokemon?.attack ?? 0,
@@ -300,6 +301,7 @@ export class Battle {
       pokemonB: {
         name: opponentPokemon?.nickname || opponentPokemon?.name || 'Pokemon',
         sprite: opponentPokemon?.spriteFront || opponentPokemon?.spriteBack || this.FALLBACK_SPRITE,
+        statusCondition: opponentPokemon?.statusCondition ?? null,
         currentHp: opponentPokemon?.currentHp ?? 0,
         maxHp: opponentPokemon?.maxHp ?? 0,
         atk: opponentPokemon?.attack ?? 0,
