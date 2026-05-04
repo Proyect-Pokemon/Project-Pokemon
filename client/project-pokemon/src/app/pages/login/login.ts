@@ -52,9 +52,10 @@ export class Login implements OnInit, OnDestroy {
       if (result === true) {
         const jwt = this.authService.jwt;
         if (jwt) this.socketService.connect(jwt);
-        
-        const redirectTo =
-          this.route.snapshot.queryParams['redirectTo'] || '/battle';
+
+        const redirectTo = this.resolveSafeRedirectTo(
+          this.route.snapshot.queryParams['redirectTo']
+        );
 
         this.router.navigateByUrl(redirectTo);
         return;
@@ -83,5 +84,19 @@ export class Login implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     document.body.classList.remove('login-background');
+  }
+
+  private resolveSafeRedirectTo(redirectToRaw: unknown): string {
+    const redirectTo = typeof redirectToRaw === 'string' ? redirectToRaw : '';
+
+    if (!redirectTo || !redirectTo.startsWith('/')) {
+      return '/battle';
+    }
+
+    if (redirectTo.startsWith('/battle/fight')) {
+      return '/battle-select?mode=online';
+    }
+
+    return redirectTo;
   }
 }

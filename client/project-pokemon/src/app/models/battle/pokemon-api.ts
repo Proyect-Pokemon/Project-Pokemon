@@ -3,7 +3,9 @@ import { BattleMove } from '../move';
 export interface PokemonApi {
   name: string;
   sprite: string;
-  hp: number;
+  currentHp: number;
+  maxHp: number;
+  hp?: number;
   atk: number;
   def: number;
   spa: number;

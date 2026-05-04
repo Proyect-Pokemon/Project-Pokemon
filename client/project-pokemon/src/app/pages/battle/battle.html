@@ -1,5 +1,10 @@
 @if (isLoadingBattle()) {
-    <div>Cargando combate...</div>
+    <div class="battle-loading" role="status" aria-live="polite">
+        <div class="battle-loading-card">
+            <span class="battle-loading-title">Cargando combate...</span>
+            <span class="battle-loading-subtitle">Preparando el estado de la batalla online</span>
+        </div>
+    </div>
 } @else {
     <div class="battle-container">
         <div id="canvas">
@@ -7,7 +12,7 @@
                 <app-life-bar
                     [pokemonName]="battleInfo()!.pokemonB.name"
                     [currentHp]="hpB()"
-                    [maxHp]="battleInfo()!.pokemonB.hp"
+                    [maxHp]="battleInfo()!.pokemonB.maxHp"
                     status="Burned">
                 </app-life-bar>
                 <img [src]="battleInfo()!.pokemonB.sprite">
@@ -17,19 +22,66 @@
                 <app-life-bar
                     [pokemonName]="battleInfo()!.pokemonA.name"
                     [currentHp]="hpA()"
-                    [maxHp]="battleInfo()!.pokemonA.hp"
+                    [maxHp]="battleInfo()!.pokemonA.maxHp"
                     [showHp]="true">
                 </app-life-bar>
             </div>
             <div id="moves">
-                @for (move of battleInfo()!.pokemonA.moves; track $index) {
-                    <app-movement-button 
-                        [move]="move" 
-                        [disabled]="move.currentPp === 0 || showLogOverlay() || attacksDisabled()"
-                        (moveClicked)="attack($event)">
-                    </app-movement-button>
+                @if (actionPanel() === 'root') {
+                    <button class="action-button action-attack" [disabled]="showLogOverlay() || attacksDisabled()" (click)="openAttackPanel()">
+                        Atacar
+                    </button>
+                    <button class="action-button action-switch" [disabled]="showLogOverlay() || attacksDisabled()" (click)="openSwitchPanel()">
+                        Cambiar
+                    </button>
+                }
+
+                @if (actionPanel() === 'attack') {
+                    <div class="submenu-header">
+                        <button class="back-button" [disabled]="isWaitingForOpponent()" (click)="backToActionMenu()">← Volver</button>
+                        <span>Elige movimiento</span>
+                    </div>
+
+                    <div class="moves-grid">
+                        @for (move of battleInfo()!.pokemonA.moves; track $index) {
+                            <app-movement-button 
+                                [move]="move" 
+                                [disabled]="move.currentPp === 0 || showLogOverlay() || attacksDisabled()"
+                                (moveClicked)="attack($event)">
+                            </app-movement-button>
+                        }
+                    </div>
+                }
+
+                @if (actionPanel() === 'switch') {
+                    <div class="submenu-header">
+                        <button class="back-button" [disabled]="isWaitingForOpponent()" (click)="backToActionMenu()">← Volver</button>
+                        <span>Elige Pokémon</span>
+                    </div>
+
+                    <div class="switch-grid">
+                        @for (option of switchOptions(); track option.index) {
+                            <button
+                                class="switch-option"
+                                [disabled]="option.isActive || option.isFainted || attacksDisabled() || showLogOverlay()"
+                                (click)="switchPokemon(option.index)">
+                                <img [src]="option.sprite" [alt]="option.name">
+                                <div class="switch-option-text">
+                                    <strong>{{ option.name }}</strong>
+                                    <span>{{ option.hpLabel }}</span>
+                                </div>
+                            </button>
+                        }
+                    </div>
                 }
             </div>
+
+            @if (isWaitingForOpponent()) {
+                <div class="waiting-overlay">
+                    <div class="waiting-overlay-card">Esperando la acción del oponente...</div>
+                </div>
+            }
+
             <app-battle-log-overlay 
                 [log]="battleLog()" 
                 [visible]="showLogOverlay()"

@@ -110,6 +110,14 @@ export class SocketService {
   }
 
   private handleBattleMessage(message: any): void {
+    console.info('[WS][Battle] Update', {
+      action: message.action,
+      battleId: message.battle?.battleId,
+      requiresSwitch: message.requiresSwitch ?? false,
+      winnerSide: message.winnerSide ?? null,
+      messages: message.messages ?? [],
+    });
+
     this.onBattleState.set({
       action: message.action ?? 0,
       battle: message.battle,
@@ -202,6 +210,8 @@ export class SocketService {
   }
 
   attack(battleId: string, moveName: string): void {
+    console.info('[WS][Battle] Send Attack', { battleId, moveName });
+
     this.sendMessage({
       type: 1,
       action: 1,
@@ -211,6 +221,8 @@ export class SocketService {
   }
 
   switchPokemon(battleId: string, targetSlot: number): void {
+    console.info('[WS][Battle] Send Switch', { battleId, targetSlot });
+
     this.sendMessage({
       type: 1,
       action: 2,
@@ -246,6 +258,9 @@ export class SocketService {
     this.matchmakingState.set('idle');
     this.matchmakingMessage.set('');
     this.activeBattleId.set(null);
+    this.onBattleMatched.set(null);
+    this.onBattleState.set(null);
+    this.onChatMessage.set(null);
 
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.close();

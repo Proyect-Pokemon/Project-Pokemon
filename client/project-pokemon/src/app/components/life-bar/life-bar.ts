@@ -26,6 +26,10 @@ export class LifeBar {
     return Math.max(0, this.currentHp ?? 0);
   }
 
+  get displayHpPercent(): number {
+    return Math.trunc(this.hpPercent);
+  }
+
   get healthColor(): string {
     const percent = this.hpPercent;
     if (percent > 50) return 'green';
