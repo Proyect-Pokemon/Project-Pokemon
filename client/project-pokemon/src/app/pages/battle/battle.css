@@ -130,7 +130,7 @@
     pointer-events: none;
 }
 
-#canvas > * {
+#canvas > :not(.waiting-overlay) {
     position: relative;
     z-index: 1;
 }
@@ -310,18 +310,19 @@ app-battle-chat {
     justify-content: center;
     background: rgba(6, 13, 28, 0.58);
     backdrop-filter: blur(2px);
-    z-index: 4;
+    border-radius: 14px;
+    z-index: 10;
 }
 
 .waiting-overlay-card {
-    border: 1px solid rgba(132, 203, 255, 0.38);
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
     border-radius: 14px;
-    padding: 14px 20px;
-    background: rgba(7, 23, 47, 0.94);
+    padding: 20px 28px;
     color: #e7f8ff;
     font-weight: 700;
     letter-spacing: 0.2px;
-    box-shadow: 0 16px 30px rgba(3, 7, 16, 0.35);
 }
 
 @media (max-width: 1200px) {

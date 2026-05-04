@@ -75,13 +75,13 @@
                         }
                     </div>
                 }
-            </div>
 
-            @if (isWaitingForOpponent()) {
-                <div class="waiting-overlay">
-                    <div class="waiting-overlay-card">Esperando la acción del oponente...</div>
-                </div>
-            }
+                @if (isWaitingForOpponent()) {
+                    <div class="waiting-overlay">
+                        <div class="waiting-overlay-card">Esperando la acción del oponente...</div>
+                    </div>
+                }
+            </div>
 
             <app-battle-log-overlay 
                 [log]="battleLog()" 
