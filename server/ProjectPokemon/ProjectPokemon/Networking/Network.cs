@@ -97,8 +97,7 @@ public class Network {
                     _logger.LogWarning($"Mensaje no reconocido de cliente {client.ClientId}");
                     break;
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             _logger.LogError(ex, $"Error procesando mensaje de cliente {client.ClientId}");
         }
     }
@@ -140,8 +139,7 @@ public class Network {
 
             // Unir al cliente a la batalla
             JoinBattle(client.ClientId, response.BattleId);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             _logger.LogError(ex, "Error iniciando batalla");
 
             var errorResponse = new StartBattleResponse {
@@ -181,8 +179,83 @@ public class Network {
             return;
         }
 
-        // TODO: Procesar la acción (attack, switch, etc.)
-        battle.BattleLog.Add($"Acción recibida: {actionRequest.Action}");
+        _logger.LogInformation(
+            "Accion recibida en batalla {BattleId}: userId={UserId}, action={Action}, move={MoveName}, targetSlot={TargetSlot}",
+            actionRequest.BattleId,
+            client.UserId,
+            actionRequest.Action,
+            actionRequest.MoveName,
+            actionRequest.TargetSlot
+        );
+
+        int? userId = client.UserId;
+        if (!userId.HasValue) {
+            await client.SendAsync(new BattleStateUpdate {
+                Action = actionRequest.Action,
+                Battle = CreateBattleSnapshot(battle),
+                Messages = new List<string> { "No se pudo identificar al jugador." },
+                RequiresSwitch = false,
+                WinnerSide = battle.WinnerSide
+            });
+            return;
+        }
+
+        using IServiceScope scope = _scopeFactory.CreateScope();
+        BattleService battleService = scope.ServiceProvider.GetRequiredService<BattleService>();
+
+        BattleService.SubmitBattleActionResult result = battleService.SubmitPvPAction(
+            battle,
+            userId.Value,
+            actionRequest.Action,
+            actionRequest.MoveName,
+            actionRequest.TargetSlot
+        );
+
+        if (!result.Accepted) {
+            _logger.LogWarning(
+                "Accion rechazada en batalla {BattleId} para userId={UserId}. Motivo: {Messages}",
+                actionRequest.BattleId,
+                userId.Value,
+                string.Join(" | ", result.Messages)
+            );
+
+            await client.SendAsync(new BattleStateUpdate {
+                Action = actionRequest.Action,
+                Battle = CreateBattleSnapshot(battle, userId.Value),
+                Messages = result.Messages,
+                RequiresSwitch = false,
+                WinnerSide = result.WinnerSide
+            });
+            return;
+        }
+
+        // Si sólo uno eligió acción, notificar sólo al emisor.
+        if (!result.TurnResolved) {
+            _logger.LogInformation(
+                "Batalla {BattleId}: accion guardada para userId={UserId}, esperando rival.",
+                actionRequest.BattleId,
+                userId.Value
+            );
+
+            await client.SendAsync(new BattleStateUpdate {
+                Action = actionRequest.Action,
+                Battle = CreateBattleSnapshot(battle, userId.Value),
+                Messages = result.Messages,
+                RequiresSwitch = false,
+                WinnerSide = result.WinnerSide
+            });
+            return;
+        }
+
+        // Turno resuelto: enviar actualización personalizada a todos.
+        _logger.LogInformation(
+            "Batalla {BattleId}: turno resuelto. winner={Winner}. Logs={MessagesCount}",
+            actionRequest.BattleId,
+            result.WinnerSide,
+            result.Messages.Count
+        );
+
+        battle.BattleLog.AddRange(result.Messages);
 
         // Enviar actualización personalizada a cada jugador de la batalla
         if (!_battleClients.TryGetValue(actionRequest.BattleId, out var clientIds)) return;
@@ -194,9 +267,9 @@ public class Network {
                 var update = new BattleStateUpdate {
                     Action = actionRequest.Action,
                     Battle = CreateBattleSnapshot(battle, perspectiveUserId),
-                    Messages = new List<string> { $"Procesando acción: {actionRequest.Action}" },
+                    Messages = result.Messages,
                     RequiresSwitch = false,
-                    WinnerSide = battle.WinnerSide
+                    WinnerSide = result.WinnerSide
                 };
                 return _clients[id].SendAsync(update);
             });
@@ -334,8 +407,7 @@ public class Network {
 
             await player1.SendAsync(stateForPlayer1);
             await player2.SendAsync(stateForPlayer2);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             _logger.LogError(ex, "Error en emparejamiento de jugadores");
         }
     }

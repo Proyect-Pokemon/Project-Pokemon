@@ -1,4 +1,5 @@
 using ProjectPokemon.Enum;
+using ProjectPokemon.Networking.Messages.Battle;
 
 namespace ProjectPokemon.Models.Battle;
 
@@ -8,14 +9,38 @@ public class BattleSession {
     public required BattleSide PlayerSide { get; set; }
     public required BattleSide OpponentSide { get; set; }
     public int Turn { get; set; } = 1;
+    public Dictionary<int, PendingBattleAction> PendingActions { get; } = new();
     public List<string> BattleLog { get; set; } = new();
     public string? WinnerSide { get; set; } = null;
+    public object SyncRoot { get; } = new();
 
     // Player1 = PlayerSide, Player2 = OpponentSide
     public required int PlayerUserId { get; set; }
     public int? Player2UserId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public bool IsParticipant(int userId) {
+        return PlayerUserId == userId || Player2UserId == userId;
+    }
+
+    public int? GetOpponentUserId(int userId) {
+        if (PlayerUserId == userId) return Player2UserId;
+        if (Player2UserId == userId) return PlayerUserId;
+        return null;
+    }
+
+    public BattleSide? GetSideForUser(int userId) {
+        if (PlayerUserId == userId) return PlayerSide;
+        if (Player2UserId == userId) return OpponentSide;
+        return null;
+    }
+
+    public BattleSide? GetOpponentSideForUser(int userId) {
+        if (PlayerUserId == userId) return OpponentSide;
+        if (Player2UserId == userId) return PlayerSide;
+        return null;
+    }
 
     // Verifica si la batalla ha terminado
     public bool IsBattleOver() {
@@ -29,6 +54,12 @@ public class BattleSession {
         }
         return false;
     }
+}
+
+public class PendingBattleAction {
+    public required BattleAction Action { get; set; }
+    public string? MoveName { get; set; }
+    public int? TargetSlot { get; set; }
 }
 
 // Representa un lado de la batalla (jugador u oponente)
