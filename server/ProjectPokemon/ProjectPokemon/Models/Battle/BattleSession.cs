@@ -11,12 +11,16 @@ public class BattleSession
     public required BattleSide PlayerSide { get; set; }
     public required BattleSide OpponentSide { get; set; }
 
+    public BattleStatus Status { get; set; } = BattleStatus.WaitingForOpponent;
+
     public int Turn { get; set; } = 1;
 
-    public Dictionary<int, PendingBattleAction> PendingActions { get; } = new();
+    // Key = userId
+    public Dictionary<int, PendingBattleAction> PendingActionsByUserId { get; } = new();
 
     public List<string> BattleLog { get; set; } = new();
 
+    // UserId del ganador de la batalla
     public int? WinnerUserId { get; set; } = null;
 
     public object SyncRoot { get; } = new();
@@ -36,6 +40,7 @@ public class BattleSession
     {
         if (PlayerUserId == userId) return Player2UserId;
         if (Player2UserId == userId) return PlayerUserId;
+
         return null;
     }
 
@@ -43,6 +48,7 @@ public class BattleSession
     {
         if (PlayerUserId == userId) return PlayerSide;
         if (Player2UserId == userId) return OpponentSide;
+
         return null;
     }
 
@@ -50,6 +56,7 @@ public class BattleSession
     {
         if (PlayerUserId == userId) return OpponentSide;
         if (Player2UserId == userId) return PlayerSide;
+
         return null;
     }
 
@@ -59,12 +66,14 @@ public class BattleSession
         if (PlayerSide.IsDefeated())
         {
             WinnerUserId = Player2UserId;
+            Status = BattleStatus.Finished;
             return true;
         }
 
         if (OpponentSide.IsDefeated())
         {
             WinnerUserId = PlayerUserId;
+            Status = BattleStatus.Finished;
             return true;
         }
 
@@ -89,6 +98,7 @@ public class BattleSide
     public PokemonBattle? GetActivePokemon()
     {
         if (ActiveSlot < 0 || ActiveSlot >= Team.Count) return null;
+
         return Team[ActiveSlot];
     }
 
@@ -96,6 +106,9 @@ public class BattleSide
     public bool SwitchPokemon(int newSlot)
     {
         if (newSlot < 0 || newSlot >= Team.Count) return false;
+
+        if (newSlot == ActiveSlot) return false;
+
         if (Team[newSlot].IsFainted()) return false;
 
         ActiveSlot = newSlot;
