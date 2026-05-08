@@ -4,14 +4,21 @@ using ProjectPokemon.Networking.Messages.Battle;
 namespace ProjectPokemon.Models.Battle;
 
 // Representa una sesión de batalla activa en memoria
-public class BattleSession {
-    public string BattleId { get; set; } = Guid.NewGuid().ToString();
+public class BattleSession
+{
+    public Guid BattleId { get; set; } = Guid.NewGuid();
+
     public required BattleSide PlayerSide { get; set; }
     public required BattleSide OpponentSide { get; set; }
+
     public int Turn { get; set; } = 1;
+
     public Dictionary<int, PendingBattleAction> PendingActions { get; } = new();
+
     public List<string> BattleLog { get; set; } = new();
-    public string? WinnerSide { get; set; } = null;
+
+    public int? WinnerUserId { get; set; } = null;
+
     public object SyncRoot { get; } = new();
 
     // Player1 = PlayerSide, Player2 = OpponentSide
@@ -20,60 +27,74 @@ public class BattleSession {
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public bool IsParticipant(int userId) {
+    public bool IsParticipant(int userId)
+    {
         return PlayerUserId == userId || Player2UserId == userId;
     }
 
-    public int? GetOpponentUserId(int userId) {
+    public int? GetOpponentUserId(int userId)
+    {
         if (PlayerUserId == userId) return Player2UserId;
         if (Player2UserId == userId) return PlayerUserId;
         return null;
     }
 
-    public BattleSide? GetSideForUser(int userId) {
+    public BattleSide? GetSideForUser(int userId)
+    {
         if (PlayerUserId == userId) return PlayerSide;
         if (Player2UserId == userId) return OpponentSide;
         return null;
     }
 
-    public BattleSide? GetOpponentSideForUser(int userId) {
+    public BattleSide? GetOpponentSideForUser(int userId)
+    {
         if (PlayerUserId == userId) return OpponentSide;
         if (Player2UserId == userId) return PlayerSide;
         return null;
     }
 
     // Verifica si la batalla ha terminado
-    public bool IsBattleOver() {
-        if (PlayerSide.IsDefeated()) {
-            WinnerSide = "opponent";
+    public bool IsBattleOver()
+    {
+        if (PlayerSide.IsDefeated())
+        {
+            WinnerUserId = Player2UserId;
             return true;
         }
-        if (OpponentSide.IsDefeated()) {
-            WinnerSide = "player";
+
+        if (OpponentSide.IsDefeated())
+        {
+            WinnerUserId = PlayerUserId;
             return true;
         }
+
         return false;
     }
 }
 
-public class PendingBattleAction {
+public class PendingBattleAction
+{
     public required BattleAction Action { get; set; }
     public string? MoveName { get; set; }
     public int? TargetSlot { get; set; }
 }
 
 // Representa un lado de la batalla (jugador u oponente)
-public class BattleSide {
+public class BattleSide
+{
     public List<PokemonBattle> Team { get; set; } = new();
+
     public int ActiveSlot { get; set; } = 0; // 0-5
 
-    public PokemonBattle? GetActivePokemon() {
+    public PokemonBattle? GetActivePokemon()
+    {
         if (ActiveSlot < 0 || ActiveSlot >= Team.Count) return null;
         return Team[ActiveSlot];
     }
 
     // Cambia el Pokémon activo
-    public bool SwitchPokemon(int newSlot) {
+    public bool SwitchPokemon(int newSlot)
+    {
         if (newSlot < 0 || newSlot >= Team.Count) return false;
         if (Team[newSlot].IsFainted()) return false;
 
@@ -82,15 +103,19 @@ public class BattleSide {
     }
 
     // Verifica si todos los Pokémon están debilitados
-    public bool IsDefeated() {
+    public bool IsDefeated()
+    {
         return Team.All(p => p.IsFainted());
     }
 
     // Obtiene el primer Pokémon no debilitado
-    public int? GetFirstNonFaintedSlot() {
-        for (int i = 0; i < Team.Count; i++) {
+    public int? GetFirstNonFaintedSlot()
+    {
+        for (int i = 0; i < Team.Count; i++)
+        {
             if (!Team[i].IsFainted()) return i;
         }
+
         return null;
     }
 }
