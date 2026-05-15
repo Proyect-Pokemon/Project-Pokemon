@@ -65,6 +65,11 @@ export class Login implements OnInit, OnDestroy {
 
     } catch (err: any) {
 
+      if (err?.status === 0) {
+        this.errorMessage.set('No se pudo establecer conexión con el servidor.');
+        return;
+      }
+
       const backendError =
         typeof err?.error === 'string'
           ? err.error
