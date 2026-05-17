@@ -13,7 +13,7 @@ namespace ProjectPokemon.Networking;
 // Actúa como un "router" central que distribuye mensajes según su tipo.
 public class Network {
     private readonly IDictionary<Guid, Client> _clients = new ConcurrentDictionary<Guid, Client>();
-    private readonly IDictionary<string, HashSet<Guid>> _battleClients = new ConcurrentDictionary<string, HashSet<Guid>>(); // battleId -> clientIds
+    private readonly ConcurrentDictionary<Guid, HashSet<Guid>> _battleClients = new(); // battleId -> clientIds
     private readonly BattleSessionManager _sessionManager;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly Matchmaking _matchmaking;
@@ -45,7 +45,7 @@ public class Network {
     }
 
     // Asocia un cliente con una batalla específica
-    public void JoinBattle(Guid clientId, string battleId) {
+    public void JoinBattle(Guid clientId, Guid battleId) {
         if (!_battleClients.ContainsKey(battleId)) {
             _battleClients[battleId] = new HashSet<Guid>();
         }
@@ -54,7 +54,7 @@ public class Network {
     }
 
     // Envía un mensaje a todos los clientes de una batalla
-    public async Task BroadcastToBattleAsync<T>(string battleId, T message) where T : IMessage {
+    public async Task BroadcastToBattleAsync<T>(Guid battleId, T message) where T : IMessage {
         if (!_battleClients.TryGetValue(battleId, out var clientIds)) {
             return;
         }
@@ -114,9 +114,9 @@ public class Network {
             if (session is null) {
                 await client.SendAsync(new StartBattleResponse {
                     Action = BattleAction.StartBattle,
-                    BattleId = string.Empty,
+                    BattleId = Guid.Empty,
                     InitialState = new BattleSnapshot {
-                        BattleId = string.Empty,
+                        BattleId = Guid.Empty,
                         Turn = 0,
                         PlayerSide = new BattleSideSnapshot { Team = new(), ActiveSlot = 0 },
                         OpponentSide = new BattleSideSnapshot { Team = new(), ActiveSlot = 0 }
@@ -144,9 +144,9 @@ public class Network {
 
             var errorResponse = new StartBattleResponse {
                 Action = BattleAction.StartBattle,
-                BattleId = "",
+                BattleId = Guid.Empty,
                 InitialState = new BattleSnapshot {
-                    BattleId = "",
+                    BattleId = Guid.Empty,
                     Turn = 0,
                     PlayerSide = new BattleSideSnapshot { Team = new(), ActiveSlot = 0 },
                     OpponentSide = new BattleSideSnapshot { Team = new(), ActiveSlot = 0 }
@@ -195,7 +195,7 @@ public class Network {
                 Battle = CreateBattleSnapshot(battle),
                 Messages = new List<string> { "No se pudo identificar al jugador." },
                 RequiresSwitch = false,
-                WinnerSide = battle.WinnerSide
+                WinnerUserId = battle.WinnerUserId
             });
             return;
         }
@@ -224,7 +224,7 @@ public class Network {
                 Battle = CreateBattleSnapshot(battle, userId.Value),
                 Messages = result.Messages,
                 RequiresSwitch = false,
-                WinnerSide = result.WinnerSide
+                WinnerUserId = battle.WinnerUserId
             });
             return;
         }
@@ -242,7 +242,7 @@ public class Network {
                 Battle = CreateBattleSnapshot(battle, userId.Value),
                 Messages = result.Messages,
                 RequiresSwitch = false,
-                WinnerSide = result.WinnerSide
+                WinnerUserId = battle.WinnerUserId
             });
             return;
         }
@@ -251,7 +251,7 @@ public class Network {
         _logger.LogInformation(
             "Batalla {BattleId}: turno resuelto. winner={Winner}. Logs={MessagesCount}",
             actionRequest.BattleId,
-            result.WinnerSide,
+            result.WinnerUserId,
             result.Messages.Count
         );
 
@@ -269,7 +269,7 @@ public class Network {
                     Battle = CreateBattleSnapshot(battle, perspectiveUserId),
                     Messages = result.Messages,
                     RequiresSwitch = false,
-                    WinnerSide = result.WinnerSide
+                    WinnerUserId = battle.WinnerUserId
                 };
                 return _clients[id].SendAsync(update);
             });
@@ -394,7 +394,7 @@ public class Network {
                 Battle = CreateBattleSnapshot(session, player1.UserId ?? 1),
                 Messages = new List<string> { "¡La batalla comienza!" },
                 RequiresSwitch = false,
-                WinnerSide = null
+                WinnerUserId = null
             };
 
             var stateForPlayer2 = new BattleStateUpdate {
@@ -402,7 +402,7 @@ public class Network {
                 Battle = CreateBattleSnapshot(session, player2.UserId ?? 2),
                 Messages = new List<string> { "¡La batalla comienza!" },
                 RequiresSwitch = false,
-                WinnerSide = null
+                WinnerUserId = null
             };
 
             await player1.SendAsync(stateForPlayer1);

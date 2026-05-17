@@ -20,11 +20,12 @@ public class BattleService {
         _logger = logger;
     }
 
-    public class SubmitBattleActionResult {
+    public class SubmitBattleActionResult
+    {
         public bool Accepted { get; set; }
         public bool TurnResolved { get; set; }
         public List<string> Messages { get; set; } = new();
-        public string? WinnerSide { get; set; }
+        public int? WinnerUserId { get; set; }
     }
 
     // Crea una nueva batalla cargando el equipo del usuario (vs CPU con placeholder)
@@ -137,16 +138,16 @@ public class BattleService {
                     Accepted = false,
                     TurnResolved = false,
                     Messages = new List<string> { "No perteneces a esta batalla." },
-                    WinnerSide = battle.WinnerSide
+                    WinnerUserId = battle.WinnerUserId
                 };
             }
 
-            if (battle.WinnerSide != null) {
+            if (battle.WinnerUserId != null) {
                 return new SubmitBattleActionResult {
                     Accepted = false,
                     TurnResolved = false,
                     Messages = new List<string> { "La batalla ya ha terminado." },
-                    WinnerSide = battle.WinnerSide
+                    WinnerUserId = battle.WinnerUserId
                 };
             }
 
@@ -155,11 +156,11 @@ public class BattleService {
                     Accepted = false,
                     TurnResolved = false,
                     Messages = new List<string> { validationError },
-                    WinnerSide = battle.WinnerSide
+                    WinnerUserId = battle.WinnerUserId
                 };
             }
 
-            battle.PendingActions[userId] = new PendingBattleAction {
+            battle.PendingActionsByUserId[userId] = new PendingBattleAction {
                 Action = action,
                 MoveName = moveName,
                 TargetSlot = targetSlot
@@ -171,49 +172,49 @@ public class BattleService {
                     Accepted = false,
                     TurnResolved = false,
                     Messages = new List<string> { "No hay rival asignado." },
-                    WinnerSide = battle.WinnerSide
+                    WinnerUserId = battle.WinnerUserId
                 };
             }
 
-            if (!battle.PendingActions.ContainsKey(opponentUserId.Value)) {
+            if (!battle.PendingActionsByUserId.ContainsKey(opponentUserId.Value)) {
                 return new SubmitBattleActionResult {
                     Accepted = true,
                     TurnResolved = false,
                     Messages = new List<string> { "Acción recibida. Esperando al rival..." },
-                    WinnerSide = battle.WinnerSide
+                    WinnerUserId = battle.WinnerUserId
                 };
             }
 
             // Ya hay 2 acciones pendientes: resolver turno simultáneo
             int player2UserId = battle.Player2UserId ?? opponentUserId.Value;
-            if (!battle.PendingActions.TryGetValue(battle.PlayerUserId, out PendingBattleAction? actionP1)) {
+            if (!battle.PendingActionsByUserId.TryGetValue(battle.PlayerUserId, out PendingBattleAction? actionP1)) {
                 return new SubmitBattleActionResult {
                     Accepted = false,
                     TurnResolved = false,
                     Messages = new List<string> { "Falta la acción del jugador 1." },
-                    WinnerSide = battle.WinnerSide
+                    WinnerUserId = battle.WinnerUserId
                 };
             }
 
-            if (!battle.PendingActions.TryGetValue(player2UserId, out PendingBattleAction? actionP2)) {
+            if (!battle.PendingActionsByUserId.TryGetValue(player2UserId, out PendingBattleAction? actionP2)) {
                 return new SubmitBattleActionResult {
                     Accepted = false,
                     TurnResolved = false,
                     Messages = new List<string> { "Falta la acción del jugador 2." },
-                    WinnerSide = battle.WinnerSide
+                    WinnerUserId = battle.WinnerUserId
                 };
             }
 
             List<string> turnMessages = ResolveSimultaneousTurn(battle, actionP1, actionP2, battle.PlayerUserId, player2UserId);
 
-            battle.PendingActions.Clear();
+            battle.PendingActionsByUserId.Clear();
             battle.Turn++;
 
             return new SubmitBattleActionResult {
                 Accepted = true,
                 TurnResolved = true,
                 Messages = turnMessages,
-                WinnerSide = battle.WinnerSide
+                WinnerUserId = battle.WinnerUserId
             };
         }
     }
@@ -306,12 +307,12 @@ public class BattleService {
 
         // Rendirse tiene prioridad total y termina la batalla inmediatamente.
         if (player1Action.Action == BattleAction.Forfeit) {
-            battle.WinnerSide = "opponent";
+            battle.WinnerUserId = player2UserId;
             logs.Add("El jugador 1 se rindió.");
             return logs;
         }
         if (player2Action.Action == BattleAction.Forfeit) {
-            battle.WinnerSide = "player";
+            battle.WinnerUserId = player1UserId;
             logs.Add("El jugador 2 se rindió.");
             return logs;
         }

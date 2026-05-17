@@ -47,7 +47,7 @@ public class CancelSearchResponse : LobbyMessage {
 
 // Servidor notifica que se encontró un rival y empieza la batalla
 public class BattleMatchedNotification : LobbyMessage {
-    public required string BattleId { get; set; }
+    public required Guid BattleId { get; set; }
     public required string OpponentUsername { get; set; }
     public int OpponentUserId { get; set; }
 }

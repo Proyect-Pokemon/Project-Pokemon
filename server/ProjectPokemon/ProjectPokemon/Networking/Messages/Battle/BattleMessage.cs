@@ -14,7 +14,7 @@ public class StartBattleRequest : BattleMessage {
 
 // Respuesta del servidor al iniciar batalla
 public class StartBattleResponse : BattleMessage {
-    public required string BattleId { get; set; }
+    public required Guid BattleId { get; set; }
     public required BattleSnapshot InitialState { get; set; }
     public bool Success { get; set; } = true;
     public string? ErrorMessage { get; set; }
@@ -22,7 +22,7 @@ public class StartBattleResponse : BattleMessage {
 
 // Mensaje del cliente para realizar una acción en la batalla
 public class BattleActionRequest : BattleMessage {
-    public required string BattleId { get; set; }
+    public required Guid BattleId { get; set; }
     public string? MoveName { get; set; }      // Para acción Attack
     public int? TargetSlot { get; set; }       // Para acción Switch (0-5)
 }
@@ -32,12 +32,12 @@ public class BattleStateUpdate : BattleMessage {
     public required BattleSnapshot Battle { get; set; }
     public List<string> Messages { get; set; } = new();
     public bool RequiresSwitch { get; set; } = false;
-    public string? WinnerSide { get; set; } = null; // "player" | "opponent" | null
+    public int? WinnerUserId { get; set; }
 }
 
 // Snapshot completo del estado de la batalla
 public class BattleSnapshot {
-    public required string BattleId { get; set; }
+    public required Guid BattleId { get; set; }
     public required BattleSideSnapshot PlayerSide { get; set; }
     public required BattleSideSnapshot OpponentSide { get; set; }
     public int Turn { get; set; } = 1;
