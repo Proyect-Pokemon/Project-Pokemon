@@ -12,6 +12,7 @@ export class LifeBar {
   @Input() currentHp: number | null = null;
   @Input() maxHp: number | null = null;
   @Input() showHp: boolean = false;
+  @Input() status: string = '';
 
   get hpPercent(): number {
     const max = this.maxHp ?? 0;
@@ -25,10 +26,34 @@ export class LifeBar {
     return Math.max(0, this.currentHp ?? 0);
   }
 
+  get displayHpPercent(): number {
+    return Math.trunc(this.hpPercent);
+  }
+
   get healthColor(): string {
     const percent = this.hpPercent;
     if (percent > 50) return 'green';
     if (percent > 20) return 'yellow';
     return 'red';
+  }
+
+  get statusDisplay(): string {
+    const statusLower = this.status.toLowerCase();
+    if (statusLower === 'burned') return 'QUE';
+    if (statusLower === 'frozen') return 'CON';
+    if (statusLower === 'poison') return 'ENV';
+    if (statusLower === 'sleep') return 'DOR';
+    if (statusLower === 'paralyzed') return 'PAR';
+    return '';
+  }
+
+  get statusClass(): string {
+    const statusLower = this.status.toLowerCase();
+    if (statusLower === 'burned') return 'status-fire';
+    if (statusLower === 'frozen') return 'status-ice';
+    if (statusLower === 'poison') return 'status-poison';
+    if (statusLower === 'sleep') return 'status-flying';
+    if (statusLower === 'paralyzed') return 'status-electric';
+    return '';
   }
 }

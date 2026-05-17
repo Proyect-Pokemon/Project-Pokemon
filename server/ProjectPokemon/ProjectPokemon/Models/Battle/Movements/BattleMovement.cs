@@ -4,6 +4,7 @@ namespace ProjectPokemon.Models.Battle.Movements;
 
 public abstract class BattleMovement : IMovement {
     public int CurrentPp { get; set; }
+    public int MaxPp => Pp;             // Alias para facilitar acceso
     public int Id { get; }
     public string Name { get; }
     public string Description { get; }

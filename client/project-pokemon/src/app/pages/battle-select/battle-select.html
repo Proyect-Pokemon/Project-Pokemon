@@ -2,11 +2,17 @@
     <section class="team-selector" (click)="closeTeamMenu()">
         <header class="selector-header">
             <h1>Elige un equipo</h1>
-            <p class="mode-label">Modo VS. CPU</p>
+            <p class="mode-label">Modo {{ mode() === 'online' ? 'VS. ONLINE' : 'VS. CPU' }}</p>
         </header>
 
         @if (isLoadingTeams()) {
             <p class="state-message">Cargando equipos...</p>
+        } @else if (mode() === 'online' && isSearchingBattle()) {
+            <div class="searching-box">
+                <h2>Buscando rival...</h2>
+                <p>{{ searchingMessage() || 'Esperando a otro jugador en cola' }}</p>
+                <button type="button" class="cancel-search-btn" (click)="cancelSearch($event)">Cancelar búsqueda</button>
+            </div>
         } @else if (teams().length === 0) {
             <p class="state-message">No tienes equipos creados. Crea uno en Team Builder para empezar.</p>
         } @else {

@@ -2,22 +2,143 @@
     display: flex;
     flex-direction: column;
     flex: 1;
+    position: relative;
+    min-height: 100%;
+    isolation: isolate;
+    overflow: hidden;
+    background: linear-gradient(180deg, #071126 0%, #0b1c3b 52%, #112b56 100%);
+}
+
+:host::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(195deg, rgba(106, 182, 255, 0.16) 0%, transparent 36%),
+        repeating-linear-gradient(
+            0deg,
+            rgba(126, 201, 255, 0.16) 0,
+            rgba(126, 201, 255, 0.16) 2px,
+            transparent 2px,
+            transparent 56px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            rgba(126, 201, 255, 0.2) 0,
+            rgba(126, 201, 255, 0.2) 2px,
+            transparent 2px,
+            transparent 56px
+        );
+    transform-origin: center top;
+    transform: perspective(1200px) rotateX(83deg) rotateZ(18deg) scale(2.15) translateY(14%);
+    opacity: 1;
+    mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.82) 6%, rgba(0, 0, 0, 1) 16%);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.82) 6%, rgba(0, 0, 0, 1) 16%);
+    filter: drop-shadow(0 0 12px rgba(114, 196, 255, 0.4));
+    pointer-events: none;
+    z-index: 0;
+}
+
+:host::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at top left, rgba(111, 206, 255, 0.22), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(120, 161, 255, 0.18), transparent 30%),
+        radial-gradient(ellipse at 50% 82%, rgba(95, 179, 255, 0.24), transparent 28%),
+        linear-gradient(180deg, rgba(9, 19, 40, 0.04), rgba(3, 8, 20, 0.2));
+    pointer-events: none;
+    z-index: 0;
+}
+
+.battle-container {
+    display: flex;
+    gap: 18px;
+    height: 100%;
+    flex: 1;
+    padding: 24px;
+    box-sizing: border-box;
+    align-items: stretch;
+    position: relative;
+    z-index: 1;
+}
+
+.battle-loading {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.battle-loading-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 18px 24px;
+    border-radius: 18px;
+    border: 1px solid rgba(167, 221, 255, 0.45);
+    background: rgba(4, 17, 37, 0.92);
+    box-shadow: 0 20px 40px rgba(2, 8, 19, 0.55);
+}
+
+.battle-loading-title {
+    font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+    font-weight: 800;
+    color: #eaf9ff;
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 8px rgba(140, 214, 255, 0.42);
+}
+
+.battle-loading-subtitle {
+    font-size: clamp(0.86rem, 1.1vw, 1rem);
+    font-weight: 600;
+    color: rgba(210, 238, 255, 0.9);
 }
 
 #canvas {
     position: relative;
-    background-image: url(/assets/battlegrounds/battleground-grass.png);
-    background-repeat: no-repeat;
-    background-position: center;
     image-rendering: pixelated;
-    background-size: contain;
     width: 70%;
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    margin: auto;
-    padding: 30px 30px 0px 30px;
+    margin: 0;
+    padding: 26px 26px 10px 26px;
     gap: 20px;
+    border-radius: 28px;
+    overflow: hidden;
+}
+
+#canvas::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+#canvas::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+#canvas > :not(.waiting-overlay) {
+    position: relative;
+    z-index: 1;
+}
+
+app-battle-chat {
+    width: 30%;
+    max-height: 80vh;
+    display: flex;
 }
 
 .enemy {
@@ -25,7 +146,7 @@
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
-    gap: 10px;
+    gap: 18px;
     flex: 1;
     min-height: 0;
 }
@@ -35,37 +156,202 @@
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
-    gap: 10px;
+    gap: 18px;
     flex: 1;
     min-height: 0;
 }
 
+.enemy app-life-bar,
+.ally app-life-bar {
+    flex: 0 1 360px;
+    max-width: 360px;
+}
+
 .enemy img {
-    width: 15%;
+    width: 16%;
     image-rendering: pixelated;
     height: auto;
+    filter: drop-shadow(0 14px 18px rgba(27, 18, 39, 0.28));
 }
 
 .ally img {
-    width: 20%;
+    width: 21%;
     image-rendering: pixelated;
     height: auto;
+    filter: drop-shadow(0 14px 18px rgba(27, 18, 39, 0.28));
 }
 
 #moves {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
-    margin-bottom: 10px;
-    margin-left: 10px;
-    margin-right: 10px;
+    margin: 0 8px 8px;
     position: relative;
+}
+
+.action-button {
+    border: 0;
+    border-radius: 16px;
+    padding: 14px 18px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #f3fbff;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+
+.action-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+}
+
+.action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-attack {
+    background: linear-gradient(135deg, #c9463d, #9b2320);
+}
+
+.action-switch {
+    background: linear-gradient(135deg, #2a87bf, #1a567a);
+}
+
+.submenu-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #d7f5ff;
+    font-weight: 700;
+}
+
+.back-button {
+    border: 0;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #eaf8ff;
+    background: rgba(17, 32, 58, 0.85);
+    cursor: pointer;
+}
+
+.back-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.moves-grid {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.switch-grid {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.switch-option {
+    border: 0;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 64px;
+    padding: 8px 10px;
+    text-align: left;
+    color: #eaffff;
+    background: rgba(12, 25, 48, 0.86);
+    cursor: pointer;
+}
+
+.switch-option img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+.switch-option-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.switch-option-text strong {
+    font-size: 0.86rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.switch-option-text span {
+    font-size: 0.75rem;
+    opacity: 0.85;
+}
+
+.switch-option:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.waiting-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6, 13, 28, 0.58);
+    backdrop-filter: blur(2px);
+    border-radius: 14px;
+    z-index: 10;
+}
+
+.waiting-overlay-card {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    border-radius: 14px;
+    padding: 20px 28px;
+    color: #e7f8ff;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+@media (max-width: 1200px) {
+    .battle-container {
+        flex-direction: column;
+        padding: 18px;
+    }
+
+    #canvas {
+        width: 100%;
+        max-height: none;
+    }
+
+    app-battle-chat {
+        width: 100%;
+        min-height: 300px;
+    }
 }
 
 @media (max-width: 800px) {
     #canvas {
-        width: 96%;
-        padding: 18px 12px 0 12px;
+        width: 100%;
+        padding: 16px 12px 10px 12px;
+        border-radius: 22px;
+    }
+
+    .enemy,
+    .ally {
+        gap: 12px;
     }
 
     .enemy img {
@@ -74,5 +360,9 @@
 
     .ally img {
         width: 30%;
+    }
+
+    .switch-grid {
+        grid-template-columns: 1fr 1fr;
     }
 }

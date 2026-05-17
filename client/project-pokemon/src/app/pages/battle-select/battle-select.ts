@@ -1,6 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TeamService } from '../../services/team-service';
 import { GetTeamDto } from '../../models/team';
 import { AuthService } from '../../services/auth';
@@ -8,6 +8,7 @@ import { PokemonTeamService } from '../../services/pokemon-team-service';
 import { PokemonService } from '../../services/pokemon-service';
 import { GetAllPokemonTeamDto } from '../../models/pokemon-team';
 import { Pokemon } from '../../models/pokemon';
+import { SocketService } from '../../services/websocket-service';
 
 interface TeamSlotView {
   displayName: string;
@@ -27,18 +28,54 @@ interface BattleSelectTeamView {
   styleUrl: './battle-select.css',
 })
 export class BattleSelect {
+  mode = signal<'cpu' | 'online'>('cpu');
   teams = signal<BattleSelectTeamView[]>([]);
   selectedTeamId = signal<number | null>(null);
   contextMenuTeamId = signal<number | null>(null);
   isLoadingTeams = signal(true);
+  isSearchingBattle = signal(false);
+  searchingMessage = signal('');
 
   private teamService = inject(TeamService);
   private authService = inject(AuthService);
   private pokemonTeamService = inject(PokemonTeamService);
   private pokemonService = inject(PokemonService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private socketService = inject(SocketService);
+
+  constructor() {
+    effect(() => {
+      if (this.mode() !== 'online') {
+        this.isSearchingBattle.set(false);
+        return;
+      }
+
+      this.searchingMessage.set(this.socketService.matchmakingMessage());
+      this.isSearchingBattle.set(this.socketService.matchmakingState() === 'searching');
+    });
+
+    effect(() => {
+      if (this.mode() !== 'online') {
+        return;
+      }
+
+      const match = this.socketService.onBattleMatched();
+      if (!match) {
+        return;
+      }
+
+      this.isSearchingBattle.set(false);
+      void this.router.navigate(['/battle/fight'], {
+        queryParams: { mode: 'online', battleId: match.battleId },
+      });
+    });
+  }
 
   async ngOnInit(): Promise<void> {
+    const modeParam = this.route.snapshot.queryParamMap.get('mode');
+    this.mode.set(modeParam === 'online' ? 'online' : 'cpu');
+
     await this.loadUserTeams();
   }
 
@@ -64,9 +101,21 @@ export class BattleSelect {
     this.selectedTeamId.set(teamId);
     this.contextMenuTeamId.set(null);
 
+    if (this.mode() === 'online') {
+      this.socketService.searchBattle(teamId);
+      this.isSearchingBattle.set(true);
+      return;
+    }
+
     void this.router.navigate(['/battle/fight'], {
-      queryParams: { teamId },
+      queryParams: { mode: 'cpu', teamId },
     });
+  }
+
+  cancelSearch(event?: Event): void {
+    event?.stopPropagation();
+    this.socketService.cancelSearch();
+    this.isSearchingBattle.set(false);
   }
 
   private async loadUserTeams(): Promise<void> {

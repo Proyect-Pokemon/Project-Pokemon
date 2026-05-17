@@ -17,7 +17,20 @@ export class BattleModeSelect {
 
     this.isLeaving.set(true);
     setTimeout(() => {
-      void this.router.navigate(['/battle-select']);
+      void this.router.navigate(['/battle-select'], {
+        queryParams: { mode: 'cpu' },
+      });
+    }, 300);
+  }
+
+  goToVsOnline(): void {
+    if (this.isLeaving()) return;
+
+    this.isLeaving.set(true);
+    setTimeout(() => {
+      void this.router.navigate(['/battle-select'], {
+        queryParams: { mode: 'online' },
+      });
     }, 300);
   }
 }

@@ -7,7 +7,7 @@
                 <span>VS. CPU</span>
             </button>
 
-            <button type="button" class="mode-button mode-online" disabled>
+            <button type="button" class="mode-button mode-online" [disabled]="isLeaving()" (click)="goToVsOnline()">
                 <span>VS. ONLINE</span>
             </button>
 

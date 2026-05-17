@@ -77,6 +77,9 @@
     margin-bottom: 20px;
     border-left: 4px solid var(--fighting-color);
     font-weight: 500;
+    width: 100%;
+    max-width: 400px;
+    box-sizing: border-box;
 }
 
 .error {
@@ -156,18 +159,15 @@ input[type="password"]:focus {
     transform: none;
 }
 
-.error, .error-global {
+.error-global {
+    color: var(--alert-color);
+    font-size: 1.05em;
+    font-weight: 700;
+    text-align: center;
+}
+
+.error {
     color: var(--alert-color);
     font-size: 0.9em;
     margin-top: 0.2em;
-}
-
-/* Mensaje global más grande y centrado */
-.error-global {
-    font-size: 1.2em;
-    font-weight: bold;
-    text-align: center;
-    margin-top: 12px;
-    position: relative;
-    top: 12px;
 }

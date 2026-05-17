@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { BattleResponse } from '../models/pokemon-api';
-import { BattleTurnRequest, BattleTurnResponse } from '../models/battle-turn';
+import { BattleResponse } from '../models/battle/pokemon-api';
+import { BattleActionResponse, PlayTurnRequest } from '../models/battle/battle-turn-action';
 import { ApiService } from './api';
 
 // Este servicio se encarga de gestionar las llamadas a la API relacionadas con
@@ -35,8 +35,8 @@ export class BattleService {
   }
 
   // Envía el movimiento seleccionado al backend y obtiene el nuevo estado del turno.
-  async playTurn(moveName: string): Promise<BattleTurnResponse | null> {
-    const payload: BattleTurnRequest = { moveName };
-    return await this.apiService.post<BattleTurnResponse>('battle/turn', payload);
+  async playTurn(moveName: string): Promise<BattleActionResponse | null> {
+    const payload: PlayTurnRequest = { moveName };
+    return await this.apiService.post<BattleActionResponse>('battle/turn', payload);
   }
 }

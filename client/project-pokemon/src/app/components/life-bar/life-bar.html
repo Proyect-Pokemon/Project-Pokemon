@@ -1,11 +1,18 @@
 <div class="pokemon-info">
     <div class="info-header">
-        <span>{{ pokemonName | titlecase }}</span>
+        <div class="name-row">
+            <span class="pokemon-name">{{ pokemonName | titlecase }}</span>
+            @if (status) {
+                <span class="status-tag" [class]="statusClass">{{ statusDisplay }}</span>
+            }
+        </div>
         <div class="life-bar">
             <div class="health" [style.width.%]="hpPercent" [class]="healthColor"></div>
         </div>
     </div>
     @if (showHp) {
         <span class="hp-display">{{ displayHp }}/{{ maxHp }}</span>
+    } @else {
+        <span class="hp-display subtle">{{ displayHpPercent }}%</span>
     }
 </div>

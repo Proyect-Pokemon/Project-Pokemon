@@ -1,163 +1,318 @@
-import { Component, inject, signal } from '@angular/core';
-import { BattleService } from '../../services/battle-service';
-import { BattleResponse } from '../../models/pokemon-api';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { BattleResponse } from '../../models/battle/pokemon-api';
 import { BattleMove } from '../../models/move';
 import { MovementButton } from '../../components/movement-button/movement-button';
 import { CommonModule, TitleCasePipe } from '@angular/common';
 import { BattleLogOverlay } from '../../components/battle-log-overlay/battle-log-overlay';
 import { FinishBattleDialog } from '../../components/finish-battle-dialog/finish-battle-dialog';
 import { LifeBar } from '../../components/life-bar/life-bar';
-import { BattleTurnResponse } from '../../models/battle-turn';
+import { BattleChat } from '../../components/battle-chat/battle-chat';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AuthService } from '../../services/auth';
+import { SocketService } from '../../services/websocket-service';
+import { BattleService } from '../../services/battle-service';
+
+type BattleActionPanel = 'root' | 'attack' | 'switch';
 
 @Component({
   selector: 'app-battle',
-  imports: [MovementButton, BattleLogOverlay, FinishBattleDialog, LifeBar, CommonModule],
+  imports: [MovementButton, BattleLogOverlay, FinishBattleDialog, LifeBar, BattleChat, CommonModule],
   providers: [TitleCasePipe],
   templateUrl: './battle.html',
   styleUrl: './battle.css',
 })
 export class Battle {
+  private readonly FALLBACK_SPRITE = '/assets/error/missing-no.png';
+  private readonly WAITING_MESSAGE_SNIPPET = 'esperando al rival';
+  private readonly ONLINE_BATTLE_BOOTSTRAP_TIMEOUT_MS = 8000;
+  private onlineBattleBootstrapTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  battle = signal(false);
+  mode = signal<'cpu' | 'online'>('cpu');
+  battleId = signal<string | null>(null);
   battleInfo = signal<BattleResponse | null>(null);
+  latestBattleSnapshot = signal<any | null>(null);
   hpA = signal<number | null>(null);
   hpB = signal<number | null>(null);
   isLoadingBattle = signal(true);
+  attacksDisabled = signal(true);
+  isWaitingForOpponent = signal(false);
+  actionPanel = signal<BattleActionPanel>('root');
 
-  // Estado para el log y visibilidad del overlay
   battleLog = signal<string[]>([]);
   showLogOverlay = signal(false);
   showFinishDialog = signal(false);
-  
-  // Variables temporales para actualizar HP de forma sincronizada
-  private pendingHpA: number | null = null;
-  private pendingHpB: number | null = null;
-  private logLineActions: ('update-hpA' | 'update-hpB' | 'none')[] = [];
 
-  private apiService = inject(BattleService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private titleCasePipe = inject(TitleCasePipe);
-  private currentTeamId: number | null = null;
+  private authService = inject(AuthService);
+  private socketService = inject(SocketService);
+  private battleService = inject(BattleService);
+
+  currentUsername = this.authService.nickname;
+
+  switchOptions = computed(() => {
+    const snapshot = this.latestBattleSnapshot();
+    const team = snapshot?.playerSide?.team;
+    const activeSlot = snapshot?.playerSide?.activeSlot ?? 0;
+
+    if (!Array.isArray(team)) {
+      return [] as Array<{ index: number; name: string; hpLabel: string; sprite: string; isActive: boolean; isFainted: boolean }>;
+    }
+
+    return team.map((pokemon: any, index: number) => {
+      const maxHp = pokemon?.maxHp ?? 0;
+      const currentHp = pokemon?.currentHp ?? 0;
+      return {
+        index,
+        name: pokemon?.nickname || pokemon?.name || `Pokemon ${index + 1}`,
+        hpLabel: `${currentHp}/${maxHp}`,
+        sprite: pokemon?.spriteBack || pokemon?.spriteFront || this.FALLBACK_SPRITE,
+        isActive: index === activeSlot,
+        isFainted: !!pokemon?.isFainted,
+      };
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      if (this.mode() !== 'online') {
+        return;
+      }
+
+      const battleEvent = this.socketService.onBattleState();
+      const currentBattleId = this.battleId();
+
+      if (!battleEvent || !currentBattleId || battleEvent.battle?.battleId !== currentBattleId) {
+        return;
+      }
+
+      const mapped = this.mapBattleSnapshotToView(battleEvent.battle);
+      this.latestBattleSnapshot.set(battleEvent.battle);
+      this.battleInfo.set(mapped);
+      this.hpA.set(mapped.pokemonA.currentHp ?? mapped.pokemonA.hp ?? 0);
+      this.hpB.set(mapped.pokemonB.currentHp ?? mapped.pokemonB.hp ?? 0);
+      this.isLoadingBattle.set(false);
+      this.clearOnlineBattleBootstrapTimeout();
+
+      const waitingForOpponent = this.hasWaitingMessage(battleEvent.messages);
+      this.isWaitingForOpponent.set(waitingForOpponent);
+      this.attacksDisabled.set(waitingForOpponent);
+
+      if (battleEvent.requiresSwitch) {
+        this.actionPanel.set('switch');
+      } else if (!waitingForOpponent) {
+        this.actionPanel.set('root');
+      }
+
+      if (battleEvent.messages.length > 0) {
+        this.battleLog.update((current) => [...current, ...battleEvent.messages]);
+      }
+    });
+  }
 
   async ngOnInit(): Promise<void> {
-    const teamIdParam = this.route.snapshot.queryParamMap.get('teamId');
-    const teamId = teamIdParam ? Number(teamIdParam) : NaN;
+    const modeParam = this.route.snapshot.queryParamMap.get('mode');
+    this.mode.set(modeParam === 'online' ? 'online' : 'cpu');
 
-    if (!teamIdParam || Number.isNaN(teamId)) {
+    if (this.mode() === 'cpu') {
+      const teamIdParam = this.route.snapshot.queryParamMap.get('teamId');
+      const teamId = teamIdParam ? Number(teamIdParam) : NaN;
+
+      if (!teamIdParam || Number.isNaN(teamId)) {
+        this.isLoadingBattle.set(false);
+        void this.router.navigate(['/battle']);
+        return;
+      }
+
+      const data = await this.battleService.startBattle(teamId);
+      this.isLoadingBattle.set(false);
+
+      if (!data) {
+        void this.router.navigate(['/battle']);
+        return;
+      }
+
+      this.battleInfo.set(data);
+      this.hpA.set(data.pokemonA.currentHp ?? data.pokemonA.hp ?? 0);
+      this.hpB.set(data.pokemonB.currentHp ?? data.pokemonB.hp ?? 0);
+      this.attacksDisabled.set(false);
+      this.isWaitingForOpponent.set(false);
+      this.actionPanel.set('root');
+      return;
+    }
+
+    const battleId = this.route.snapshot.queryParamMap.get('battleId');
+
+    if (!battleId) {
       this.isLoadingBattle.set(false);
       void this.router.navigate(['/battle']);
       return;
     }
 
-    this.currentTeamId = teamId;
-    const data = await this.apiService.startBattle(teamId);
-    this.isLoadingBattle.set(false);
+    const matchedBattleId = this.socketService.onBattleMatched()?.battleId;
+    if (!matchedBattleId || matchedBattleId !== battleId) {
+      this.isLoadingBattle.set(false);
+      void this.router.navigate(['/battle-select'], {
+        queryParams: { mode: 'online' },
+      });
+      return;
+    }
 
-    if (!data) return;
+    this.battleId.set(battleId);
+    this.socketService.setActiveBattle(battleId);
+    this.attacksDisabled.set(true);
+    this.isWaitingForOpponent.set(false);
+    this.actionPanel.set('root');
+    this.startOnlineBattleBootstrapTimeout();
+  }
 
-    this.hydrateBattle(data);
+  ngOnDestroy(): void {
+    this.clearOnlineBattleBootstrapTimeout();
+    this.socketService.setActiveBattle(null);
+  }
+
+  openAttackPanel(): void {
+    if (this.attacksDisabled() || this.showLogOverlay()) {
+      return;
+    }
+    this.actionPanel.set('attack');
+  }
+
+  openSwitchPanel(): void {
+    if (this.attacksDisabled() || this.showLogOverlay()) {
+      return;
+    }
+    this.actionPanel.set('switch');
+  }
+
+  backToActionMenu(): void {
+    if (this.isWaitingForOpponent()) {
+      return;
+    }
+
+    if (this.socketService.onBattleState()?.requiresSwitch) {
+      return;
+    }
+
+    this.actionPanel.set('root');
   }
 
   async attack(move: BattleMove): Promise<void> {
-    const response = await this.apiService.playTurn(move.name);
-    if (!response) return;
+    if (this.mode() === 'cpu') {
+      return;
+    }
 
-    this.applyBattleTurn(response);
+    const battleId = this.battleId();
+    if (!battleId) {
+      return;
+    }
+
+    this.attacksDisabled.set(true);
+    this.isWaitingForOpponent.set(true);
+    this.socketService.attack(battleId, move.name);
+  }
+
+  switchPokemon(targetSlot: number): void {
+    if (this.mode() === 'cpu') {
+      return;
+    }
+
+    const battleId = this.battleId();
+    if (!battleId) {
+      return;
+    }
+
+    this.attacksDisabled.set(true);
+    this.isWaitingForOpponent.set(true);
+    this.socketService.switchPokemon(battleId, targetSlot);
+  }
+
+  private hasWaitingMessage(messages: string[]): boolean {
+    return messages.some(message =>
+      message?.toLowerCase().includes(this.WAITING_MESSAGE_SNIPPET)
+    );
   }
 
   onLineChanged(lineIndex: number): void {
-    const action = this.logLineActions[lineIndex];
-    
-    if (action === 'update-hpA') {
-      this.hpA.set(this.pendingHpA!);
-    } else if (action === 'update-hpB') {
-      this.hpB.set(this.pendingHpB!);
-    }
-    // Si action === 'none', no se actualiza nada
+    // Implementar lógica del log de combate
   }
 
-  onRetryBattle() {
-    if (!this.currentTeamId) {
-      this.resetBattleState();
+  private startOnlineBattleBootstrapTimeout(): void {
+    this.clearOnlineBattleBootstrapTimeout();
+
+    this.onlineBattleBootstrapTimeoutId = setTimeout(() => {
+      if (this.mode() !== 'online') {
+        return;
+      }
+
+      if (this.battleInfo()) {
+        return;
+      }
+
+      this.socketService.setActiveBattle(null);
+      this.isLoadingBattle.set(false);
+      void this.router.navigate(['/battle-select'], {
+        queryParams: { mode: 'online' },
+      });
+    }, this.ONLINE_BATTLE_BOOTSTRAP_TIMEOUT_MS);
+  }
+
+  private clearOnlineBattleBootstrapTimeout(): void {
+    if (!this.onlineBattleBootstrapTimeoutId) {
       return;
     }
 
-    this.apiService.startBattle(this.currentTeamId).then((data) => {
-      if (!data) return;
-
-      this.hydrateBattle(data);
-    });
-    this.showFinishDialog.set(false);
+    clearTimeout(this.onlineBattleBootstrapTimeoutId);
+    this.onlineBattleBootstrapTimeoutId = null;
   }
 
-  private hydrateBattle(data: BattleResponse): void {
-    this.resetBattleState();
-    this.battleInfo.set(data);
-    this.hpA.set(data.pokemonA.hp);
-    this.hpB.set(data.pokemonB.hp);
-    this.battle.set(true);
-  }
+  private mapBattleSnapshotToView(snapshot: any): BattleResponse {
+    const playerSlot = snapshot.playerSide?.activeSlot ?? 0;
+    const opponentSlot = snapshot.opponentSide?.activeSlot ?? 0;
 
-  private resetBattleState(): void {
-    this.battle.set(false);
-    this.battleInfo.set(null);
-    this.hpA.set(null);
-    this.hpB.set(null);
-    this.pendingHpA = null;
-    this.pendingHpB = null;
-    this.battleLog.set([]);
-    this.logLineActions = [];
-    this.showLogOverlay.set(false);
-    this.showFinishDialog.set(false);
-  }
+    const playerPokemon = snapshot.playerSide?.team?.[playerSlot] ?? snapshot.playerSide?.team?.[0];
+    const opponentPokemon = snapshot.opponentSide?.team?.[opponentSlot] ?? snapshot.opponentSide?.team?.[0];
 
-  private applyBattleTurn(result: BattleTurnResponse): void {
-    if (result.battle) {
-      this.battleInfo.set(result.battle);
-    }
-
-    const battle = this.battleInfo();
-    if (!battle) return;
-
-    const resolvedHpA = result.hpA ?? result.pokemonAHp ?? battle.pokemonA.hp;
-    const resolvedHpB = result.hpB ?? result.pokemonBHp ?? battle.pokemonB.hp;
-
-    this.pendingHpA = resolvedHpA;
-    this.pendingHpB = resolvedHpB;
-    this.hpA.set(resolvedHpA);
-    this.hpB.set(resolvedHpB);
-
-    const rawLog = result.log ?? result.battleLog ?? [];
-    const normalizedLog = this.normalizeBattleLog(rawLog, result.winner);
-    this.battleLog.set(normalizedLog);
-    this.logLineActions = normalizedLog.map(() => 'none');
-
-    if (normalizedLog.length > 0) {
-      this.showLogOverlay.set(true);
-      setTimeout(() => {
-        this.showLogOverlay.set(false);
-        if (result.finished || result.isFinished || !!result.winner) {
-          this.showFinishDialog.set(true);
-        }
-      }, normalizedLog.length * 3000);
-      return;
-    }
-
-    if (result.finished || result.isFinished || !!result.winner) {
-      this.showFinishDialog.set(true);
-    }
-  }
-
-  private normalizeBattleLog(logLines: string[], winner?: string | null): string[] {
-    if (winner && winner !== 'Empate') {
-      return [
-        ...logLines,
-        `¡${this.titleCasePipe.transform(winner)} ha ganado el combate!`,
-      ];
-    }
-
-    return logLines;
+    return {
+      pokemonA: {
+        name: playerPokemon?.nickname || playerPokemon?.name || 'Pokemon',
+        sprite: playerPokemon?.spriteBack || playerPokemon?.spriteFront || this.FALLBACK_SPRITE,
+        statusCondition: playerPokemon?.statusCondition ?? null,
+        currentHp: playerPokemon?.currentHp ?? 0,
+        maxHp: playerPokemon?.maxHp ?? 0,
+        atk: playerPokemon?.attack ?? 0,
+        def: playerPokemon?.defense ?? 0,
+        spa: playerPokemon?.specialAttack ?? 0,
+        spd: playerPokemon?.specialDefense ?? 0,
+        spe: playerPokemon?.speed ?? 0,
+        type1: 'unknown',
+        type2: null,
+        moves: (playerPokemon?.movements ?? []).map((move: any) => ({
+          name: move.name,
+          description: '',
+          power: null,
+          accuracy: null,
+          moveClass: '',
+          pp: move.maxPp,
+          currentPp: move.currentPp,
+          type: move.type,
+        })),
+      },
+      pokemonB: {
+        name: opponentPokemon?.nickname || opponentPokemon?.name || 'Pokemon',
+        sprite: opponentPokemon?.spriteFront || opponentPokemon?.spriteBack || this.FALLBACK_SPRITE,
+        statusCondition: opponentPokemon?.statusCondition ?? null,
+        currentHp: opponentPokemon?.currentHp ?? 0,
+        maxHp: opponentPokemon?.maxHp ?? 0,
+        atk: opponentPokemon?.attack ?? 0,
+        def: opponentPokemon?.defense ?? 0,
+        spa: opponentPokemon?.specialAttack ?? 0,
+        spd: opponentPokemon?.specialDefense ?? 0,
+        spe: opponentPokemon?.speed ?? 0,
+        type1: 'unknown',
+        type2: null,
+        moves: [],
+      },
+    };
   }
 }

@@ -1,0 +1,28 @@
+<div class="chat-container">
+  <div class="chat-header">
+    <h3>Combate número X</h3>
+  </div>
+  
+  <div class="chat-messages">
+    @for (message of messages(); track $index) {
+      <div [class]="'message ' + (message.isOwn ? 'own' : 'opponent')">
+        <span class="sender">{{ message.from }}</span>
+        <span class="content">{{ message.content }}</span>
+      </div>
+    }
+  </div>
+
+  <div class="chat-input">
+    <input 
+      type="text" 
+      #messageInput
+      placeholder="Escribe un mensaje..."
+      (keyup.enter)="sendMessage(messageInput.value); messageInput.value = ''"
+      [disabled]="isInputDisabled()">
+    <button 
+      (click)="sendMessage(messageInput.value); messageInput.value = ''"
+      [disabled]="isInputDisabled()">
+      Enviar
+    </button>
+  </div>
+</div>
