@@ -11,7 +11,7 @@ export interface BattleStateEvent {
   battle: any;
   messages: string[];
   requiresSwitch: boolean;
-  winnerSide: string | null;
+  winnerUserId: number | null;
 }
 
 interface ChatMessage {
@@ -114,7 +114,7 @@ export class SocketService {
       action: message.action,
       battleId: message.battle?.battleId,
       requiresSwitch: message.requiresSwitch ?? false,
-      winnerSide: message.winnerSide ?? null,
+      winnerUserId: message.winnerUserId ?? null,
       messages: message.messages ?? [],
     });
 
@@ -123,7 +123,7 @@ export class SocketService {
       battle: message.battle,
       messages: message.messages ?? [],
       requiresSwitch: message.requiresSwitch ?? false,
-      winnerSide: message.winnerSide ?? null,
+      winnerUserId: message.winnerUserId ?? null,
     });
   }
 

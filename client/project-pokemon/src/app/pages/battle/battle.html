@@ -90,10 +90,7 @@
             </app-battle-log-overlay>
             @if (showFinishDialog()) {
                 <app-finish-battle-dialog
-                    [hpA]="hpA()"
-                    [hpB]="hpB()"
-                    [pokemonAName]="battleInfo()!.pokemonA.name"
-                    [pokemonBName]="battleInfo()!.pokemonB.name"
+                    [result]="battleResult()"
                 ></app-finish-battle-dialog>
             }
         </div>
