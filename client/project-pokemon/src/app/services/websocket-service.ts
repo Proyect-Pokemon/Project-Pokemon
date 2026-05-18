@@ -213,6 +213,8 @@ export class SocketService {
     this.activeBattleId.set(null);
     this.onBattleMatched.set(null);
     this.onBattleState.set(null);
+    this.matchmakingState.set('idle');
+    this.matchmakingMessage.set('');
   }
 
   attack(battleId: string, moveName: string): void {
