@@ -43,6 +43,10 @@ export class Battle {
   showLogOverlay = signal(false);
   showFinishDialog = signal(false);
   battleResult = signal<BattleResult>(null);
+  showLeaveConfirmation = signal(false);
+
+  private leaveDecisionResolver: ((decision: boolean) => void) | null = null;
+  private leaveDecisionPromise: Promise<boolean> | null = null;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -185,7 +189,37 @@ export class Battle {
 
   ngOnDestroy(): void {
     this.clearOnlineBattleBootstrapTimeout();
-    this.socketService.setActiveBattle(null);
+    this.socketService.resetBattleContext();
+  }
+
+  canLeaveBattle(): Promise<boolean> | boolean {
+    if (!this.shouldConfirmLeaveBattle()) {
+      return true;
+    }
+
+    if (this.leaveDecisionPromise) {
+      return this.leaveDecisionPromise;
+    }
+
+    this.showLeaveConfirmation.set(true);
+    this.leaveDecisionPromise = new Promise<boolean>((resolve) => {
+      this.leaveDecisionResolver = resolve;
+    });
+
+    return this.leaveDecisionPromise;
+  }
+
+  confirmLeaveBattle(): void {
+    const currentBattleId = this.battleId();
+    if (this.mode() === 'online' && currentBattleId) {
+      this.socketService.forfeit(currentBattleId);
+    }
+
+    this.resolveLeaveDecision(true);
+  }
+
+  cancelLeaveBattle(): void {
+    this.resolveLeaveDecision(false);
   }
 
   openAttackPanel(): void {
@@ -260,6 +294,21 @@ export class Battle {
     }
 
     return 'defeat';
+  }
+
+  private shouldConfirmLeaveBattle(): boolean {
+    return this.mode() === 'online' && !!this.battleId() && !this.showFinishDialog();
+  }
+
+  private resolveLeaveDecision(decision: boolean): void {
+    this.showLeaveConfirmation.set(false);
+
+    if (this.leaveDecisionResolver) {
+      this.leaveDecisionResolver(decision);
+    }
+
+    this.leaveDecisionResolver = null;
+    this.leaveDecisionPromise = null;
   }
 
   onLineChanged(lineIndex: number): void {

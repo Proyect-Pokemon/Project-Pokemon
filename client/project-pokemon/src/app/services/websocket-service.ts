@@ -209,6 +209,12 @@ export class SocketService {
     this.activeBattleId.set(battleId);
   }
 
+  resetBattleContext(): void {
+    this.activeBattleId.set(null);
+    this.onBattleMatched.set(null);
+    this.onBattleState.set(null);
+  }
+
   attack(battleId: string, moveName: string): void {
     console.info('[WS][Battle] Send Attack', { battleId, moveName });
 

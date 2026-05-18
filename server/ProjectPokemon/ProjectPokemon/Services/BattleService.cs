@@ -151,6 +151,29 @@ public class BattleService {
                 };
             }
 
+            if (action == BattleAction.Forfeit) {
+                int? forfeitOpponentUserId = battle.GetOpponentUserId(userId);
+                if (!forfeitOpponentUserId.HasValue) {
+                    return new SubmitBattleActionResult {
+                        Accepted = false,
+                        TurnResolved = false,
+                        Messages = new List<string> { "No hay rival asignado." },
+                        WinnerUserId = battle.WinnerUserId
+                    };
+                }
+
+                battle.WinnerUserId = forfeitOpponentUserId.Value;
+                battle.Status = ProjectPokemon.Enum.BattleStatus.Finished;
+                battle.PendingActionsByUserId.Clear();
+
+                return new SubmitBattleActionResult {
+                    Accepted = true,
+                    TurnResolved = true,
+                    Messages = new List<string> { "Un jugador se rindió." },
+                    WinnerUserId = battle.WinnerUserId
+                };
+            }
+
             if (!IsValidActionPayload(battle, userId, action, moveName, targetSlot, out string validationError)) {
                 return new SubmitBattleActionResult {
                     Accepted = false,

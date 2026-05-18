@@ -93,6 +93,7 @@
                     [result]="battleResult()"
                 ></app-finish-battle-dialog>
             }
+
         </div>
 
         @if (mode() === 'online') {
@@ -103,4 +104,17 @@
             </app-battle-chat>
         }
     </div>
+
+    @if (showLeaveConfirmation()) {
+        <dialog class="leave-confirm-dialog" open aria-live="assertive">
+            <div class="leave-confirm-card">
+                <h3>Si cambias de página perderás el combate.</h3>
+                <p>¿Estás seguro que quieres rendirte?</p>
+                <div class="leave-confirm-actions">
+                    <button class="leave-cancel-button" (click)="cancelLeaveBattle()">Cancelar</button>
+                    <button class="leave-accept-button" (click)="confirmLeaveBattle()">Aceptar</button>
+                </div>
+            </div>
+        </dialog>
+    }
 }
