@@ -325,6 +325,82 @@ app-battle-chat {
     letter-spacing: 0.2px;
 }
 
+.leave-confirm-dialog {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    border: 0;
+    margin: 0;
+    background: rgba(6, 13, 28, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+}
+
+.leave-confirm-dialog[open] {
+    display: flex;
+}
+
+.leave-confirm-card {
+    width: min(560px, 94vw);
+    border-radius: 18px;
+    border: 1px solid rgba(167, 221, 255, 0.42);
+    background: rgba(4, 17, 37, 0.95);
+    box-shadow: 0 24px 48px rgba(2, 8, 19, 0.58);
+    padding: 22px;
+    color: #eaf9ff;
+}
+
+.leave-confirm-card h3 {
+    margin: 0;
+    font-size: clamp(1.05rem, 2vw, 1.3rem);
+    line-height: 1.35;
+}
+
+.leave-confirm-card p {
+    margin: 10px 0 0;
+    color: rgba(210, 238, 255, 0.94);
+}
+
+.leave-confirm-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.leave-cancel-button,
+.leave-accept-button {
+    border: 0;
+    border-radius: 12px;
+    min-width: 112px;
+    padding: 10px 14px;
+    font-weight: 800;
+    color: #f3fbff;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.leave-cancel-button {
+    background: linear-gradient(135deg, #2a87bf, #1a567a);
+}
+
+.leave-accept-button {
+    background: linear-gradient(135deg, #c9463d, #9b2320);
+}
+
+.leave-cancel-button:hover,
+.leave-accept-button:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
 @media (max-width: 1200px) {
     .battle-container {
         flex-direction: column;
@@ -364,5 +440,14 @@ app-battle-chat {
 
     .switch-grid {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .leave-confirm-actions {
+        justify-content: stretch;
+    }
+
+    .leave-cancel-button,
+    .leave-accept-button {
+        flex: 1;
     }
 }

@@ -258,23 +258,33 @@ public class Network {
         battle.BattleLog.AddRange(result.Messages);
 
         // Enviar actualización personalizada a cada jugador de la batalla
-        if (!_battleClients.TryGetValue(actionRequest.BattleId, out var clientIds)) return;
+        if (_battleClients.TryGetValue(actionRequest.BattleId, out var clientIds)) {
+            var tasks = clientIds
+                .Where(id => _clients.ContainsKey(id))
+                .Select(id => {
+                    int perspectiveUserId = _clients[id].UserId ?? battle.PlayerUserId;
+                    var update = new BattleStateUpdate {
+                        Action = actionRequest.Action,
+                        Battle = CreateBattleSnapshot(battle, perspectiveUserId),
+                        Messages = result.Messages,
+                        RequiresSwitch = false,
+                        WinnerUserId = battle.WinnerUserId
+                    };
+                    return _clients[id].SendAsync(update);
+                });
 
-        var tasks = clientIds
-            .Where(id => _clients.ContainsKey(id))
-            .Select(id => {
-                int perspectiveUserId = _clients[id].UserId ?? battle.PlayerUserId;
-                var update = new BattleStateUpdate {
-                    Action = actionRequest.Action,
-                    Battle = CreateBattleSnapshot(battle, perspectiveUserId),
-                    Messages = result.Messages,
-                    RequiresSwitch = false,
-                    WinnerUserId = battle.WinnerUserId
-                };
-                return _clients[id].SendAsync(update);
-            });
+            await Task.WhenAll(tasks);
+        }
 
-        await Task.WhenAll(tasks);
+        if (battle.WinnerUserId.HasValue) {
+            CleanupFinishedBattle(actionRequest.BattleId);
+        }
+    }
+
+    private void CleanupFinishedBattle(Guid battleId) {
+        _battleClients.TryRemove(battleId, out _);
+        _sessionManager.RemoveBattle(battleId);
+        _logger.LogInformation("Batalla {BattleId} finalizada y limpiada de suscripciones activas.", battleId);
     }
 
     private async Task HandleChatMessage(Client client, ChatMessage chatMessage) {

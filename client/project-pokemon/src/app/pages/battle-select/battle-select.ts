@@ -76,6 +76,12 @@ export class BattleSelect {
     const modeParam = this.route.snapshot.queryParamMap.get('mode');
     this.mode.set(modeParam === 'online' ? 'online' : 'cpu');
 
+    if (this.mode() === 'online') {
+      this.socketService.resetBattleContext();
+      this.isSearchingBattle.set(false);
+      this.searchingMessage.set('');
+    }
+
     await this.loadUserTeams();
   }
 

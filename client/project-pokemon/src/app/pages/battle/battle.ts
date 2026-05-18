@@ -13,6 +13,7 @@ import { SocketService } from '../../services/websocket-service';
 import { BattleService } from '../../services/battle-service';
 
 type BattleActionPanel = 'root' | 'attack' | 'switch';
+type BattleResult = 'victory' | 'defeat' | null;
 
 @Component({
   selector: 'app-battle',
@@ -41,6 +42,11 @@ export class Battle {
   battleLog = signal<string[]>([]);
   showLogOverlay = signal(false);
   showFinishDialog = signal(false);
+  battleResult = signal<BattleResult>(null);
+  showLeaveConfirmation = signal(false);
+
+  private leaveDecisionResolver: ((decision: boolean) => void) | null = null;
+  private leaveDecisionPromise: Promise<boolean> | null = null;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -49,6 +55,7 @@ export class Battle {
   private battleService = inject(BattleService);
 
   currentUsername = this.authService.nickname;
+  currentUserId = this.authService.currentUserId;
 
   switchOptions = computed(() => {
     const snapshot = this.latestBattleSnapshot();
@@ -95,12 +102,26 @@ export class Battle {
       this.clearOnlineBattleBootstrapTimeout();
 
       const waitingForOpponent = this.hasWaitingMessage(battleEvent.messages);
-      this.isWaitingForOpponent.set(waitingForOpponent);
-      this.attacksDisabled.set(waitingForOpponent);
 
-      if (battleEvent.requiresSwitch) {
+      const hasWinner = battleEvent.winnerUserId !== null && battleEvent.winnerUserId !== undefined;
+      const isFinished = hasWinner;
+
+      if (isFinished) {
+        this.battleResult.set(this.resolveBattleResult(battleEvent.winnerUserId));
+        this.showFinishDialog.set(true);
+        this.isWaitingForOpponent.set(false);
+        this.attacksDisabled.set(true);
+        this.actionPanel.set('root');
+      } else {
+        this.showFinishDialog.set(false);
+        this.battleResult.set(null);
+        this.isWaitingForOpponent.set(waitingForOpponent);
+        this.attacksDisabled.set(waitingForOpponent);
+      }
+
+      if (!isFinished && battleEvent.requiresSwitch) {
         this.actionPanel.set('switch');
-      } else if (!waitingForOpponent) {
+      } else if (!isFinished && !waitingForOpponent) {
         this.actionPanel.set('root');
       }
 
@@ -168,7 +189,37 @@ export class Battle {
 
   ngOnDestroy(): void {
     this.clearOnlineBattleBootstrapTimeout();
-    this.socketService.setActiveBattle(null);
+    this.socketService.resetBattleContext();
+  }
+
+  canLeaveBattle(): Promise<boolean> | boolean {
+    if (!this.shouldConfirmLeaveBattle()) {
+      return true;
+    }
+
+    if (this.leaveDecisionPromise) {
+      return this.leaveDecisionPromise;
+    }
+
+    this.showLeaveConfirmation.set(true);
+    this.leaveDecisionPromise = new Promise<boolean>((resolve) => {
+      this.leaveDecisionResolver = resolve;
+    });
+
+    return this.leaveDecisionPromise;
+  }
+
+  confirmLeaveBattle(): void {
+    const currentBattleId = this.battleId();
+    if (this.mode() === 'online' && currentBattleId) {
+      this.socketService.forfeit(currentBattleId);
+    }
+
+    this.resolveLeaveDecision(true);
+  }
+
+  cancelLeaveBattle(): void {
+    this.resolveLeaveDecision(false);
   }
 
   openAttackPanel(): void {
@@ -231,6 +282,33 @@ export class Battle {
     return messages.some(message =>
       message?.toLowerCase().includes(this.WAITING_MESSAGE_SNIPPET)
     );
+  }
+
+  private resolveBattleResult(winnerUserId: number | null): BattleResult {
+    if (!winnerUserId) {
+      return 'defeat';
+    }
+
+    if (this.currentUserId() === winnerUserId) {
+      return 'victory';
+    }
+
+    return 'defeat';
+  }
+
+  private shouldConfirmLeaveBattle(): boolean {
+    return this.mode() === 'online' && !!this.battleId() && !this.showFinishDialog();
+  }
+
+  private resolveLeaveDecision(decision: boolean): void {
+    this.showLeaveConfirmation.set(false);
+
+    if (this.leaveDecisionResolver) {
+      this.leaveDecisionResolver(decision);
+    }
+
+    this.leaveDecisionResolver = null;
+    this.leaveDecisionPromise = null;
   }
 
   onLineChanged(lineIndex: number): void {

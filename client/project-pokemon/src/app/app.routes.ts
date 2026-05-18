@@ -13,13 +13,14 @@ import { BattleSelect } from './pages/battle-select/battle-select';
 import { BattleModeSelect } from './pages/battle-mode-select/battle-mode-select';
 import { redirectionGuard } from './guards/redirection-guard';
 import { adminGuard } from './guards/admin-guard';
+import { battleLeaveGuard } from './guards/battle-leave-guard';
 
 export const routes: Routes = [
     { path: 'about', component: About },
     { path: 'admin-panel', component: AdminPanel, canActivate: [redirectionGuard, adminGuard] },
     { path: 'battle', component: BattleModeSelect, canActivate: [redirectionGuard] },
     { path: 'battle-select', component: BattleSelect, canActivate: [redirectionGuard] },
-    { path: 'battle/fight', component: Battle, canActivate: [redirectionGuard] },
+    { path: 'battle/fight', component: Battle, canActivate: [redirectionGuard], canDeactivate: [battleLeaveGuard] },
     { path: 'friends', component: Friends, canActivate: [redirectionGuard] },
     { path: 'login', component: Login },
     { path: 'profile', component: Profile, canActivate: [redirectionGuard] },
