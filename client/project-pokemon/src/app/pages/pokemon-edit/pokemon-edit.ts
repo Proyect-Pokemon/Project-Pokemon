@@ -52,7 +52,22 @@ export class PokemonEdit {
   spriteUrl = computed<string | null>(() => {
     const pokemon = this.selectedPokemon();
     if (!pokemon) return null;
-    return this.isShiny() ? (pokemon.spriteFrontShiny ?? pokemon.spriteFront) : pokemon.spriteFront;
+
+    const isFemale = this.selectedSex() === 'H';
+
+    if (this.isShiny()) {
+      if (isFemale && pokemon.spriteFrontFemShiny) {
+        return pokemon.spriteFrontFemShiny;
+      }
+
+      return pokemon.spriteFrontShiny ?? pokemon.spriteFront;
+    }
+
+    if (isFemale && pokemon.spriteFrontFem) {
+      return pokemon.spriteFrontFem;
+    }
+
+    return pokemon.spriteFront;
   });
 
   displayName = computed(() => {

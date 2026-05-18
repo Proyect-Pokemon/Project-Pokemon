@@ -230,14 +230,14 @@
 }
 
 .slot-sprite {
-    width: 78px;
-    height: 78px;
+    width: 100px;
+    height: 100px;
     object-fit: contain;
     image-rendering: pixelated;
     position: absolute;
-    right: 0.35rem;
-    bottom: 0;
-    transform: translateY(-8px);
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
     pointer-events: none;
 }
 
@@ -296,8 +296,7 @@
     }
 
     .slot-sprite {
-        width: 62px;
-        height: 62px;
-        transform: translateY(-5px);
+        width: 88px;
+        height: 88px;
     }
 }

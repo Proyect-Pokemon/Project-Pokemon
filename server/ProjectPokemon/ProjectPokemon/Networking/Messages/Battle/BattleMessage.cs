@@ -54,6 +54,7 @@ public class PokemonSnapshot {
     public int PokemonId { get; set; }
     public required string Name { get; set; }
     public string? Nickname { get; set; }
+    public string? Sex { get; set; }
     public int Slot { get; set; }
     public int CurrentHp { get; set; }
     public int MaxHp { get; set; }
@@ -61,6 +62,12 @@ public class PokemonSnapshot {
     public required string Status { get; set; }
     public string? SpriteFront { get; set; }
     public string? SpriteBack { get; set; }
+    public string? SpriteFrontShiny { get; set; }
+    public string? SpriteBackShiny { get; set; }
+    public string? SpriteFrontFem { get; set; }
+    public string? SpriteBackFem { get; set; }
+    public string? SpriteFrontFemShiny { get; set; }
+    public string? SpriteBackFemShiny { get; set; }
     public bool Shiny { get; set; }
     public List<MovementSnapshot>? Movements { get; set; }
     public int? Attack { get; set; }

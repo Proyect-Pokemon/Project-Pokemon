@@ -73,7 +73,7 @@ export class Battle {
         index,
         name: pokemon?.nickname || pokemon?.name || `Pokemon ${index + 1}`,
         hpLabel: `${currentHp}/${maxHp}`,
-        sprite: pokemon?.spriteBack || pokemon?.spriteFront || this.FALLBACK_SPRITE,
+        sprite: this.resolveSnapshotSprite(pokemon, true),
         isActive: index === activeSlot,
         isFainted: !!pokemon?.isFainted,
       };
@@ -354,7 +354,7 @@ export class Battle {
     return {
       pokemonA: {
         name: playerPokemon?.nickname || playerPokemon?.name || 'Pokemon',
-        sprite: playerPokemon?.spriteBack || playerPokemon?.spriteFront || this.FALLBACK_SPRITE,
+        sprite: this.resolveSnapshotSprite(playerPokemon, true),
         statusCondition: playerPokemon?.statusCondition ?? null,
         currentHp: playerPokemon?.currentHp ?? 0,
         maxHp: playerPokemon?.maxHp ?? 0,
@@ -378,7 +378,7 @@ export class Battle {
       },
       pokemonB: {
         name: opponentPokemon?.nickname || opponentPokemon?.name || 'Pokemon',
-        sprite: opponentPokemon?.spriteFront || opponentPokemon?.spriteBack || this.FALLBACK_SPRITE,
+        sprite: this.resolveSnapshotSprite(opponentPokemon, false),
         statusCondition: opponentPokemon?.statusCondition ?? null,
         currentHp: opponentPokemon?.currentHp ?? 0,
         maxHp: opponentPokemon?.maxHp ?? 0,
@@ -392,5 +392,53 @@ export class Battle {
         moves: [],
       },
     };
+  }
+
+  private resolveSnapshotSprite(pokemon: any, preferBack: boolean): string {
+    const isFemale = this.isFemaleSex(pokemon?.sex);
+    const isShiny = !!pokemon?.shiny;
+
+    if (preferBack) {
+      if (isShiny) {
+        if (isFemale && pokemon?.spriteBackFemShiny) {
+          return pokemon.spriteBackFemShiny;
+        }
+
+        if (pokemon?.spriteBackShiny) {
+          return pokemon.spriteBackShiny;
+        }
+      }
+
+      if (isFemale && pokemon?.spriteBackFem) {
+        return pokemon.spriteBackFem;
+      }
+
+      return pokemon?.spriteBack || pokemon?.spriteFront || this.FALLBACK_SPRITE;
+    }
+
+    if (isShiny) {
+      if (isFemale && pokemon?.spriteFrontFemShiny) {
+        return pokemon.spriteFrontFemShiny;
+      }
+
+      if (pokemon?.spriteFrontShiny) {
+        return pokemon.spriteFrontShiny;
+      }
+    }
+
+    if (isFemale && pokemon?.spriteFrontFem) {
+      return pokemon.spriteFrontFem;
+    }
+
+    return pokemon?.spriteFront || pokemon?.spriteBack || this.FALLBACK_SPRITE;
+  }
+
+  private isFemaleSex(sex: unknown): boolean {
+    if (typeof sex !== 'string') {
+      return false;
+    }
+
+    const normalized = sex.trim().toLowerCase();
+    return normalized === 'h' || normalized === 'f';
   }
 }

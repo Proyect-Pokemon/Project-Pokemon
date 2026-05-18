@@ -148,9 +148,7 @@ export class BattleSelect {
 
         const pokemon = pokemonById.get(slotPokemon.pokemonId);
         const displayName = slotPokemon.nickname?.trim() || pokemon?.name || 'Pokemon';
-        const sprite = slotPokemon.shiny
-          ? (pokemon?.spriteFrontShiny ?? pokemon?.spriteFront ?? null)
-          : (pokemon?.spriteFront ?? null);
+        const sprite = pokemon?.miniSprite ?? pokemon?.spriteFront ?? null;
 
         return { displayName, sprite };
       });

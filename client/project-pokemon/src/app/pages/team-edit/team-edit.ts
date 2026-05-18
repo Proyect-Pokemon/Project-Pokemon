@@ -117,9 +117,21 @@ export class TeamEdit {
   selectedSprite = computed<string | null>(() => {
     const pt = this.selectedPokemonTeam();
     if (!pt?.pokemon) return null;
-    return pt.shiny
-      ? (pt.pokemon.spriteFrontShiny ?? pt.pokemon.spriteFront)
-      : pt.pokemon.spriteFront;
+
+    const isFemale = pt.sex === 'H';
+    if (pt.shiny) {
+      if (isFemale && pt.pokemon.spriteFrontFemShiny) {
+        return pt.pokemon.spriteFrontFemShiny;
+      }
+
+      return pt.pokemon.spriteFrontShiny ?? pt.pokemon.spriteFront;
+    }
+
+    if (isFemale && pt.pokemon.spriteFrontFem) {
+      return pt.pokemon.spriteFrontFem;
+    }
+
+    return pt.pokemon.spriteFront;
   });
 
   constructor() {

@@ -20,6 +20,12 @@ public class PokemonBattle {
     public int Slot { get; set; }
     public string SpriteFront { get; private set; }
     public string SpriteBack { get; private set; }
+    public string SpriteFrontShiny { get; private set; }
+    public string SpriteBackShiny { get; private set; }
+    public string? SpriteFrontFem { get; private set; }
+    public string? SpriteBackFem { get; private set; }
+    public string? SpriteFrontFemShiny { get; private set; }
+    public string? SpriteBackFemShiny { get; private set; }
 
     // Estadísticas base con la naturaleza aplicada
     public int MaxHp { get; private set; }
@@ -58,6 +64,12 @@ public class PokemonBattle {
         Shiny = pokemonTeam.Shiny;
         Sex = pokemonTeam.Sex;
         Slot = pokemonTeam.Slot;
+        SpriteFrontShiny = pokemonTeam.Pokemon.SpriteFrontShiny;
+        SpriteBackShiny = pokemonTeam.Pokemon.SpriteBackShiny;
+        SpriteFrontFem = pokemonTeam.Pokemon.SpriteFrontFem;
+        SpriteBackFem = pokemonTeam.Pokemon.SpriteBackFem;
+        SpriteFrontFemShiny = pokemonTeam.Pokemon.SpriteFrontFemShiny;
+        SpriteBackFemShiny = pokemonTeam.Pokemon.SpriteBackFemShiny;
         SpriteFront = ResolveSpriteFront(pokemonTeam.Pokemon, pokemonTeam.Shiny, pokemonTeam.Sex);
         SpriteBack = ResolveSpriteBack(pokemonTeam.Pokemon, pokemonTeam.Shiny, pokemonTeam.Sex);
         Status = PokeStatus.None;
@@ -78,7 +90,7 @@ public class PokemonBattle {
     }
 
     private static string ResolveSpriteFront(Pokemon pokemon, bool shiny, char? sex) {
-        bool female = sex.HasValue && char.ToLowerInvariant(sex.Value) == 'f';
+        bool female = sex.HasValue && (char.ToLowerInvariant(sex.Value) == 'h' || char.ToLowerInvariant(sex.Value) == 'f');
 
         if (shiny) {
             if (female && !string.IsNullOrWhiteSpace(pokemon.SpriteFrontFemShiny)) return pokemon.SpriteFrontFemShiny;
@@ -90,7 +102,7 @@ public class PokemonBattle {
     }
 
     private static string ResolveSpriteBack(Pokemon pokemon, bool shiny, char? sex) {
-        bool female = sex.HasValue && char.ToLowerInvariant(sex.Value) == 'f';
+        bool female = sex.HasValue && (char.ToLowerInvariant(sex.Value) == 'h' || char.ToLowerInvariant(sex.Value) == 'f');
 
         if (shiny) {
             if (female && !string.IsNullOrWhiteSpace(pokemon.SpriteBackFemShiny)) return pokemon.SpriteBackFemShiny;
