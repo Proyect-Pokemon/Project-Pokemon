@@ -101,4 +101,33 @@ export class AuthService {
     await this.api.post('auth/register', registerData);
     return true;
   }
+
+  async googleLogin(
+    idToken: string,
+    remember = true
+  ): Promise<boolean> {
+    const response =
+      await this.api.post<AuthResponse>(
+        'auth/google',
+        { idToken }
+      );
+
+    if (response?.accessToken) {
+
+      this.jwt =
+        response.accessToken;
+
+      if (remember) {
+
+        localStorage.setItem(
+          'jwt',
+          response.accessToken
+        );
+      }
+
+      return true;
+    }
+
+    return false;
+  }
 }

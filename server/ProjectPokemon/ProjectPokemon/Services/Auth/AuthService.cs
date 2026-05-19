@@ -20,6 +20,9 @@ namespace ProjectPokemon.Services.Auth
             if (user is null)
                 return null;
 
+            if (user.Password == null)
+                return null;
+
             if (!PasswordHelper.Verify(model.Password, user.Password))
                 return null;
 

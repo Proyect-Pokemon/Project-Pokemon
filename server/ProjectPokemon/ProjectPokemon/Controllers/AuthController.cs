@@ -11,10 +11,17 @@ namespace ProjectPokemon.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
+        private readonly GoogleAuthService _googleAuthService;
 
-        public AuthController(AuthService authService)
+        public AuthController(AuthService authService, GoogleAuthService googleAuthService)
         {
             _authService = authService;
+            _googleAuthService = googleAuthService;
+        }
+
+        public class GoogleLoginDto
+        {
+            public string IdToken { get; set; } = "";
         }
 
         [HttpPost("login")]
@@ -55,6 +62,22 @@ namespace ProjectPokemon.Controllers
                 RegisterResult.InvalidData => BadRequest("Datos inválidos."),
                 _ => BadRequest("No se pudo registrar el usuario.")
             };
+        }
+
+        [HttpPost("google")]
+        public async Task<ActionResult<AuthResponseDto>>
+        GoogleLogin([FromBody] GoogleLoginDto dto)
+        {
+            var token =
+                await _googleAuthService
+                .LoginWithGoogleAsync(dto.IdToken);
+            if (token is null)
+                return Unauthorized("Google token inválido");
+
+            return Ok(new AuthResponseDto
+            {
+                AccessToken = token
+            });
         }
     }
 }

@@ -5,6 +5,8 @@ import { AuthService } from '../../services/auth';
 import { FormsModule } from '@angular/forms';
 import { SocketService } from '../../services/websocket-service';
 
+declare const google: any;
+
 @Component({
   selector: 'app-login',
   imports: [RouterLink, FormsModule],
@@ -26,7 +28,8 @@ export class Login implements OnInit, OnDestroy {
   private readonly socketService = inject(SocketService);
 
   canSubmit(): boolean {
-    return this.nickname.trim().length > 0 && this.password.trim().length > 0;
+    return this.nickname.trim().length > 0 &&
+           this.password.trim().length > 0;
   }
 
   async submit() {
@@ -50,23 +53,37 @@ export class Login implements OnInit, OnDestroy {
       );
 
       if (result === true) {
-        const jwt = this.authService.jwt;
-        if (jwt) this.socketService.connect(jwt);
 
-        const redirectTo = this.resolveSafeRedirectTo(
-          this.route.snapshot.queryParams['redirectTo']
+        const jwt = this.authService.jwt;
+
+        if (jwt)
+          this.socketService.connect(jwt);
+
+        const redirectTo =
+          this.resolveSafeRedirectTo(
+            this.route.snapshot.queryParams['redirectTo']
+          );
+
+        this.router.navigateByUrl(
+          redirectTo
         );
 
-        this.router.navigateByUrl(redirectTo);
         return;
       }
 
-      this.errorMessage.set('Usuario o contraseña incorrectos.');
+      this.errorMessage.set(
+        'Usuario o contraseña incorrectos.'
+      );
 
-    } catch (err: any) {
+    }
+    catch (err: any) {
 
       if (err?.status === 0) {
-        this.errorMessage.set('No se pudo establecer conexión con el servidor.');
+
+        this.errorMessage.set(
+          'No se pudo establecer conexión con el servidor.'
+        );
+
         return;
       }
 
@@ -74,31 +91,115 @@ export class Login implements OnInit, OnDestroy {
         typeof err?.error === 'string'
           ? err.error
           : err?.error?.error ||
-          err?.error?.message ||
-          err?.message;
+            err?.error?.message ||
+            err?.message;
 
       this.errorMessage.set(
-        backendError || 'Error de conexión con el servidor.'
+        backendError ||
+        'Error de conexión con el servidor.'
       );
     }
   }
 
   ngOnInit() {
-    document.body.classList.add('login-background');
+
+    document.body.classList.add(
+      'login-background'
+    );
+
+    // Inicializar Google Sign-In
+    if (typeof google !== 'undefined') {
+
+      google.accounts.id.initialize({
+
+        client_id:
+          'TU_CLIENT_ID.apps.googleusercontent.com',
+
+        callback:
+          (response: any) =>
+            this.handleGoogle(response)
+
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById(
+          'googleButton'
+        ),
+        {
+          theme: 'outline',
+          size: 'large'
+        }
+      );
+    }
+  }
+
+  async handleGoogle(
+    response: any
+  ) {
+
+    const idToken =
+      response.credential;
+
+    try {
+
+      const result =
+        await this.authService.googleLogin(
+          idToken,
+          this.rememberMeChecked
+        );
+
+      if (result === true) {
+
+        const jwt =
+          this.authService.jwt;
+
+        if (jwt)
+          this.socketService.connect(jwt);
+
+        this.router.navigateByUrl(
+          '/battle'
+        );
+      }
+
+    }
+    catch {
+
+      this.errorMessage.set(
+        'Error al iniciar sesión con Google'
+      );
+    }
   }
 
   ngOnDestroy() {
-    document.body.classList.remove('login-background');
+
+    document.body.classList.remove(
+      'login-background'
+    );
   }
 
-  private resolveSafeRedirectTo(redirectToRaw: unknown): string {
-    const redirectTo = typeof redirectToRaw === 'string' ? redirectToRaw : '';
+  private resolveSafeRedirectTo(
+    redirectToRaw: unknown
+  ): string {
 
-    if (!redirectTo || !redirectTo.startsWith('/')) {
+    const redirectTo =
+      typeof redirectToRaw === 'string'
+        ? redirectToRaw
+        : '';
+
+    if (
+      !redirectTo ||
+      !redirectTo.startsWith('/')
+    ) {
+
       return '/battle';
     }
 
-    if (redirectTo.startsWith('/battle/fight')) {
+    if (
+      redirectTo.startsWith(
+        '/battle/fight'
+      )
+    ) {
+
       return '/battle-select?mode=online';
     }
 
