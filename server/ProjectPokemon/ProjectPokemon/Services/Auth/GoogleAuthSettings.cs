@@ -1,7 +1,14 @@
 ﻿namespace ProjectPokemon.Services.Auth
 {
-    public class GoogleAuthSettings
+    /// <summary>
+    /// Configuración de autenticación Google OAuth.
+    /// Se rellena desde appsettings.json.
+    /// </summary>
+    public sealed class GoogleAuthSettings
     {
-        public string ClientId { get; set; } = string.Empty;
+        /// <summary>
+        /// Client ID generado en Google Cloud Console.
+        /// </summary>
+        public string ClientId { get; init; } = string.Empty;
     }
 }
