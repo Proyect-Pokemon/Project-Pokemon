@@ -142,6 +142,79 @@ export class BattleSelect {
     this.isSearchingBattle.set(false);
   }
 
+  getNatureNameEs(natureName: string): string {
+    const normalizedName = natureName.toLowerCase().replace(/[\s_\-]/g, '');
+
+    const natureNames: Record<string, string> = {
+      hardy: 'Fuerte',
+      bold: 'Osada',
+      modest: 'Modesta',
+      calm: 'Serena',
+      timid: 'Miedosa',
+      lonely: 'Huraña',
+      docile: 'Dócil',
+      mild: 'Afable',
+      gentle: 'Amable',
+      hasty: 'Activa',
+      adamant: 'Firme',
+      impish: 'Agitada',
+      bashful: 'Tímida',
+      careful: 'Cauta',
+      jolly: 'Alegre',
+      naughty: 'Pícara',
+      lax: 'Floja',
+      rash: 'Alocada',
+      quirky: 'Rara',
+      naive: 'Ingenua',
+      brave: 'Audaz',
+      relaxed: 'Plácida',
+      quiet: 'Mansa',
+      sassy: 'Grosera',
+      serious: 'Seria',
+    };
+
+    return natureNames[normalizedName] ?? natureName;
+  }
+
+  getTypeLabelEs(type: string): string {
+    const normalizedType = type.toLowerCase().trim();
+
+    const typeNames: Record<string, string> = {
+      normal: 'Normal',
+      fire: 'Fuego',
+      water: 'Agua',
+      electric: 'Eléctrico',
+      grass: 'Planta',
+      ice: 'Hielo',
+      fighting: 'Lucha',
+      poison: 'Veneno',
+      ground: 'Tierra',
+      flying: 'Volador',
+      psychic: 'Psíquico',
+      bug: 'Bicho',
+      rock: 'Roca',
+      ghost: 'Fantasma',
+      dragon: 'Dragón',
+      dark: 'Siniestro',
+      steel: 'Acero',
+      fairy: 'Hada',
+    };
+
+    return typeNames[normalizedType] ?? type;
+  }
+
+  getMoveClassLabelEs(movementClass: string): string {
+    const normalizedClass = movementClass.toLowerCase().trim();
+
+    const classNames: Record<string, string> = {
+      physical: 'Físico',
+      special: 'Especial',
+      status: 'Estado',
+    };
+
+    return classNames[normalizedClass] ?? movementClass;
+  }
+
   getMoveChipColor(type: string): string {
     const normalizedType = type?.toLowerCase().trim();
 
@@ -324,7 +397,7 @@ export class BattleSelect {
           speciesName: pokemon?.name || 'Pokemon',
           sprite,
           types,
-          nature: nature?.name || 'Sin naturaleza',
+          nature: nature ? this.getNatureNameEs(nature.name) : 'Sin naturaleza',
           moves,
         };
       });

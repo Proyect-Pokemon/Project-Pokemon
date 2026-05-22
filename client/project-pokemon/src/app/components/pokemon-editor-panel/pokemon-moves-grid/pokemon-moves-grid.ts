@@ -57,6 +57,31 @@ export class PokemonMovesGrid {
         return classMap[movementClass] ?? movementClass;
     }
 
+    getTypeLabel(type: string): string {
+        const typeMap: Record<string, string> = {
+            normal: 'Normal',
+            fire: 'Fuego',
+            water: 'Agua',
+            electric: 'Eléctrico',
+            grass: 'Planta',
+            ice: 'Hielo',
+            fighting: 'Lucha',
+            poison: 'Veneno',
+            ground: 'Tierra',
+            flying: 'Volador',
+            psychic: 'Psíquico',
+            bug: 'Bicho',
+            rock: 'Roca',
+            ghost: 'Fantasma',
+            dragon: 'Dragón',
+            dark: 'Siniestro',
+            steel: 'Acero',
+            fairy: 'Hada',
+        };
+
+        return typeMap[type?.toLowerCase()] ?? type;
+    }
+
     onTypeIconLoad(event: Event): void {
         (event.target as HTMLImageElement).style.display = '';
     }

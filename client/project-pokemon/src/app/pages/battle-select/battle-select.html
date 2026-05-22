@@ -90,7 +90,7 @@
                                                         class="type-badge"
                                                         [style.background-color]="getTypeBadgeColor(type)"
                                                         [style.border-color]="getTypeBadgeBorderColor(type)">
-                                                        {{ type }}
+                                                        {{ getTypeLabelEs(type) }}
                                                     </span>
                                                 }
                                             </div>
@@ -115,7 +115,7 @@
                                                     <span>-</span>
                                                 } @else {
                                                     <span>{{ move.name }}</span>
-                                                    <small>{{ move.type }} · {{ move.movementClass }}</small>
+                                                    <small>{{ getTypeLabelEs(move.type) }} · {{ getMoveClassLabelEs(move.movementClass) }}</small>
                                                 }
                                             </div>
                                         }
