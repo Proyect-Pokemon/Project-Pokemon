@@ -145,10 +145,12 @@ export class TeamEdit {
     });
 
     const teamId = Number(this.route.snapshot.paramMap.get('id'));
+    const slotParam = Number(this.route.snapshot.queryParamMap.get('slot'));
+    const preferredSlot = Number.isNaN(slotParam) ? null : slotParam;
     if (!teamId) {
       this.router.navigate(['/team-builder']);
     } else {
-      this.loadData(teamId);
+      this.loadData(teamId, preferredSlot);
     }
   }
 
@@ -353,7 +355,72 @@ export class TeamEdit {
   getStatValue(key: string): number | string {
     const p = this.selectedPokemonTeam()?.pokemon;
     if (!p) return '—';
-    return (p as unknown as Record<string, unknown>)[key] as number ?? '—';
+
+    const baseValue = (p as unknown as Record<string, unknown>)[key];
+    if (typeof baseValue !== 'number') {
+      return '—';
+    }
+
+    // HP is not modified by nature in Pokemon games.
+    if (key === 'hp') {
+      return baseValue;
+    }
+
+    const statKeyToNatureKey: Record<string, string> = {
+      attack: 'attack',
+      defense: 'defense',
+      specialAttack: 'specialattack',
+      specialDefense: 'specialdefense',
+      speed: 'speed',
+    };
+
+    const natureKey = statKeyToNatureKey[key];
+    if (!natureKey) {
+      return baseValue;
+    }
+
+    return Math.floor(baseValue * this.getNatureMultiplier(natureKey));
+  }
+
+  private getNatureMultiplier(natureKey: string): number {
+    const nature = this.selectedNature();
+    if (!nature) {
+      return 1;
+    }
+
+    const numericMap: Record<number, string> = {
+      0: 'hp',
+      1: 'attack',
+      2: 'defense',
+      3: 'specialattack',
+      4: 'specialdefense',
+      5: 'speed',
+    };
+
+    const normalize = (v: string | number): string => {
+      if (typeof v === 'number') {
+        return numericMap[v] ?? '';
+      }
+
+      return v.toLowerCase().replace(/[\s_]/g, '');
+    };
+
+    const boost = normalize(nature.statBoost);
+    const drop = normalize(nature.statDrop);
+
+    if (boost === drop) {
+      return 1;
+    }
+
+    if (boost === natureKey) {
+      return 1.1;
+    }
+
+    if (drop === natureKey) {
+      return 0.9;
+    }
+
+    return 1;
   }
 
   getNatureArrow(natureKey: string): '▲' | '▼' | null {

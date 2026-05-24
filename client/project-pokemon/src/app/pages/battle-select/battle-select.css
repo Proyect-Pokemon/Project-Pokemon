@@ -22,6 +22,7 @@
     width: min(1220px, 96%);
     margin: 0 auto;
     padding: 1rem 0.75rem 1.25rem 0.75rem;
+    position: relative;
 }
 
 .selector-header {
@@ -144,6 +145,18 @@
     pointer-events: none;
 }
 
+.team-column::before {
+    content: 'Pulsa para revisar el equipo';
+    display: block;
+    margin: 0 0 0.4rem 0;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #0f5368;
+    opacity: 0.75;
+}
+
 .team-name {
     margin: 0 0 0.5rem 0;
     text-transform: uppercase;
@@ -151,55 +164,6 @@
     font-size: 2rem;
     letter-spacing: 1px;
     text-align: center;
-}
-
-.team-context-menu {
-    position: absolute;
-    top: 3.55rem;
-    left: 0.7rem;
-    right: 0.7rem;
-    z-index: 5;
-    background: rgba(15, 62, 77, 0.96);
-    border: 1px solid rgba(147, 224, 246, 0.5);
-    border-radius: 12px;
-    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.35);
-    padding: 0.35rem;
-    display: grid;
-    gap: 0.35rem;
-}
-
-.menu-item {
-    border: none;
-    border-radius: 8px;
-    padding: 0.6rem 0.65rem;
-    text-align: left;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #e4f6ff;
-    background: rgba(82, 142, 161, 0.35);
-    cursor: pointer;
-}
-
-.menu-item:hover {
-    background: rgba(112, 182, 205, 0.45);
-}
-
-.menu-item-primary {
-    background: linear-gradient(90deg, #ffffff 0%, #e8dff5 100%);
-    color: #10495e;
-}
-
-.menu-item-primary:hover {
-    background: linear-gradient(90deg, #f7fff0 0%, #d8ffd6 100%);
-}
-
-.menu-item-cancel {
-    background: rgba(255, 255, 255, 0.12);
-    color: #d9edf5;
-}
-
-.menu-item-cancel:hover {
-    background: rgba(255, 255, 255, 0.2);
 }
 
 .slot-list {
@@ -217,6 +181,21 @@
     padding: 0.5rem 0.7rem;
     position: relative;
     overflow: visible;
+}
+
+.slot-item.slot-empty {
+    align-items: center;
+    justify-content: center;
+    background: rgba(214, 205, 226, 0.72);
+    border: 1px dashed rgba(15, 83, 104, 0.22);
+}
+
+.slot-empty-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: rgba(15, 83, 104, 0.85);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .slot-name {
@@ -239,6 +218,274 @@
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
+}
+
+.team-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: rgba(4, 17, 37, 0.72);
+    backdrop-filter: blur(4px);
+}
+
+.team-confirm-card {
+    width: min(1180px, 100%);
+    max-height: min(92vh, 980px);
+    overflow: auto;
+    background: var(--primary-color);
+    color: var(--secondary-color);
+    border-radius: 18px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    padding: 1.35rem;
+}
+
+.team-confirm-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.confirm-kicker {
+    display: inline-flex;
+    margin-bottom: 0.4rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--action-color) 0%, #39757e 100%);
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.team-confirm-header h2 {
+    margin: 0;
+    color: var(--secondary-color);
+    font-size: clamp(1.55rem, 2.4vw, 2.1rem);
+}
+
+.team-confirm-header p {
+    margin: 0.35rem 0 0;
+    color: #666;
+    font-size: 0.98rem;
+}
+
+.team-confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.team-confirm-actions-top {
+    justify-content: flex-end;
+}
+
+.confirm-button {
+    border: none;
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+
+.confirm-button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.03);
+}
+
+.confirm-button-primary {
+    background: linear-gradient(135deg, var(--action-color) 0%, #39757e 100%);
+    color: var(--primary-color);
+    box-shadow: 0 8px 18px rgba(20, 111, 124, 0.28);
+}
+
+.confirm-button-secondary {
+    background: var(--primary-color);
+    color: var(--secondary-color);
+    border: 1px solid rgba(27, 18, 39, 0.15);
+}
+
+.team-confirm-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-bottom: 1rem;
+}
+
+.team-confirm-summary span {
+    padding: 0.45rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(0, 148, 174, 0.1);
+    color: var(--secondary-color);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.team-confirm-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.pokemon-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 240px;
+    padding: 0.85rem;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #eff4f8 100%);
+    border: 1px solid rgba(27, 18, 39, 0.1);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.pokemon-card-empty {
+    align-items: center;
+    justify-content: center;
+    background: rgba(239, 244, 248, 0.72);
+    border-style: dashed;
+}
+
+.pokemon-empty-state {
+    width: 100%;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    border: 1px dashed rgba(27, 18, 39, 0.16);
+    color: rgba(27, 18, 39, 0.62);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.pokemon-card-top {
+    display: grid;
+    grid-template-columns: 98px minmax(0, 1fr);
+    gap: 0.85rem;
+    align-items: center;
+}
+
+.pokemon-sprite-shell {
+    width: 98px;
+    height: 98px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(0, 148, 174, 0.12), rgba(0, 63, 80, 0.08));
+}
+
+.pokemon-sprite {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+.pokemon-main-info h3 {
+    margin: 0;
+    color: var(--secondary-color);
+    font-size: 1.05rem;
+    text-transform: capitalize;
+}
+
+.pokemon-species {
+    display: block;
+    margin-top: 0.2rem;
+    color: #666;
+    font-size: 0.82rem;
+}
+
+.type-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.55rem;
+}
+
+.type-badge {
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 63, 80, 0.12);
+    border-bottom-width: 2px;
+    color: var(--secondary-color);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.pokemon-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+}
+
+.detail-block {
+    padding: 0.55rem 0.65rem;
+    border-radius: 12px;
+    background: rgba(0, 148, 174, 0.08);
+}
+
+.detail-label {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: var(--action-color);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.detail-block strong {
+    color: var(--secondary-color);
+    font-size: 0.88rem;
+}
+
+.moves-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+
+.move-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-height: 52px;
+    padding: 0.5rem 0.6rem;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 63, 80, 0.08);
+    border-bottom-width: 2px;
+    box-shadow: 0 4px 10px rgba(0, 63, 80, 0.05);
+}
+
+.move-chip-empty {
+    opacity: 0.55;
+}
+
+.move-chip span {
+    color: var(--secondary-color);
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.move-chip small {
+    color: #666;
+    font-size: 0.72rem;
 }
 
 @keyframes fade-in {
@@ -283,6 +530,14 @@
         position: static;
         margin-top: 0.3rem;
     }
+
+    .team-confirm-header {
+        flex-direction: column;
+    }
+
+    .team-confirm-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 520px) {
@@ -298,5 +553,28 @@
     .slot-sprite {
         width: 88px;
         height: 88px;
+    }
+
+    .team-confirm-overlay {
+        padding: 0.75rem;
+    }
+
+    .team-confirm-card {
+        padding: 1rem;
+    }
+
+    .team-confirm-grid,
+    .pokemon-details-grid,
+    .moves-list {
+        grid-template-columns: 1fr;
+    }
+
+    .pokemon-card-top {
+        grid-template-columns: 1fr;
+    }
+
+    .pokemon-sprite-shell {
+        width: 100%;
+        height: 120px;
     }
 }

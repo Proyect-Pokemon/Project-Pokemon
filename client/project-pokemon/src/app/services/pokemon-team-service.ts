@@ -13,7 +13,10 @@ export class PokemonTeamService extends BaseApiService {
   }
 
   async addPokemonTeam(dto: PostPokemonTeamDto): Promise<boolean> {
-    return this.create<PostPokemonTeamDto>('pokemonteam', dto);
+    return this.create<PostPokemonTeamDto>('pokemonteam', {
+      ...dto,
+      sex: dto.sex ?? 'M',
+    });
   }
 
   async updateNickname(pokemonTeamId: number, dto: PutPokemonTeamNicknameDto): Promise<boolean> {

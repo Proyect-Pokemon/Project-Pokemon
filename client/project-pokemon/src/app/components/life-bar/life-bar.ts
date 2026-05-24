@@ -9,10 +9,40 @@ import { Component, Input } from '@angular/core';
 })
 export class LifeBar {
   @Input() pokemonName: string = '';
+  @Input() pokemonSex: string | null = null;
   @Input() currentHp: number | null = null;
   @Input() maxHp: number | null = null;
   @Input() showHp: boolean = false;
   @Input() status: string = '';
+
+  get showGenderBadge(): boolean {
+    return this.genderClass !== null;
+  }
+
+  get genderClass(): 'male' | 'female' | null {
+    if (!this.pokemonSex) {
+      return null;
+    }
+
+    const normalized = this.pokemonSex.trim().toLowerCase();
+    if (normalized === 'h' || normalized === 'f') {
+      return 'female';
+    }
+
+    if (normalized === 'm') {
+      return 'male';
+    }
+
+    return null;
+  }
+
+  get genderIconSrc(): string {
+    return this.genderClass === 'female' ? 'assets/icons/UI/female.svg' : 'assets/icons/UI/male.svg';
+  }
+
+  get genderAlt(): string {
+    return this.genderClass === 'female' ? 'Hembra' : 'Macho';
+  }
 
   get hpPercent(): number {
     const max = this.maxHp ?? 0;

@@ -12,7 +12,7 @@
                         <span class="move-type-icon-wrapper">
                             <img class="move-type-icon"
                                 [src]="getTypeIconSrc(movement.type)"
-                                [alt]="movement.type"
+                            [alt]="getTypeLabel(movement.type)"
                                 (load)="onTypeIconLoad($event)"
                                 (error)="onTypeIconError($event)" />
                         </span>
@@ -38,6 +38,7 @@
 
         <div class="picker-search-wrapper">
             <input
+                #pickerSearchInput
                 class="picker-search"
                 type="text"
                 placeholder="Buscar por nombre o tipo..."
@@ -58,10 +59,10 @@
                         <span class="move-option-type-icon-wrapper">
                             <img class="move-option-type-icon"
                                 [src]="getTypeIconSrc(move.type)"
-                                [alt]="move.type"
+                            [alt]="getTypeLabel(move.type)"
                                 (error)="onTypeIconError($event)" />
                         </span>
-                        <span class="move-option-type-badge" [ngClass]="getTypeClass(move.type)">{{ move.type }}</span>
+                        <span class="move-option-type-badge" [ngClass]="getTypeClass(move.type)">{{ getTypeLabel(move.type) }}</span>
                         <span class="move-option-name">{{ move.name }}</span>
                     </div>
                     <div class="move-option-right">

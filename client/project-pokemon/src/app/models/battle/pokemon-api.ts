@@ -2,6 +2,7 @@ import { BattleMove } from '../move';
 
 export interface PokemonApi {
   name: string;
+  sex?: string | null;
   sprite: string;
   statusCondition?: string | null;
   currentHp: number;
