@@ -410,7 +410,7 @@ export class BattleSelect {
     });
 
     this.teams.set(cards);
-    this.selectedTeamId.set(cards[0]?.id ?? null);
+    this.selectedTeamId.set(null);
     this.isLoadingTeams.set(false);
   }
 }
