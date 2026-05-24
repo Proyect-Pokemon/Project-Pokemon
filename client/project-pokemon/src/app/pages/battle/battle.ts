@@ -354,6 +354,7 @@ export class Battle {
     return {
       pokemonA: {
         name: playerPokemon?.nickname || playerPokemon?.name || 'Pokemon',
+        sex: playerPokemon?.sex ?? null,
         sprite: this.resolveSnapshotSprite(playerPokemon, true),
         statusCondition: playerPokemon?.statusCondition ?? null,
         currentHp: playerPokemon?.currentHp ?? 0,
@@ -378,6 +379,7 @@ export class Battle {
       },
       pokemonB: {
         name: opponentPokemon?.nickname || opponentPokemon?.name || 'Pokemon',
+        sex: opponentPokemon?.sex ?? null,
         sprite: this.resolveSnapshotSprite(opponentPokemon, false),
         statusCondition: opponentPokemon?.statusCondition ?? null,
         currentHp: opponentPokemon?.currentHp ?? 0,

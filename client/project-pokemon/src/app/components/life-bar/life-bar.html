@@ -1,7 +1,14 @@
 <div class="pokemon-info">
     <div class="info-header">
         <div class="name-row">
-            <span class="pokemon-name">{{ pokemonName | titlecase }}</span>
+            <div class="name-with-gender">
+                <span class="pokemon-name">{{ pokemonName | titlecase }}</span>
+                @if (showGenderBadge) {
+                    <span class="gender-badge" [class]="'gender-badge ' + genderClass">
+                        <img [src]="genderIconSrc" [alt]="genderAlt" class="gender-icon" />
+                    </span>
+                }
+            </div>
             @if (status) {
                 <span class="status-tag" [class]="statusClass">{{ statusDisplay }}</span>
             }
