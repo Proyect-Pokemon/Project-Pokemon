@@ -20,8 +20,7 @@ public class BattleService {
         _logger = logger;
     }
 
-    public class SubmitBattleActionResult
-    {
+    public class SubmitBattleActionResult {
         public bool Accepted { get; set; }
         public bool TurnResolved { get; set; }
         public List<string> Messages { get; set; } = new();
@@ -38,9 +37,13 @@ public class BattleService {
             .Include(pt => pt.Pokemon)
             .Include(pt => pt.Nature)
             .Include(pt => pt.Movement1)
+                .ThenInclude(m => m!.StatChanges)
             .Include(pt => pt.Movement2)
+                .ThenInclude(m => m!.StatChanges)
             .Include(pt => pt.Movement3)
+                .ThenInclude(m => m!.StatChanges)
             .Include(pt => pt.Movement4)
+                .ThenInclude(m => m!.StatChanges)
             .FirstOrDefaultAsync(pt => pt.Id == 1);
 
         if (opponentPokemonEntity == null) {
@@ -98,12 +101,16 @@ public class BattleService {
                 .ThenInclude(pt => pt.Nature)
             .Include(t => t.PokemonsTeam)
                 .ThenInclude(pt => pt.Movement1)
+                    .ThenInclude(m => m!.StatChanges)
             .Include(t => t.PokemonsTeam)
                 .ThenInclude(pt => pt.Movement2)
+                    .ThenInclude(m => m!.StatChanges)
             .Include(t => t.PokemonsTeam)
                 .ThenInclude(pt => pt.Movement3)
+                    .ThenInclude(m => m!.StatChanges)
             .Include(t => t.PokemonsTeam)
                 .ThenInclude(pt => pt.Movement4)
+                    .ThenInclude(m => m!.StatChanges)
             .FirstOrDefaultAsync(t => t.Id == teamId && t.UserId == userId);
 
         if (team == null) {

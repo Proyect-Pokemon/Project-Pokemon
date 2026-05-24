@@ -15,6 +15,11 @@ public static class BattleMovementFactory {
             return new DamageMovement(movement);
         }
 
+        // Si el movimiento tiene categoría "net-good-stats" es un StatChangeMovement
+        if (movement.Category == "net-good-stats") {
+            return new StatChangeMovement(movement);
+        }
+
         // TODO: Implementar otros tipos de movimientos según Category:
         // - "damage-ailment": DamageAilmentMovement (movimiento que hace daño Y aplica estado)
         // - "damage-heal": DamageHealMovement (movimiento que hace daño Y cura al atacante)
@@ -22,7 +27,6 @@ public static class BattleMovementFactory {
         // - "field-effect": FieldEffectMovement (efectos de campo en un lado)
         // - "force-switch": ForceSwitchMovement (movimientos que fuerzan cambio de pokémon)
         // - "heal": HealMovement (movimientos que solo curan)
-        // - "net-good-stats": StatChangeMovement (movimientos que cambian stats)
         // - "ohko": OhkoMovement (movimientos fulminantes)
         // - "unique": UniqueMovement (movimientos especiales únicos)
         // - "whole-field-effect": WholeFieldEffectMovement (efectos de campo globales)
