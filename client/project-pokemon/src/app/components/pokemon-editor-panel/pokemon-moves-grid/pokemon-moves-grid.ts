@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed, ViewChild, ElementRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Movement } from '../../../models/move';
 
@@ -10,6 +10,7 @@ import { Movement } from '../../../models/move';
     styleUrls: ['./pokemon-moves-grid.css'],
 })
 export class PokemonMovesGrid {
+    @ViewChild('pickerSearchInput') pickerSearchInput?: ElementRef<HTMLInputElement>;
     @Input() movements: (Movement | null)[] = [null, null, null, null];
     @Input() allMovements: Movement[] = [];
     @Output() movementChanged = new EventEmitter<{ index: number; movementId: number | null }>();
@@ -18,13 +19,25 @@ export class PokemonMovesGrid {
     pickerSearchQuery = signal('');
 
     filteredMovements = computed(() => {
-        const query = this.pickerSearchQuery().toLowerCase().trim();
+        const query = this.normalizeSearchText(this.pickerSearchQuery());
         if (!query) return this.allMovements;
         return this.allMovements.filter(m =>
-            m.name.toLowerCase().includes(query) ||
-            m.type.toLowerCase().includes(query)
+            this.normalizeSearchText(m.name).includes(query) ||
+            this.normalizeSearchText(m.type).includes(query)
         );
     });
+
+    constructor() {
+        effect(() => {
+            if (this.openPickerIndex() === null) {
+                return;
+            }
+
+            setTimeout(() => {
+                this.pickerSearchInput?.nativeElement.focus();
+            }, 0);
+        });
+    }
 
     onMoveButtonClick(index: number): void {
         this.pickerSearchQuery.set('');
@@ -98,5 +111,13 @@ export class PokemonMovesGrid {
         const key = type.toLowerCase();
         const filename = this.TYPE_ICON_MAP[key] ?? key;
         return `assets/icons/types/${filename}.svg`;
+    }
+
+    private normalizeSearchText(value: string): string {
+        return value
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
     }
 }

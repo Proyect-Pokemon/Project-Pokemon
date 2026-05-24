@@ -145,10 +145,12 @@ export class TeamEdit {
     });
 
     const teamId = Number(this.route.snapshot.paramMap.get('id'));
+    const slotParam = Number(this.route.snapshot.queryParamMap.get('slot'));
+    const preferredSlot = Number.isNaN(slotParam) ? null : slotParam;
     if (!teamId) {
       this.router.navigate(['/team-builder']);
     } else {
-      this.loadData(teamId);
+      this.loadData(teamId, preferredSlot);
     }
   }
 

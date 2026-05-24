@@ -188,10 +188,20 @@ export class PokemonEdit {
       return;
     }
 
-    this.router.navigate(['/team-builder', current.teamId]);
+    this.router.navigate(['/team-builder', current.teamId], {
+      queryParams: { slot: current.slot },
+    });
   }
 
   goBack() {
+    const current = this.pokemonTeam();
+    if (current) {
+      this.router.navigate(['/team-builder', current.teamId], {
+        queryParams: { slot: current.slot },
+      });
+      return;
+    }
+
     const currentTeamId = this.teamId();
     if (!currentTeamId) {
       this.router.navigate(['/team-builder']);
