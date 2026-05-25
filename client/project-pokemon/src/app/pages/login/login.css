@@ -171,3 +171,9 @@ input[type="password"]:focus {
     font-size: 0.9em;
     margin-top: 0.2em;
 }
+
+#googleButton{
+    display:flex;
+    justify-content:center;
+    margin-top:12px;
+}

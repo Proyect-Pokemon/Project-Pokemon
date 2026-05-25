@@ -49,6 +49,10 @@ public class Program {
         builder.Services.AddScoped<TokenService>();
         builder.Services.AddScoped<AuthService>();
 
+        builder.Services.Configure<GoogleAuthSettings>(
+            builder.Configuration.GetSection("GoogleAuth"));
+        builder.Services.AddScoped<GoogleAuthService>();
+
         // Battle Services - WebSocket Nativo
         builder.Services.AddSingleton<ProjectPokemon.Services.BattleSessionManager>();
         builder.Services.AddScoped<ProjectPokemon.Services.BattleService>();
