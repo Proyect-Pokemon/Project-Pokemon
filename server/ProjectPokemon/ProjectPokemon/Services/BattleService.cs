@@ -371,6 +371,9 @@ public class BattleService {
             battle.IsBattleOver();
         }
 
+        // Aplicar efectos de estado al final del turno (solo a Pokémon activos)
+        ApplyEndOfTurnEffects(battle, logs);
+
         return logs;
     }
 
@@ -452,6 +455,16 @@ public class BattleService {
             return;
         }
 
+        // Verificar si el Pokémon puede atacar (estados como Freeze, Sleep, Paralysis)
+        var (canAttack, statusMessage) = attacker.CanAttack();
+        if (statusMessage != null) {
+            logs.Add(statusMessage);
+        }
+
+        if (!canAttack) {
+            return; // El Pokémon no puede atacar debido a su estado
+        }
+
         var move = attacker.Movements
             .FirstOrDefault(m => string.Equals(m.Name, action.MoveName, StringComparison.OrdinalIgnoreCase));
 
@@ -476,5 +489,98 @@ public class BattleService {
                 logs.Add($"Entra {newActive?.GetDisplayName() ?? "Pokémon"} automáticamente.");
             }
         }
+    }
+
+    // Aplica efectos de estado al final del turno para ambos Pokémon activos
+    private void ApplyEndOfTurnEffects(BattleSession battle, List<string> logs) {
+        // Aplicar efectos al Pokémon activo del jugador 1
+        var player1Active = battle.PlayerSide.GetActivePokemon();
+        if (player1Active != null && !player1Active.IsFainted()) {
+            string? effect = player1Active.ApplyEndOfTurnStatusEffect();
+            if (effect != null) {
+                logs.Add(effect);
+
+                // Verificar si se debilitó por el efecto de estado
+                if (player1Active.IsFainted()) {
+                    logs.Add($"{player1Active.GetDisplayName()} se debilitó.");
+
+                    int? autoSwitchSlot = battle.PlayerSide.GetFirstNonFaintedSlot();
+                    if (autoSwitchSlot.HasValue) {
+                        battle.PlayerSide.SwitchPokemon(autoSwitchSlot.Value);
+                        var newActive = battle.PlayerSide.GetActivePokemon();
+                        logs.Add($"Entra {newActive?.GetDisplayName() ?? "Pokémon"} automáticamente.");
+                    }
+                }
+            }
+
+            // Aplicar efectos secundarios si sigue vivo
+            if (!player1Active.IsFainted()) {
+                string? secondaryEffect = player1Active.ApplyEndOfTurnSecondaryStatusEffect();
+                if (secondaryEffect != null) {
+                    logs.Add(secondaryEffect);
+
+                    // Verificar si se debilitó por el efecto secundario
+                    if (player1Active.IsFainted()) {
+                        logs.Add($"{player1Active.GetDisplayName()} se debilitó.");
+
+                        int? autoSwitchSlot = battle.PlayerSide.GetFirstNonFaintedSlot();
+                        if (autoSwitchSlot.HasValue) {
+                            battle.PlayerSide.SwitchPokemon(autoSwitchSlot.Value);
+                            var newActive = battle.PlayerSide.GetActivePokemon();
+                            logs.Add($"Entra {newActive?.GetDisplayName() ?? "Pokémon"} automáticamente.");
+                        }
+                    }
+                }
+            }
+        }
+
+        // Verificar si la batalla terminó antes de aplicar efectos al jugador 2
+        if (battle.IsBattleOver()) {
+            return;
+        }
+
+        // Aplicar efectos al Pokémon activo del jugador 2
+        var player2Active = battle.OpponentSide.GetActivePokemon();
+        if (player2Active != null && !player2Active.IsFainted()) {
+            string? effect = player2Active.ApplyEndOfTurnStatusEffect();
+            if (effect != null) {
+                logs.Add(effect);
+
+                // Verificar si se debilitó por el efecto de estado
+                if (player2Active.IsFainted()) {
+                    logs.Add($"{player2Active.GetDisplayName()} se debilitó.");
+
+                    int? autoSwitchSlot = battle.OpponentSide.GetFirstNonFaintedSlot();
+                    if (autoSwitchSlot.HasValue) {
+                        battle.OpponentSide.SwitchPokemon(autoSwitchSlot.Value);
+                        var newActive = battle.OpponentSide.GetActivePokemon();
+                        logs.Add($"Entra {newActive?.GetDisplayName() ?? "Pokémon"} automáticamente.");
+                    }
+                }
+            }
+
+            // Aplicar efectos secundarios si sigue vivo
+            if (!player2Active.IsFainted()) {
+                string? secondaryEffect = player2Active.ApplyEndOfTurnSecondaryStatusEffect();
+                if (secondaryEffect != null) {
+                    logs.Add(secondaryEffect);
+
+                    // Verificar si se debilitó por el efecto secundario
+                    if (player2Active.IsFainted()) {
+                        logs.Add($"{player2Active.GetDisplayName()} se debilitó.");
+
+                        int? autoSwitchSlot = battle.OpponentSide.GetFirstNonFaintedSlot();
+                        if (autoSwitchSlot.HasValue) {
+                            battle.OpponentSide.SwitchPokemon(autoSwitchSlot.Value);
+                            var newActive = battle.OpponentSide.GetActivePokemon();
+                            logs.Add($"Entra {newActive?.GetDisplayName() ?? "Pokémon"} automáticamente.");
+                        }
+                    }
+                }
+            }
+        }
+
+        // Verificar si la batalla terminó después de los efectos
+        battle.IsBattleOver();
     }
 }

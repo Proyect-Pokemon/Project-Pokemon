@@ -450,6 +450,14 @@ public class Network {
     }
 
     private PokemonSnapshot CreatePokemonSnapshot(Models.Battle.PokemonBattle pokemon, bool isPlayerSide) {
+        // Obtener los estados secundarios activos como lista de strings
+        var secondaryStatuses = new List<string>();
+        foreach (Enum.PokeSecondaryStatus status in System.Enum.GetValues(typeof(Enum.PokeSecondaryStatus))) {
+            if (status != Enum.PokeSecondaryStatus.None && pokemon.HasSecondaryStatus(status)) {
+                secondaryStatuses.Add(status.ToString());
+            }
+        }
+
         return new PokemonSnapshot {
             PokemonId = pokemon.PokemonId,
             Name = pokemon.Name,
@@ -460,6 +468,7 @@ public class Network {
             MaxHp = pokemon.MaxHp,
             IsFainted = pokemon.IsFainted(),
             Status = pokemon.Status.ToString(),
+            SecondaryStatuses = secondaryStatuses,
             SpriteFront = pokemon.SpriteFront,
             SpriteBack = pokemon.SpriteBack,
             SpriteFrontShiny = pokemon.SpriteFrontShiny,

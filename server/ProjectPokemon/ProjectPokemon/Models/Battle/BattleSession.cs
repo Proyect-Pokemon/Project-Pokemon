@@ -4,8 +4,7 @@ using ProjectPokemon.Networking.Messages.Battle;
 namespace ProjectPokemon.Models.Battle;
 
 // Representa una sesión de batalla activa en memoria
-public class BattleSession
-{
+public class BattleSession {
     public Guid BattleId { get; set; } = Guid.NewGuid();
 
     public required BattleSide PlayerSide { get; set; }
@@ -31,29 +30,25 @@ public class BattleSession
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public bool IsParticipant(int userId)
-    {
+    public bool IsParticipant(int userId) {
         return PlayerUserId == userId || Player2UserId == userId;
     }
 
-    public int? GetOpponentUserId(int userId)
-    {
+    public int? GetOpponentUserId(int userId) {
         if (PlayerUserId == userId) return Player2UserId;
         if (Player2UserId == userId) return PlayerUserId;
 
         return null;
     }
 
-    public BattleSide? GetSideForUser(int userId)
-    {
+    public BattleSide? GetSideForUser(int userId) {
         if (PlayerUserId == userId) return PlayerSide;
         if (Player2UserId == userId) return OpponentSide;
 
         return null;
     }
 
-    public BattleSide? GetOpponentSideForUser(int userId)
-    {
+    public BattleSide? GetOpponentSideForUser(int userId) {
         if (PlayerUserId == userId) return OpponentSide;
         if (Player2UserId == userId) return PlayerSide;
 
@@ -61,17 +56,14 @@ public class BattleSession
     }
 
     // Verifica si la batalla ha terminado
-    public bool IsBattleOver()
-    {
-        if (PlayerSide.IsDefeated())
-        {
+    public bool IsBattleOver() {
+        if (PlayerSide.IsDefeated()) {
             WinnerUserId = Player2UserId;
             Status = BattleStatus.Finished;
             return true;
         }
 
-        if (OpponentSide.IsDefeated())
-        {
+        if (OpponentSide.IsDefeated()) {
             WinnerUserId = PlayerUserId;
             Status = BattleStatus.Finished;
             return true;
@@ -81,51 +73,62 @@ public class BattleSession
     }
 }
 
-public class PendingBattleAction
-{
+public class PendingBattleAction {
     public required BattleAction Action { get; set; }
     public string? MoveName { get; set; }
     public int? TargetSlot { get; set; }
 }
 
 // Representa un lado de la batalla (jugador u oponente)
-public class BattleSide
-{
+public class BattleSide {
     public List<PokemonBattle> Team { get; set; } = new();
 
     public int ActiveSlot { get; set; } = 0; // 0-5
 
-    public PokemonBattle? GetActivePokemon()
-    {
+    public PokemonBattle? GetActivePokemon() {
         if (ActiveSlot < 0 || ActiveSlot >= Team.Count) return null;
 
         return Team[ActiveSlot];
     }
 
     // Cambia el Pokémon activo
-    public bool SwitchPokemon(int newSlot)
-    {
+    public bool SwitchPokemon(int newSlot) {
         if (newSlot < 0 || newSlot >= Team.Count) return false;
 
         if (newSlot == ActiveSlot) return false;
 
         if (Team[newSlot].IsFainted()) return false;
 
+        // Resetear el contador de BadlyPoisoned del Pokémon que sale del campo
+        var previousPokemon = GetActivePokemon();
+        if (previousPokemon != null && previousPokemon.Status == Enum.PokeStatus.BadlyPoisoned) {
+            previousPokemon.BadlyPoisonedCounter = 1;
+        }
+
+        // Eliminar confusión al salir del campo
+        if (previousPokemon != null && previousPokemon.HasSecondaryStatus(Enum.PokeSecondaryStatus.Confuse)) {
+            previousPokemon.RemoveSecondaryStatus(Enum.PokeSecondaryStatus.Confuse);
+            previousPokemon.ConfusionTurnsRemaining = 0;
+        }
+
+        // Eliminar Leech Seed al salir del campo
+        if (previousPokemon != null && previousPokemon.HasSecondaryStatus(Enum.PokeSecondaryStatus.Seeded)) {
+            previousPokemon.RemoveSecondaryStatus(Enum.PokeSecondaryStatus.Seeded);
+            previousPokemon.LeechSeedSource = null;
+        }
+
         ActiveSlot = newSlot;
         return true;
     }
 
     // Verifica si todos los Pokémon están debilitados
-    public bool IsDefeated()
-    {
+    public bool IsDefeated() {
         return Team.All(p => p.IsFainted());
     }
 
     // Obtiene el primer Pokémon no debilitado
-    public int? GetFirstNonFaintedSlot()
-    {
-        for (int i = 0; i < Team.Count; i++)
-        {
+    public int? GetFirstNonFaintedSlot() {
+        for (int i = 0; i < Team.Count; i++) {
             if (!Team[i].IsFainted()) return i;
         }
 

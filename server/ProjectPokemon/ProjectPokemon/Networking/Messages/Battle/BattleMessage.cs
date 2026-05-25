@@ -60,6 +60,7 @@ public class PokemonSnapshot {
     public int MaxHp { get; set; }
     public bool IsFainted { get; set; }
     public required string Status { get; set; }
+    public List<string> SecondaryStatuses { get; set; } = new(); // Estados secundarios activos
     public string? SpriteFront { get; set; }
     public string? SpriteBack { get; set; }
     public string? SpriteFrontShiny { get; set; }
