@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { RouterLink, Router, ActivatedRoute } from "@angular/router";
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthRequest } from '../../models/auth-request';
 import { AuthService } from '../../services/auth';
-import { FormsModule } from '@angular/forms';
 import { SocketService } from '../../services/websocket-service';
 
 declare const google: any;
@@ -15,17 +15,16 @@ declare const google: any;
 })
 export class Login implements OnInit, OnDestroy {
 
-  // Variables del formulario de login
-  nickname: string = '';
-  password: string = '';
-  rememberMeChecked: boolean = false;
+  nickname = '';
+  password = '';
+  rememberMeChecked = false;
 
   errorMessage = signal('');
 
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private readonly socketService = inject(SocketService);
+  private socketService = inject(SocketService);
 
   canSubmit(): boolean {
     return this.nickname.trim().length > 0 &&
@@ -34,9 +33,7 @@ export class Login implements OnInit, OnDestroy {
 
   async submit() {
 
-    if (!this.canSubmit()) {
-      return;
-    }
+    if (!this.canSubmit()) return;
 
     this.errorMessage.set('');
 
@@ -52,38 +49,24 @@ export class Login implements OnInit, OnDestroy {
         this.rememberMeChecked
       );
 
-      if (result === true) {
-
-        const jwt = this.authService.jwt;
-
-        if (jwt)
-          this.socketService.connect(jwt);
-
-        const redirectTo =
-          this.resolveSafeRedirectTo(
-            this.route.snapshot.queryParams['redirectTo']
-          );
-
-        this.router.navigateByUrl(
-          redirectTo
-        );
-
+      if (!result) {
+        this.errorMessage.set('Usuario o contraseña incorrectos.');
         return;
       }
 
-      this.errorMessage.set(
-        'Usuario o contraseña incorrectos.'
+      const jwt = this.authService.jwt;
+      if (jwt) this.socketService.connect(jwt);
+
+      const redirectTo = this.resolveSafeRedirectTo(
+        this.route.snapshot.queryParams['redirectTo']
       );
 
-    }
-    catch (err: any) {
+      await this.router.navigateByUrl(redirectTo);
+
+    } catch (err: any) {
 
       if (err?.status === 0) {
-
-        this.errorMessage.set(
-          'No se pudo establecer conexión con el servidor.'
-        );
-
+        this.errorMessage.set('No se pudo establecer conexión con el servidor.');
         return;
       }
 
@@ -95,111 +78,77 @@ export class Login implements OnInit, OnDestroy {
             err?.message;
 
       this.errorMessage.set(
-        backendError ||
-        'Error de conexión con el servidor.'
+        backendError || 'Error de conexión con el servidor.'
       );
     }
   }
 
   ngOnInit() {
 
-    document.body.classList.add(
-      'login-background'
-    );
+    document.body.classList.add('login-background');
 
-    // Inicializar Google Sign-In
-    if (typeof google !== 'undefined') {
+    if (typeof google === 'undefined') return;
 
-      google.accounts.id.initialize({
+    google.accounts.id.initialize({
+      client_id: 'TU_CLIENT_ID.apps.googleusercontent.com',
+      callback: (response: any) => this.handleGoogle(response)
+    });
 
-        client_id:
-          'TU_CLIENT_ID.apps.googleusercontent.com',
+    const button = document.getElementById('googleButton');
 
-        callback:
-          (response: any) =>
-            this.handleGoogle(response)
-
+    if (button) {
+      google.accounts.id.renderButton(button, {
+        theme: 'outline',
+        size: 'large'
       });
-
-      google.accounts.id.renderButton(
-        document.getElementById(
-          'googleButton'
-        ),
-        {
-          theme: 'outline',
-          size: 'large'
-        }
-      );
     }
   }
 
-  async handleGoogle(
-    response: any
-  ) {
+  async handleGoogle(response: any) {
 
-    const idToken =
-      response.credential;
+    const idToken = response?.credential;
+    if (!idToken) {
+      this.errorMessage.set('Token de Google inválido');
+      return;
+    }
 
     try {
 
-      const result =
-        await this.authService.googleLogin(
-          idToken,
-          this.rememberMeChecked
-        );
+      const result = await this.authService.googleLogin(
+        idToken,
+        this.rememberMeChecked
+      );
 
-      if (result === true) {
-
-        const jwt =
-          this.authService.jwt;
-
-        if (jwt)
-          this.socketService.connect(jwt);
-
-        this.router.navigateByUrl(
-          '/battle'
-        );
+      if (!result) {
+        this.errorMessage.set('Error al iniciar sesión con Google');
+        return;
       }
 
-    }
-    catch {
+      const jwt = this.authService.jwt;
+      if (jwt) this.socketService.connect(jwt);
 
-      this.errorMessage.set(
-        'Error al iniciar sesión con Google'
-      );
+      await this.router.navigateByUrl('/battle');
+
+    } catch {
+
+      this.errorMessage.set('Error al iniciar sesión con Google');
     }
   }
 
   ngOnDestroy() {
-
-    document.body.classList.remove(
-      'login-background'
-    );
+    document.body.classList.remove('login-background');
   }
 
-  private resolveSafeRedirectTo(
-    redirectToRaw: unknown
-  ): string {
+  private resolveSafeRedirectTo(redirectToRaw: unknown): string {
 
     const redirectTo =
-      typeof redirectToRaw === 'string'
-        ? redirectToRaw
-        : '';
+      typeof redirectToRaw === 'string' ? redirectToRaw : '';
 
-    if (
-      !redirectTo ||
-      !redirectTo.startsWith('/')
-    ) {
-
+    if (!redirectTo || !redirectTo.startsWith('/')) {
       return '/battle';
     }
 
-    if (
-      redirectTo.startsWith(
-        '/battle/fight'
-      )
-    ) {
-
+    if (redirectTo.startsWith('/battle/fight')) {
       return '/battle-select?mode=online';
     }
 
