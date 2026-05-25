@@ -24,7 +24,9 @@ export class Login implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private socketService = inject(SocketService);
+  private readonly socketService = inject(SocketService);
+
+  private googleInitialized = false;
 
   canSubmit(): boolean {
     return this.nickname.trim().length > 0 &&
@@ -49,7 +51,7 @@ export class Login implements OnInit, OnDestroy {
         this.rememberMeChecked
       );
 
-      if (!result) {
+      if (result !== true) {
         this.errorMessage.set('Usuario o contraseña incorrectos.');
         return;
       }
@@ -87,26 +89,40 @@ export class Login implements OnInit, OnDestroy {
 
     document.body.classList.add('login-background');
 
+    this.initGoogle();
+  }
+
+  private initGoogle(): void {
+
+    if (this.googleInitialized) return;
     if (typeof google === 'undefined') return;
 
-    google.accounts.id.initialize({
-      client_id: 'TU_CLIENT_ID.apps.googleusercontent.com',
-      callback: (response: any) => this.handleGoogle(response)
-    });
-
     const button = document.getElementById('googleButton');
+    if (!button) return;
 
-    if (button) {
+    try {
+
+      google.accounts.id.initialize({
+        client_id: 'TU_CLIENT_ID.apps.googleusercontent.com',
+        callback: (response: any) => this.handleGoogle(response)
+      });
+
       google.accounts.id.renderButton(button, {
         theme: 'outline',
         size: 'large'
       });
+
+      this.googleInitialized = true;
+
+    } catch {
+      // silencioso: no rompe login si Google falla
     }
   }
 
   async handleGoogle(response: any) {
 
     const idToken = response?.credential;
+
     if (!idToken) {
       this.errorMessage.set('Token de Google inválido');
       return;
@@ -119,7 +135,7 @@ export class Login implements OnInit, OnDestroy {
         this.rememberMeChecked
       );
 
-      if (!result) {
+      if (result !== true) {
         this.errorMessage.set('Error al iniciar sesión con Google');
         return;
       }
@@ -127,10 +143,13 @@ export class Login implements OnInit, OnDestroy {
       const jwt = this.authService.jwt;
       if (jwt) this.socketService.connect(jwt);
 
-      await this.router.navigateByUrl('/battle');
+      const redirectTo = this.resolveSafeRedirectTo(
+        this.route.snapshot.queryParams['redirectTo']
+      );
+
+      await this.router.navigateByUrl(redirectTo);
 
     } catch {
-
       this.errorMessage.set('Error al iniciar sesión con Google');
     }
   }
