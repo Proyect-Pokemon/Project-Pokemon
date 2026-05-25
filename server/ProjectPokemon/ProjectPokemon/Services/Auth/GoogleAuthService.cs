@@ -5,7 +5,11 @@ using ProjectPokemon.Models.Database.Entities;
 
 namespace ProjectPokemon.Services.Auth;
 
-public class GoogleAuthService
+/// <summary>
+/// Gestiona autenticación mediante Google OAuth
+/// y creación automática de usuarios.
+/// </summary>
+public sealed class GoogleAuthService
 {
     private readonly UnitOfWork _unitOfWork;
     private readonly TokenService _tokenService;
@@ -18,52 +22,129 @@ public class GoogleAuthService
     {
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
-        _settings = settings.Value;
+
+        _settings =
+            settings.Value
+            ?? throw new ArgumentNullException(
+                nameof(settings)
+            );
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(
+            _settings.ClientId
+        );
     }
 
-    public async Task<string?> LoginWithGoogleAsync(string idToken)
+    /// <summary>
+    /// Valida token Google,
+    /// obtiene o crea usuario
+    /// y devuelve JWT propio.
+    /// </summary>
+    public async Task<string?> LoginWithGoogleAsync(
+        string idToken)
     {
+        if (string.IsNullOrWhiteSpace(idToken))
+        {
+            return null;
+        }
+
         GoogleJsonWebSignature.Payload payload;
 
         try
         {
-            payload = await GoogleJsonWebSignature.ValidateAsync(idToken,
-                new GoogleJsonWebSignature.ValidationSettings
-                {
-                    Audience = new[] { _settings.ClientId }
-                });
+            payload =
+                await GoogleJsonWebSignature.ValidateAsync(
+                    idToken,
+                    new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience =
+                        [
+                            _settings.ClientId
+                        ]
+                    });
         }
-        catch
+        catch (InvalidJwtException)
         {
-            return null; // token inválido
+            return null;
         }
 
-        // 1. buscar usuario por email
-        var user = await _unitOfWork.UserRepository.GetUserByEmailAsync(payload.Email);
+        if (string.IsNullOrWhiteSpace(payload.Email))
+        {
+            return null;
+        }
 
-        // 2. si no existe, crearlo
+        User? user =
+            await _unitOfWork
+                .UserRepository
+                .GetUserByEmailAsync(
+                    payload.Email
+                );
+
         if (user is null)
         {
-            user = new User
-            {
-                Email = payload.Email,
-                Nickname = GenerateNickname(payload.Email, payload.Name),
-                Password = null,
-                AvatarPath = payload.Picture,
-                Role = "user",
-                Biography = null
-            };
-
-            await _unitOfWork.UserRepository.InsertAsync(user);
-            await _unitOfWork.SaveAsync();
+            user =
+                await CreateGoogleUserAsync(
+                    payload
+                );
         }
 
-        // 3. generar JWT normal
-        return _tokenService.CreateToken(user);
+        return _tokenService.CreateToken(
+            user
+        );
     }
 
-    private string GenerateNickname(string email, string name)
+    /// <summary>
+    /// Crea usuario nuevo
+    /// usando datos Google.
+    /// </summary>
+    private async Task<User>
+    CreateGoogleUserAsync(
+        GoogleJsonWebSignature.Payload payload)
     {
-        return name.Replace(" ", "") + "_" + email.Split('@')[0];
+        var user =
+            new User
+            {
+                Email = payload.Email!,
+
+                Nickname =
+                    GenerateNickname(
+                        payload.Email,
+                        payload.Name
+                    ),
+
+                Password = null,
+                AvatarPath = payload.Picture,
+                Biography = null,
+                Role = "user"
+            };
+
+        await _unitOfWork
+            .UserRepository
+            .InsertAsync(user);
+
+        await _unitOfWork.SaveAsync();
+
+        return user;
+    }
+
+    /// <summary>
+    /// Genera nickname básico
+    /// desde nombre y correo.
+    /// </summary>
+    private static string GenerateNickname(
+        string email,
+        string? name)
+    {
+        string safeName =
+            string.IsNullOrWhiteSpace(name)
+            ? "User"
+            : string.Concat(
+                name.Where(
+                    c => !char.IsWhiteSpace(c)
+                ));
+
+        string emailPrefix =
+            email.Split('@')[0];
+
+        return $"{safeName}_{emailPrefix}";
     }
 }
