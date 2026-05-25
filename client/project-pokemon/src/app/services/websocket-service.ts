@@ -10,6 +10,7 @@ export interface BattleStateEvent {
   action: number;
   battle: any;
   messages: string[];
+  timeline: any[];
   requiresSwitch: boolean;
   winnerUserId: number | null;
 }
@@ -116,12 +117,14 @@ export class SocketService {
       requiresSwitch: message.requiresSwitch ?? false,
       winnerUserId: message.winnerUserId ?? null,
       messages: message.messages ?? [],
+      timeline: message.timeline ?? [],
     });
 
     this.onBattleState.set({
       action: message.action ?? 0,
       battle: message.battle,
       messages: message.messages ?? [],
+      timeline: message.timeline ?? [],
       requiresSwitch: message.requiresSwitch ?? false,
       winnerUserId: message.winnerUserId ?? null,
     });

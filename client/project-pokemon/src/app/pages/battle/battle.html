@@ -31,10 +31,11 @@
             </div>
             <div id="moves">
                 @if (actionPanel() === 'root') {
-                    <button class="action-button action-attack" [disabled]="showLogOverlay() || attacksDisabled()" (click)="openAttackPanel()">
+                    <div class="action-panel-prompt">Elige una accion</div>
+                    <button class="action-button action-attack" [disabled]="attacksDisabled()" (click)="openAttackPanel()">
                         Atacar
                     </button>
-                    <button class="action-button action-switch" [disabled]="showLogOverlay() || attacksDisabled()" (click)="openSwitchPanel()">
+                    <button class="action-button action-switch" [disabled]="attacksDisabled()" (click)="openSwitchPanel()">
                         Cambiar
                     </button>
                 }
@@ -49,7 +50,7 @@
                         @for (move of battleInfo()!.pokemonA.moves; track $index) {
                             <app-movement-button 
                                 [move]="move" 
-                                [disabled]="move.currentPp === 0 || showLogOverlay() || attacksDisabled()"
+                                [disabled]="move.currentPp === 0 || attacksDisabled()"
                                 (moveClicked)="attack($event)">
                             </app-movement-button>
                         }
@@ -66,7 +67,7 @@
                         @for (option of switchOptions(); track option.index) {
                             <button
                                 class="switch-option"
-                                [disabled]="option.isActive || option.isFainted || attacksDisabled() || showLogOverlay()"
+                                [disabled]="option.isActive || option.isFainted || attacksDisabled()"
                                 (click)="switchPokemon(option.index)">
                                 <img [src]="option.sprite" [alt]="option.name">
                                 <div class="switch-option-text">
@@ -85,11 +86,6 @@
                 }
             </div>
 
-            <app-battle-log-overlay 
-                [log]="battleLog()" 
-                [visible]="showLogOverlay()"
-                (lineChanged)="onLineChanged($event)">
-            </app-battle-log-overlay>
             @if (showFinishDialog()) {
                 <app-finish-battle-dialog
                     [result]="battleResult()"
@@ -102,6 +98,7 @@
             <app-battle-chat 
                 [currentUsername]="currentUsername()"
                 [battleId]="battleId()"
+                [systemMessages]="combatChatMessages()"
                 #chatComponent>
             </app-battle-chat>
         }

@@ -223,6 +223,7 @@ public class Network {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle, userId.Value),
                 Messages = result.Messages,
+                Timeline = result.Timeline,
                 RequiresSwitch = false,
                 WinnerUserId = battle.WinnerUserId
             });
@@ -241,6 +242,7 @@ public class Network {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle, userId.Value),
                 Messages = result.Messages,
+                Timeline = result.Timeline,
                 RequiresSwitch = false,
                 WinnerUserId = battle.WinnerUserId
             });
@@ -267,6 +269,7 @@ public class Network {
                         Action = actionRequest.Action,
                         Battle = CreateBattleSnapshot(battle, perspectiveUserId),
                         Messages = result.Messages,
+                        Timeline = result.Timeline,
                         RequiresSwitch = false,
                         WinnerUserId = battle.WinnerUserId
                     };

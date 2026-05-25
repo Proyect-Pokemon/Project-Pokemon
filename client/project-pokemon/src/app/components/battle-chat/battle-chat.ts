@@ -1,4 +1,4 @@
-import { Component, inject, Input, signal, effect } from '@angular/core';
+import { Component, inject, Input, signal, effect, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SocketService } from '../../services/websocket-service';
 
@@ -6,6 +6,7 @@ interface ChatMessage {
   from: string;
   content: string;
   isOwn: boolean;
+  type: 'chat' | 'system';
 }
 
 @Component({
@@ -18,9 +19,11 @@ export class BattleChat {
   @Input() currentUsername: string = 'Usuario';
   @Input() isDisabled: boolean = false;
   @Input() battleId: string | null = null;
+  @Input() systemMessages: string[] = [];
 
   messages = signal<ChatMessage[]>([]);
   isInputDisabled = signal(false);
+  private processedSystemMessages = 0;
 
   private socketService = inject(SocketService);
 
@@ -34,6 +37,22 @@ export class BattleChat {
     });
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['battleId']) {
+      this.messages.set([]);
+      this.processedSystemMessages = 0;
+    }
+
+    if (changes['systemMessages']) {
+      const nextBatch = this.systemMessages.slice(this.processedSystemMessages);
+      for (const message of nextBatch) {
+        this.addSystemMessage(message);
+      }
+
+      this.processedSystemMessages = this.systemMessages.length;
+    }
+  }
+
   sendMessage(content: string) {
     if (!content.trim() || this.isInputDisabled()) return;
 
@@ -42,6 +61,7 @@ export class BattleChat {
       from: this.currentUsername,
       content: content.trim(),
       isOwn: true,
+      type: 'chat',
     }]);
 
     // Enviar el mensaje a través del WebSocket
@@ -57,7 +77,22 @@ export class BattleChat {
       return;
     }
 
-    this.messages.update(msgs => [...msgs, { from, content, isOwn }]);
+    this.messages.update(msgs => [...msgs, { from, content, isOwn, type: 'chat' }]);
+    this.scrollToBottom();
+  }
+
+  private addSystemMessage(content: string) {
+    const message = content.trim();
+    if (!message) {
+      return;
+    }
+
+    this.messages.update(msgs => [...msgs, {
+      from: 'Combate',
+      content: message,
+      isOwn: false,
+      type: 'system',
+    }]);
     this.scrollToBottom();
   }
 

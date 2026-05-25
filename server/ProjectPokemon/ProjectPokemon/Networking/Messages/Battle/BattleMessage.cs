@@ -30,7 +30,8 @@ public class BattleActionRequest : BattleMessage {
 // Actualización del estado de la batalla enviada por el servidor
 public class BattleStateUpdate : BattleMessage {
     public required BattleSnapshot Battle { get; set; }
-    public List<string> Messages { get; set; } = new();
+    public List<string> Messages { get; set; } = new(); // Legacy: textos para compatibilidad
+    public List<BattleEvent> Timeline { get; set; } = new(); // Timeline estructurada de eventos
     public bool RequiresSwitch { get; set; } = false;
     public int? WinnerUserId { get; set; }
 }

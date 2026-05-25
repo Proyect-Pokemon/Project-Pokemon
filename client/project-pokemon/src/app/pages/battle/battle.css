@@ -189,6 +189,14 @@ app-battle-chat {
     position: relative;
 }
 
+.action-panel-prompt {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-weight: 700;
+    color: #d7f5ff;
+    letter-spacing: 0.02em;
+}
+
 .action-button {
     border: 0;
     border-radius: 16px;

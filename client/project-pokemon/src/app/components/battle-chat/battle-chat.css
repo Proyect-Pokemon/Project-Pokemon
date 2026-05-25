@@ -57,6 +57,19 @@
   border: 1px solid rgba(27, 18, 39, 0.08);
 }
 
+.message.system {
+  align-self: center;
+  max-width: 95%;
+  background: rgba(48, 78, 112, 0.14);
+  color: #1d3653;
+  border: 1px solid rgba(48, 78, 112, 0.2);
+}
+
+.message.system .sender {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .sender {
   font-weight: 600;
   font-size: 11px;
