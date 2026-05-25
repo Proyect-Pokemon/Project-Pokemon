@@ -20,7 +20,6 @@ export class AuthService {
   private readonly jwtSignal = signal<string | null>(null);
 
   constructor(private api: ApiService) {
-    // Restaurar sesión
     const jwt = localStorage.getItem('jwt');
     if (jwt) {
       this.setJwt(jwt);
@@ -42,10 +41,12 @@ export class AuthService {
 
   readonly currentUserId = computed(() => {
     const decoded = this.decodedPayload();
-    if (!decoded?.id) return null;
+    const id = decoded?.id;
 
-    const id = Number(decoded.id);
-    return Number.isNaN(id) ? null : id;
+    if (!id) return null;
+
+    const numeric = Number(id);
+    return Number.isNaN(numeric) ? null : numeric;
   });
 
   readonly isAdmin = computed(() =>
@@ -53,15 +54,13 @@ export class AuthService {
   );
 
   readonly nickname = computed(() => {
-    const decoded = this.decodedPayload();
-    const name = decoded?.unique_name?.trim();
-    return name && name.length > 0 ? name : 'Usuario';
+    const name = this.decodedPayload()?.unique_name?.trim();
+    return name?.length ? name : 'Usuario';
   });
 
   readonly avatarPath = computed(() => {
-    const decoded = this.decodedPayload();
-    const path = decoded?.AvatarPath?.trim();
-    return path && path.length > 0 ? path : '/assets/avatar-default.png';
+    const path = this.decodedPayload()?.AvatarPath?.trim();
+    return path?.length ? path : '/assets/avatar-default.png';
   });
 
   get jwt(): string | null {
@@ -79,22 +78,23 @@ export class AuthService {
 
   async login(
     authData: AuthRequest,
-    rememberMe: boolean = false
+    rememberMe = false
   ): Promise<boolean> {
 
-    const response = await this.api.post<AuthResponse>('auth/login', authData);
+    const response =
+      await this.api.post<AuthResponse>('auth/login', authData);
 
-    if (response?.accessToken) {
-      this.jwt = response.accessToken;
-
-      if (rememberMe) {
-        localStorage.setItem('jwt', response.accessToken);
-      }
-
-      return true;
+    if (!response?.accessToken) {
+      return false;
     }
 
-    return false;
+    this.jwt = response.accessToken;
+
+    if (rememberMe) {
+      localStorage.setItem('jwt', response.accessToken);
+    }
+
+    return true;
   }
 
   async register(registerData: RegisterRequest): Promise<boolean> {
@@ -106,28 +106,27 @@ export class AuthService {
     idToken: string,
     remember = true
   ): Promise<boolean> {
+
+    if (!idToken?.trim()) {
+      return false;
+    }
+
     const response =
       await this.api.post<AuthResponse>(
         'auth/google',
         { idToken }
       );
 
-    if (response?.accessToken) {
-
-      this.jwt =
-        response.accessToken;
-
-      if (remember) {
-
-        localStorage.setItem(
-          'jwt',
-          response.accessToken
-        );
-      }
-
-      return true;
+    if (!response?.accessToken) {
+      return false;
     }
 
-    return false;
+    this.jwt = response.accessToken;
+
+    if (remember) {
+      localStorage.setItem('jwt', response.accessToken);
+    }
+
+    return true;
   }
 }
