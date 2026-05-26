@@ -23,9 +23,17 @@ public class BattleService {
     public class SubmitBattleActionResult {
         public bool Accepted { get; set; }
         public bool TurnResolved { get; set; }
-        public List<string> Messages { get; set; } = new();
+        public List<string> Messages { get; set; } = new(); // Legacy (deprecated)
+        public List<StructuredBattleMessage> StructuredMessages { get; set; } = new(); // Nuevo
         public List<Networking.Messages.Battle.BattleEvent> Timeline { get; set; } = new();
         public int? WinnerUserId { get; set; }
+    }
+
+    // Clase interna para resolver turnos
+    private class TurnResolutionResult {
+        public List<string> Messages { get; set; } = new();
+        public List<StructuredBattleMessage> StructuredMessages { get; set; } = new();
+        public List<Networking.Messages.Battle.BattleEvent> Events { get; set; } = new();
     }
 
     // Crea una nueva batalla cargando el equipo del usuario (vs CPU con placeholder)
@@ -245,16 +253,11 @@ public class BattleService {
                 Accepted = true,
                 TurnResolved = true,
                 Messages = turnResult.Messages,
+                StructuredMessages = turnResult.StructuredMessages,
                 Timeline = turnResult.Events,
                 WinnerUserId = battle.WinnerUserId
             };
         }
-    }
-
-    // Clase auxiliar para el resultado de la resolución del turno
-    private class TurnResolutionResult {
-        public List<string> Messages { get; set; } = new();
-        public List<Networking.Messages.Battle.BattleEvent> Events { get; set; } = new();
     }
 
     // Métodos auxiliares para crear identificadores de Pokémon
@@ -269,6 +272,63 @@ public class BattleService {
             Slot = pokemon.Slot,
             DisplayName = pokemon.GetDisplayName()
         };
+    }
+
+    // Helper para crear nombres normalizados de Pokemon (sin tildes, minusculas)
+    private string GetNormalizedPokemonName(Models.Battle.PokemonBattle pokemon) {
+        string displayName = pokemon.GetDisplayName();
+        return Utils.TextNormalizer.NormalizePokemonName(displayName);
+    }
+
+    // Helper para obtener el nombre del owner (player/opponent)
+    private string GetOwnerName(BattleSession battle, int userId) {
+        return battle.PlayerUserId == userId ? "player" : "opponent";
+    }
+
+    // Helper para crear args basicos de actor
+    private Dictionary<string, object> CreateActorArgs(
+        BattleSession battle, 
+        int userId, 
+        Models.Battle.PokemonBattle pokemon) {
+
+        return new Dictionary<string, object> {
+            { "actor", GetNormalizedPokemonName(pokemon) },
+            { "owner", GetOwnerName(battle, userId) }
+        };
+    }
+
+    // Helper para crear args de actor + target
+    private Dictionary<string, object> CreateActorTargetArgs(
+        BattleSession battle,
+        int attackerUserId,
+        Models.Battle.PokemonBattle attacker,
+        int defenderUserId,
+        Models.Battle.PokemonBattle defender) {
+
+        return new Dictionary<string, object> {
+            { "actor", GetNormalizedPokemonName(attacker) },
+            { "actor_owner", GetOwnerName(battle, attackerUserId) },
+            { "target", GetNormalizedPokemonName(defender) },
+            { "target_owner", GetOwnerName(battle, defenderUserId) }
+        };
+    }
+
+    // Helper para añadir mensaje estructurado
+    private void AddStructuredMessage(
+        SubmitBattleActionResult result,
+        string code,
+        Dictionary<string, object>? args = null) {
+
+        result.StructuredMessages.Add(BattleMessageBuilder.Create(code, args));
+    }
+
+    // Sobrecarga para TurnResolutionResult
+    private void AddStructuredMessage(
+        TurnResolutionResult result,
+        string code,
+        Dictionary<string, object>? args = null) {
+
+        result.StructuredMessages.Add(BattleMessageBuilder.Create(code, args));
     }
 
     private bool IsValidActionPayload(
@@ -539,6 +599,34 @@ public class BattleService {
                     _ => attacker.HasSecondaryStatus(Enum.PokeSecondaryStatus.Confuse) ? "confused" : "unknown"
                 };
 
+                // Generar mensaje estructurado segun el estado
+                var actorArgs = CreateActorArgs(battle, userId, attacker);
+
+                if (attacker.Status == Enum.PokeStatus.Freeze) {
+                    AddStructuredMessage(result, BattleMessageCode.FrozenSolid, actorArgs);
+                } else if (attacker.Status == Enum.PokeStatus.Sleep) {
+                    AddStructuredMessage(result, BattleMessageCode.FastAsleep, actorArgs);
+                } else if (attacker.Status == Enum.PokeStatus.Paralysis) {
+                    AddStructuredMessage(result, BattleMessageCode.ParalyzedCantMove, actorArgs);
+                } else if (attacker.HasSecondaryStatus(Enum.PokeSecondaryStatus.Confuse)) {
+                    // Confusion self-hit: NO emitir attack_used
+                    // El daño ya fue aplicado en CanAttack(), solo registramos el evento
+                    // Extraer el daño del mensaje de estado si es posible
+                    int confusionDamage = 0;
+                    if (statusMessage.Contains(" por ")) {
+                        var parts = statusMessage.Split(" por ");
+                        if (parts.Length > 1) {
+                            var damagePart = parts[1].Replace(" PS.", "").Trim();
+                            int.TryParse(damagePart, out confusionDamage);
+                        }
+                    }
+
+                    var confusionArgs = new Dictionary<string, object>(actorArgs) {
+                        { "damage", confusionDamage }
+                    };
+                    AddStructuredMessage(result, BattleMessageCode.ConfusionSelfHit, confusionArgs);
+                }
+
                 if (defenderId != null) {
                     result.Events.Add(new Networking.Messages.Battle.AttackEvent {
                         Message = statusMessage,
@@ -554,6 +642,17 @@ public class BattleService {
                 // Si se golpeó a sí mismo por confusión, ya se generó el evento de HP en CanAttack
                 return;
             }
+
+            // Puede atacar pero hay un mensaje (ej: "se despertó", "se descongeló", "curó confusión")
+            var actorArgs2 = CreateActorArgs(battle, userId, attacker);
+
+            if (statusMessage.Contains("despertado")) {
+                AddStructuredMessage(result, BattleMessageCode.WokeUp, actorArgs2);
+            } else if (statusMessage.Contains("descongelado")) {
+                AddStructuredMessage(result, BattleMessageCode.Thawed, actorArgs2);
+            } else if (statusMessage.Contains("confundido") && statusMessage.Contains("ya no")) {
+                AddStructuredMessage(result, BattleMessageCode.ConfusionEnd, actorArgs2);
+            }
         }
 
         var selectedMove = attacker.Movements
@@ -568,25 +667,187 @@ public class BattleService {
             return;
         }
 
+        int hpBeforeAttacker = attacker.CurrentHp;
         int hpBefore = defender.CurrentHp;
+
+        // Capturar stages antes del movimiento (para detectar cambios de stats)
+        var attackerStagesBefore = new Dictionary<string, int> {
+            { "Attack", attacker.AttackStage },
+            { "Defense", attacker.DefenseStage },
+            { "SpecialAttack", attacker.SpecialAttackStage },
+            { "SpecialDefense", attacker.SpecialDefenseStage },
+            { "Speed", attacker.SpeedStage },
+            { "Accuracy", attacker.AccuracyStage },
+            { "Evasion", attacker.EvasionStage }
+        };
+
+        var defenderStagesBefore = new Dictionary<string, int> {
+            { "Attack", defender.AttackStage },
+            { "Defense", defender.DefenseStage },
+            { "SpecialAttack", defender.SpecialAttackStage },
+            { "SpecialDefense", defender.SpecialDefenseStage },
+            { "Speed", defender.SpeedStage },
+            { "Accuracy", defender.AccuracyStage },
+            { "Evasion", defender.EvasionStage }
+        };
+
         selectedMove.ExecuteMovement(attacker, defender);
+
         int hpAfter = defender.CurrentHp;
+        int hpAfterAttacker = attacker.CurrentHp;
         int damage = Math.Max(0, hpBefore - hpAfter);
 
-        string attackMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}. Daño: {damage}.";
-        result.Messages.Add(attackMsg);
+        // Aplicar reducción de daño por efectos de campo en el lado del defensor
+        // Light Screen (ID 113): reduce daño de ataques especiales
+        // Reflect (ID 115): reduce daño de ataques físicos
+        if (damage > 0 && rivalSide != null) {
+            bool damageReduced = false;
 
-        if (defenderId != null) {
-            result.Events.Add(new Networking.Messages.Battle.AttackEvent {
-                Message = attackMsg,
-                Attacker = attackerId,
-                Defender = defenderId,
-                MoveName = selectedMove.Name,
-                Hit = damage > 0 || hpBefore == hpAfter, // Hit si causó daño o el HP no cambió (ej: inmunidad)
-                Blocked = false
-            });
+            // Light Screen: protege contra ataques especiales
+            if (rivalSide.LightScreenTurnsRemaining > 0 && 
+                selectedMove.MovementClass == Enum.MovementClass.Special) {
+                damage = damage / 2;
+                damageReduced = true;
+            }
 
-            if (damage > 0) {
+            // Reflect: protege contra ataques físicos
+            if (rivalSide.ReflectTurnsRemaining > 0 && 
+                selectedMove.MovementClass == Enum.MovementClass.Physical) {
+                damage = damage / 2;
+                damageReduced = true;
+            }
+
+            // Si el daño fue reducido, recalcular el HP del defensor
+            if (damageReduced) {
+                defender.CurrentHp = hpBefore - damage;
+                if (defender.CurrentHp < 0) {
+                    defender.CurrentHp = 0;
+                }
+                hpAfter = defender.CurrentHp;
+            }
+        }
+
+        int healing = Math.Max(0, hpAfterAttacker - hpBeforeAttacker);
+
+        // Detectar cambios de estadísticas del atacante
+        var attackerStatChanges = new List<(string stat, int change, int newStage)>();
+        var attackerStagesAfter = new Dictionary<string, int> {
+            { "Attack", attacker.AttackStage },
+            { "Defense", attacker.DefenseStage },
+            { "SpecialAttack", attacker.SpecialAttackStage },
+            { "SpecialDefense", attacker.SpecialDefenseStage },
+            { "Speed", attacker.SpeedStage },
+            { "Accuracy", attacker.AccuracyStage },
+            { "Evasion", attacker.EvasionStage }
+        };
+
+        foreach (var (stat, stageBefore) in attackerStagesBefore) {
+            int stageAfter = attackerStagesAfter[stat];
+            if (stageBefore != stageAfter) {
+                attackerStatChanges.Add((stat, stageAfter - stageBefore, stageAfter));
+            }
+        }
+
+        // Detectar cambios de estadísticas del defensor
+        var defenderStatChanges = new List<(string stat, int change, int newStage)>();
+        var defenderStagesAfter = new Dictionary<string, int> {
+            { "Attack", defender.AttackStage },
+            { "Defense", defender.DefenseStage },
+            { "SpecialAttack", defender.SpecialAttackStage },
+            { "SpecialDefense", defender.SpecialDefenseStage },
+            { "Speed", defender.SpeedStage },
+            { "Accuracy", defender.AccuracyStage },
+            { "Evasion", defender.EvasionStage }
+        };
+
+        foreach (var (stat, stageBefore) in defenderStagesBefore) {
+            int stageAfter = defenderStagesAfter[stat];
+            if (stageBefore != stageAfter) {
+                // Verificar si Mist está activo y el cambio es negativo (reducción de estadística)
+                if (rivalSide != null && rivalSide.MistTurnsRemaining > 0 && stageAfter < stageBefore) {
+                    // Mist bloquea las reducciones de estadísticas del enemigo
+                    // Revertir el cambio
+                    switch (stat) {
+                        case "Attack":
+                            defender.AttackStage = stageBefore;
+                            break;
+                        case "Defense":
+                            defender.DefenseStage = stageBefore;
+                            break;
+                        case "SpecialAttack":
+                            defender.SpecialAttackStage = stageBefore;
+                            break;
+                        case "SpecialDefense":
+                            defender.SpecialDefenseStage = stageBefore;
+                            break;
+                        case "Speed":
+                            defender.SpeedStage = stageBefore;
+                            break;
+                        case "Accuracy":
+                            defender.AccuracyStage = stageBefore;
+                            break;
+                        case "Evasion":
+                            defender.EvasionStage = stageBefore;
+                            break;
+                    }
+
+                    // Emitir mensaje de bloqueo por Mist
+                    string mistBlockMsg = $"¡La niebla protege las estadísticas de {defender.GetDisplayName()}!";
+                    result.Messages.Add(mistBlockMsg);
+
+                    // Mensaje estructurado
+                    if (rivalUserId.HasValue) {
+                        var mistArgs = CreateActorArgs(battle, rivalUserId.Value, defender);
+                        AddStructuredMessage(result, BattleMessageCode.StatProtected, mistArgs);
+                    }
+
+                    result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                        Message = mistBlockMsg
+                    });
+
+                    // Actualizar la lista para no registrar el cambio
+                    // (el cambio fue bloqueado)
+                    continue;
+                }
+
+                defenderStatChanges.Add((stat, stageAfter - stageBefore, stageAfter));
+            }
+        }
+
+        // Mensaje para movimientos de daño con curación (damage+heal)
+        if (damage > 0 && healing > 0) {
+            string attackMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}. Daño: {damage}. Recupera {healing} PS.";
+            result.Messages.Add(attackMsg);
+
+            // Mensajes estructurados
+            var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
+                { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
+            };
+            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+
+            if (rivalUserId.HasValue) {
+                var damageArgs = new Dictionary<string, object>(CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender)) {
+                    { "damage", damage }
+                };
+                AddStructuredMessage(result, BattleMessageCode.DamageDealt, damageArgs);
+
+                var drainArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
+                    { "amount", healing }
+                };
+                AddStructuredMessage(result, BattleMessageCode.DrainHp, drainArgs);
+            }
+
+            if (defenderId != null) {
+                result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                    Message = attackMsg,
+                    Attacker = attackerId,
+                    Defender = defenderId,
+                    MoveName = selectedMove.Name,
+                    Hit = true,
+                    Blocked = false
+                });
+
+                // Evento de daño al defensor
                 result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
                     Message = $"{defender.GetDisplayName()} pierde {damage} PS.",
                     Target = defenderId,
@@ -597,6 +858,285 @@ public class BattleService {
                     Cause = "move",
                     SourceMove = selectedMove.Name,
                     SourcePokemon = attackerId
+                });
+
+                // Evento de curación al atacante
+                result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                    Message = $"{attacker.GetDisplayName()} recupera {healing} PS.",
+                    Target = attackerId,
+                    BeforeHp = hpBeforeAttacker,
+                    AfterHp = hpAfterAttacker,
+                    MaxHp = attacker.MaxHp,
+                    Amount = healing,
+                    Cause = "drain",
+                    SourceMove = selectedMove.Name,
+                    SourcePokemon = attackerId
+                });
+            }
+        }
+        // Mensaje para movimientos de solo daño
+        else if (damage > 0) {
+            string attackMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}. Daño: {damage}.";
+            result.Messages.Add(attackMsg);
+
+            // Mensajes estructurados
+            var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
+                { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
+            };
+            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+
+            if (rivalUserId.HasValue) {
+                var damageArgs = new Dictionary<string, object>(CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender)) {
+                    { "damage", damage }
+                };
+                AddStructuredMessage(result, BattleMessageCode.DamageDealt, damageArgs);
+            }
+
+            if (defenderId != null) {
+                result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                    Message = attackMsg,
+                    Attacker = attackerId,
+                    Defender = defenderId,
+                    MoveName = selectedMove.Name,
+                    Hit = true,
+                    Blocked = false
+                });
+
+                result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                    Message = $"{defender.GetDisplayName()} pierde {damage} PS.",
+                    Target = defenderId,
+                    BeforeHp = hpBefore,
+                    AfterHp = hpAfter,
+                    MaxHp = defender.MaxHp,
+                    Amount = -damage,
+                    Cause = "move",
+                    SourceMove = selectedMove.Name,
+                    SourcePokemon = attackerId
+                });
+
+                // Emitir eventos de cambio de estadísticas del defensor si ocurrieron
+                foreach (var (stat, change, newStage) in defenderStatChanges) {
+                    string statMsg = change > 0 
+                        ? $"{defender.GetDisplayName()} aumenta {stat} en {change}."
+                        : $"{defender.GetDisplayName()} reduce {stat} en {Math.Abs(change)}.";
+                    result.Messages.Add(statMsg);
+
+                    // Mensaje estructurado para cambios de stats
+                    var statArgs = new Dictionary<string, object>(CreateActorArgs(battle, rivalUserId.Value, defender)) {
+                        { "stat", Utils.TextNormalizer.ToSnakeCase(stat) },
+                        { "stages", Math.Abs(change) }
+                    };
+                    string statCode = change > 0 ? BattleMessageCode.StatRose : BattleMessageCode.StatFell;
+                    AddStructuredMessage(result, statCode, statArgs);
+
+                    result.Events.Add(new Networking.Messages.Battle.StatStageChangeEvent {
+                        Message = statMsg,
+                        Target = defenderId,
+                        Stat = stat,
+                        Change = change,
+                        NewStage = newStage
+                    });
+                }
+            }
+        }
+        // Mensaje para movimientos de solo curación
+        else if (healing > 0) {
+            string healMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}. Recupera {healing} PS.";
+            result.Messages.Add(healMsg);
+
+            // Mensajes estructurados
+            var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
+                { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
+            };
+            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+
+            var healArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
+                { "amount", healing }
+            };
+            AddStructuredMessage(result, BattleMessageCode.HpRestored, healArgs);
+
+            result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                Message = healMsg,
+                Attacker = attackerId,
+                Defender = attackerId, // El defensor es el mismo atacante
+                MoveName = selectedMove.Name,
+                Hit = true,
+                Blocked = false
+            });
+
+            result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                Message = $"{attacker.GetDisplayName()} recupera {healing} PS.",
+                Target = attackerId,
+                BeforeHp = hpBeforeAttacker,
+                AfterHp = hpAfterAttacker,
+                MaxHp = attacker.MaxHp,
+                Amount = healing,
+                Cause = "move",
+                SourceMove = selectedMove.Name,
+                SourcePokemon = attackerId
+            });
+        }
+        // Movimientos sin efecto visible de HP (stat changes, whole-field-effect, etc.)
+        else if (defenderId != null) {
+            string moveMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}.";
+            result.Messages.Add(moveMsg);
+
+            // Mensaje estructurado de uso de ataque
+            var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
+                { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
+            };
+            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+
+            result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                Message = moveMsg,
+                Attacker = attackerId,
+                Defender = defenderId,
+                MoveName = selectedMove.Name,
+                Hit = true,
+                Blocked = false
+            });
+
+            // Caso especial: Haze (ID 114) resetea todas las características
+            // Emitir un mensaje general en lugar de listar cada cambio
+            if (selectedMove.Id == 114 && (defenderStatChanges.Count > 0 || attackerStatChanges.Count > 0)) {
+                string hazeMsg = "Las características de los Pokémon han vuelto a sus valores originales.";
+                result.Messages.Add(hazeMsg);
+
+                // Mensaje estructurado para reset de stats
+                AddStructuredMessage(result, BattleMessageCode.StatsReset, new Dictionary<string, object>());
+                result.Messages.Add(hazeMsg);
+
+                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                    Message = hazeMsg
+                });
+            }
+            // Para otros movimientos, emitir eventos individuales de cambio de estadísticas
+            else {
+                // Emitir eventos de cambio de estadísticas del defensor si ocurrieron
+                foreach (var (stat, change, newStage) in defenderStatChanges) {
+                    string statMsg = change > 0 
+                        ? $"{defender.GetDisplayName()} aumenta {stat} en {change}."
+                        : $"{defender.GetDisplayName()} reduce {stat} en {Math.Abs(change)}.";
+                    result.Messages.Add(statMsg);
+
+                    result.Events.Add(new Networking.Messages.Battle.StatStageChangeEvent {
+                        Message = statMsg,
+                        Target = defenderId,
+                        Stat = stat,
+                        Change = change,
+                        NewStage = newStage
+                    });
+                }
+            }
+        }
+
+        // Emitir eventos de cambio de estadísticas del atacante si ocurrieron
+        // Esto es importante para movimientos como stat-boosters del usuario
+        // Para Haze, estos eventos no se emiten porque ya se emitió el mensaje general
+        if (selectedMove.Id != 114) {
+            foreach (var (stat, change, newStage) in attackerStatChanges) {
+                string statMsg = change > 0 
+                    ? $"{attacker.GetDisplayName()} aumenta {stat} en {change}."
+                    : $"{attacker.GetDisplayName()} reduce {stat} en {Math.Abs(change)}.";
+                result.Messages.Add(statMsg);
+
+                result.Events.Add(new Networking.Messages.Battle.StatStageChangeEvent {
+                    Message = statMsg,
+                    Target = attackerId,
+                    Stat = stat,
+                    Change = change,
+                    NewStage = newStage
+                });
+            }
+        }
+
+        // Manejar cambio forzado (force-switch) si el movimiento es de esa categoría
+        // Solo si el defensor no está debilitado
+        if (selectedMove.Category == "force-switch" && !defender.IsFainted() && defenderId != null) {
+            // Buscar otros Pokémon disponibles en el equipo rival
+            var availableSlots = new List<int>();
+            for (int i = 0; i < rivalSide.Team.Count; i++) {
+                if (i != rivalSide.ActiveSlot && !rivalSide.Team[i].IsFainted()) {
+                    availableSlots.Add(i);
+                }
+            }
+
+            // Si hay Pokémon disponibles, forzar cambio aleatorio
+            if (availableSlots.Count > 0) {
+                Random random = new Random();
+                int randomSlot = availableSlots[random.Next(availableSlots.Count)];
+
+                int prevSlot = rivalSide.ActiveSlot;
+                rivalSide.SwitchPokemon(randomSlot);
+                var newActive = rivalSide.GetActivePokemon();
+
+                string forcedSwitchMsg = $"{defender.GetDisplayName()} es forzado a retirarse. Entra {newActive?.GetDisplayName() ?? "Pokémon"}.";
+                result.Messages.Add(forcedSwitchMsg);
+
+                string rivalSideStr = battle.PlayerUserId == userId ? "opponent" : "player";
+                result.Events.Add(new Networking.Messages.Battle.SwitchEvent {
+                    Message = forcedSwitchMsg,
+                    Side = rivalSideStr,
+                    PreviousActiveSlot = prevSlot,
+                    NewActiveSlot = randomSlot,
+                    NewPokemonName = newActive?.GetDisplayName() ?? "Pokémon",
+                    IsAutomatic = true
+                });
+            }
+            // Si no hay Pokémon disponibles, el movimiento no tiene efecto adicional
+            // (el movimiento ya se ejecutó y consumió PP, pero no hubo cambio)
+        }
+
+        // Manejar efectos de campo (field-effect) si el movimiento es de esa categoría
+        if (selectedMove.Category == "field-effect") {
+            // Mist (ID 54): Protege las estadísticas del usuario de ser reducidas por el enemigo durante 5 turnos
+            if (selectedMove.Id == 54) {
+                mySide.MistTurnsRemaining = 5;
+                string mistMsg = $"¡{attacker.GetDisplayName()} se ha rodeado de niebla!";
+                result.Messages.Add(mistMsg);
+
+                // Mensaje estructurado
+                var mistArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
+                    { "turns", 5 }
+                };
+                AddStructuredMessage(result, BattleMessageCode.MistStart, mistArgs);
+
+                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                    Message = mistMsg
+                });
+            }
+            // Light Screen (ID 113): Reduce el daño de ataques especiales enemigos a la mitad durante 5 turnos
+            else if (selectedMove.Id == 113) {
+                mySide.LightScreenTurnsRemaining = 5;
+                string lightScreenMsg = $"¡Pantalla de Luz reduce el daño de ataques especiales!";
+                result.Messages.Add(lightScreenMsg);
+
+                // Mensaje estructurado
+                var lightScreenArgs = new Dictionary<string, object> {
+                    { "owner", GetOwnerName(battle, userId) },
+                    { "turns", 5 }
+                };
+                AddStructuredMessage(result, BattleMessageCode.LightScreenStart, lightScreenArgs);
+
+                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                    Message = lightScreenMsg
+                });
+            }
+            // Reflect (ID 115): Reduce el daño de ataques físicos enemigos a la mitad durante 5 turnos
+            else if (selectedMove.Id == 115) {
+                mySide.ReflectTurnsRemaining = 5;
+                string reflectMsg = $"¡Reflejo reduce el daño de ataques físicos!";
+                result.Messages.Add(reflectMsg);
+
+                // Mensaje estructurado
+                var reflectArgs = new Dictionary<string, object> {
+                    { "owner", GetOwnerName(battle, userId) },
+                    { "turns", 5 }
+                };
+                AddStructuredMessage(result, BattleMessageCode.ReflectStart, reflectArgs);
+
+                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                    Message = reflectMsg
                 });
             }
         }
@@ -635,6 +1175,14 @@ public class BattleService {
 
     // Aplica efectos de estado al final del turno para ambos Pokémon activos
     private void ApplyEndOfTurnEffects(BattleSession battle, TurnResolutionResult result) {
+        // Decrementar contadores de efectos de campo para ambos lados
+        DecrementFieldEffects(battle, battle.PlayerSide, battle.PlayerUserId, result);
+
+        int? opponentUserId = battle.Player2UserId ?? battle.GetOpponentUserId(battle.PlayerUserId);
+        if (opponentUserId.HasValue) {
+            DecrementFieldEffects(battle, battle.OpponentSide, opponentUserId.Value, result);
+        }
+
         // Aplicar efectos al Pokémon activo del jugador 1
         ApplyEndOfTurnEffectsForPokemon(battle, battle.PlayerUserId, battle.PlayerSide, result);
 
@@ -651,6 +1199,66 @@ public class BattleService {
 
         // Verificar si la batalla terminó después de los efectos
         battle.IsBattleOver();
+    }
+
+    // Decrementa los contadores de efectos de campo y emite mensajes cuando expiran
+    private void DecrementFieldEffects(BattleSession battle, BattleSide side, int userId, TurnResolutionResult result) {
+        // Mist
+        if (side.MistTurnsRemaining > 0) {
+            side.MistTurnsRemaining--;
+            if (side.MistTurnsRemaining == 0) {
+                string mistEndMsg = "¡El efecto de niebla se disipó!";
+                result.Messages.Add(mistEndMsg);
+
+                // Mensaje estructurado
+                var mistArgs = new Dictionary<string, object> {
+                    { "owner", GetOwnerName(battle, userId) }
+                };
+                AddStructuredMessage(result, BattleMessageCode.MistEnd, mistArgs);
+
+                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                    Message = mistEndMsg
+                });
+            }
+        }
+
+        // Light Screen
+        if (side.LightScreenTurnsRemaining > 0) {
+            side.LightScreenTurnsRemaining--;
+            if (side.LightScreenTurnsRemaining == 0) {
+                string lightScreenEndMsg = "¡El efecto de Pantalla de Luz se disipó!";
+                result.Messages.Add(lightScreenEndMsg);
+
+                // Mensaje estructurado
+                var lightScreenArgs = new Dictionary<string, object> {
+                    { "owner", GetOwnerName(battle, userId) }
+                };
+                AddStructuredMessage(result, BattleMessageCode.LightScreenEnd, lightScreenArgs);
+
+                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                    Message = lightScreenEndMsg
+                });
+            }
+        }
+
+        // Reflect
+        if (side.ReflectTurnsRemaining > 0) {
+            side.ReflectTurnsRemaining--;
+            if (side.ReflectTurnsRemaining == 0) {
+                string reflectEndMsg = "¡El efecto de Reflejo se disipó!";
+                result.Messages.Add(reflectEndMsg);
+
+                // Mensaje estructurado
+                var reflectArgs = new Dictionary<string, object> {
+                    { "owner", GetOwnerName(battle, userId) }
+                };
+                AddStructuredMessage(result, BattleMessageCode.ReflectEnd, reflectArgs);
+
+                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                    Message = reflectEndMsg
+                });
+            }
+        }
     }
 
     private void ApplyEndOfTurnEffectsForPokemon(

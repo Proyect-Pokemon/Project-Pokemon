@@ -10,6 +10,7 @@ export interface BattleStateEvent {
   action: number;
   battle: any;
   messages: string[];
+  structuredMessages: Array<{ code: string; args: Record<string, any> }>;
   timeline: any[];
   requiresSwitch: boolean;
   winnerUserId: number | null;
@@ -117,6 +118,7 @@ export class SocketService {
       requiresSwitch: message.requiresSwitch ?? false,
       winnerUserId: message.winnerUserId ?? null,
       messages: message.messages ?? [],
+      structuredMessages: message.structuredMessages ?? [],
       timeline: message.timeline ?? [],
     });
 
@@ -124,6 +126,7 @@ export class SocketService {
       action: message.action ?? 0,
       battle: message.battle,
       messages: message.messages ?? [],
+      structuredMessages: message.structuredMessages ?? [],
       timeline: message.timeline ?? [],
       requiresSwitch: message.requiresSwitch ?? false,
       winnerUserId: message.winnerUserId ?? null,

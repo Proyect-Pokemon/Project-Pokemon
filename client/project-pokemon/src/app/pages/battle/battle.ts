@@ -15,9 +15,14 @@ type BattleActionPanel = 'root' | 'attack' | 'switch';
 type BattleResult = 'victory' | 'defeat' | null;
 type BattleSideKey = 'player' | 'opponent';
 
+interface StructuredBattleMessage {
+  code: string;
+  args: Record<string, any>;
+}
+
 interface BattleStateEventPayload {
   battle: any;
-  messages: string[];
+  structuredMessages: StructuredBattleMessage[];
   timeline: any[];
   requiresSwitch: boolean;
   winnerUserId: number | null;
@@ -115,9 +120,9 @@ export class Battle {
       this.clearOnlineBattleBootstrapTimeout();
 
       const waitingForOpponent = this.hasWaitingMessage(battleEvent.messages);
-      const filteredTimeline = (battleEvent.timeline ?? []).filter((item) => this.shouldDisplayPlaybackItem(item));
-      const filteredMessages = battleEvent.messages.filter((message) => this.shouldDisplayPlaybackItem({ message }));
-      const hasPlaybackContent = filteredTimeline.length > 0 || filteredMessages.length > 0;
+      const filteredTimeline = battleEvent.timeline ?? [];
+      const structuredMessages = battleEvent.structuredMessages ?? [];
+      const hasPlaybackContent = filteredTimeline.length > 0 || structuredMessages.length > 0;
       const shouldPlayTurn = hasPlaybackContent && !waitingForOpponent;
 
       if (!untracked(() => this.battleInfo())) {
@@ -127,7 +132,7 @@ export class Battle {
       if (shouldPlayTurn) {
         this.enqueueBattlePlayback({
           battle: battleEvent.battle,
-          messages: filteredMessages,
+          structuredMessages,
           timeline: filteredTimeline,
           requiresSwitch: battleEvent.requiresSwitch ?? false,
           winnerUserId: battleEvent.winnerUserId ?? null,
@@ -358,11 +363,12 @@ export class Battle {
         return;
       }
 
-      const playbackItems = event.timeline.length
-        ? event.timeline
-        : event.messages.map((message) => ({ eventType: 'message', message }));
+      const structuredChatMessages = event.structuredMessages
+        .map((message) => this.formatStructuredCombatMessage(message))
+        .filter((message): message is string => !!message);
+      const playbackItems = event.timeline;
 
-      if (!playbackItems.length) {
+      if (!playbackItems.length && !structuredChatMessages.length) {
         this.applySnapshotToView(event.battle);
         this.applyBattleEventState(event, false);
         return;
@@ -374,19 +380,27 @@ export class Battle {
       this.isWaitingForOpponent.set(false);
 
       try {
-        for (const item of playbackItems) {
+        const totalSteps = Math.max(playbackItems.length, structuredChatMessages.length);
+        for (let index = 0; index < totalSteps; index++) {
+          const item = playbackItems[index];
           if (this.isDestroyed) {
             return;
           }
 
-          const combatMessage = this.sanitizeCombatMessage(item?.message ?? '');
+          const combatMessage = structuredChatMessages[index] ?? '';
+
           if (combatMessage) {
             this.combatChatMessages.update((current) => [...current, combatMessage]);
           }
 
-          await this.wait(this.TURN_EFFECT_DELAY_MS);
-          this.applyPlaybackEffect(item, event.battle);
-          await this.wait(Math.max(0, this.TURN_MESSAGE_DURATION_MS - this.TURN_EFFECT_DELAY_MS));
+          if (item) {
+            await this.wait(this.TURN_EFFECT_DELAY_MS);
+            this.applyPlaybackEffect(item, event.battle);
+            await this.wait(Math.max(0, this.TURN_MESSAGE_DURATION_MS - this.TURN_EFFECT_DELAY_MS));
+            continue;
+          }
+
+          await this.wait(this.TURN_MESSAGE_DURATION_MS);
         }
       } finally {
         if (!this.isDestroyed) {
@@ -397,57 +411,103 @@ export class Battle {
     });
   }
 
-  private shouldDisplayPlaybackItem(item: { eventType?: string; message?: string } | null | undefined): boolean {
-    const message = (item?.message ?? '').trim();
-    if (!message) {
-      return false;
-    }
+  private formatStructuredCombatMessage(message: StructuredBattleMessage): string {
+    const args = message?.args ?? {};
+    const actor = this.normalizeDisplayToken(args['actor']);
+    const target = this.normalizeDisplayToken(args['target']);
+    const move = this.normalizeDisplayToken(args['move']);
+    const stat = this.normalizeDisplayToken(args['stat']);
+    const damage = args['damage'];
+    const stages = args['stages'];
 
-    return !message.toLowerCase().includes(this.INTRO_MESSAGE_SNIPPET);
+    switch (message?.code) {
+      case 'attack_used':
+        return actor && move ? `${actor} usa ${move}` : '';
+      case 'attack_missed':
+        return actor ? `${actor} fallo el ataque` : 'fallo el ataque';
+      case 'avoided_attack':
+        return target ? `${target} evito el ataque` : 'evito el ataque';
+      case 'critical_hit':
+        return 'golpe critico';
+      case 'super_effective':
+        return 'muy eficaz';
+      case 'not_very_effective':
+        return 'no muy eficaz';
+      case 'no_effect':
+        return target ? `no afecta a ${target}` : 'no afecta';
+      case 'damage_dealt':
+        return target && Number.isFinite(Number(damage)) ? `${target} recibe ${damage} danio` : '';
+      case 'hp_restored':
+        return actor ? `${actor} recupera ps` : 'recupera ps';
+      case 'confusion_start':
+        return actor ? `${actor} esta confuso` : 'esta confuso';
+      case 'confusion_end':
+        return actor ? `${actor} ya no esta confuso` : 'ya no esta confuso';
+      case 'confusion_self_hit':
+        return 'esta tan confuso que se hirio a si mismo';
+      case 'paralyzed_cant_move':
+        return actor ? `${actor} esta paralizado y no puede moverse` : 'esta paralizado y no puede moverse';
+      case 'asleep':
+        return actor ? `${actor} se durmio` : 'se durmio';
+      case 'poisoned':
+      case 'badly_poisoned':
+        return actor ? `${actor} se enveneno` : 'se enveneno';
+      case 'flinched':
+        return actor ? `${actor} retrocedio` : 'retrocedio';
+      case 'fainted':
+        return actor ? `${actor} se debilito` : 'se debilito';
+      case 'send_out':
+        return actor ? `adelante ${actor}` : 'adelante';
+      case 'withdraw':
+        return actor ? `vuelve ${actor}` : 'vuelve';
+      case 'forced_switch': {
+        const next = this.normalizeDisplayToken(args['next']);
+        if (actor && next) {
+          return `${actor} es forzado a retirarse. adelante ${next}`;
+        }
+        return actor ? `${actor} es forzado a retirarse` : 'cambio forzado';
+      }
+      case 'light_screen_start':
+        return 'pantalla de luz activa';
+      case 'light_screen_end':
+        return 'pantalla de luz termina';
+      case 'reflect_start':
+        return 'reflejo activo';
+      case 'reflect_end':
+        return 'reflejo termina';
+      case 'mist_start':
+        return 'niebla activa';
+      case 'mist_end':
+        return 'niebla termina';
+      case 'stat_protected':
+        return actor ? `${actor} protege sus stats` : 'stats protegidas';
+      case 'stats_reset':
+        return 'stats reseteadas';
+      case 'stat_rose':
+        return actor && stat ? `${actor} sube ${stat}${Number.isFinite(Number(stages)) ? ` x${stages}` : ''}` : 'stat sube';
+      case 'stat_fell':
+        return actor && stat ? `${actor} baja ${stat}${Number.isFinite(Number(stages)) ? ` x${stages}` : ''}` : 'stat baja';
+      case 'out_of_pp':
+        return actor && move ? `${actor} no tiene pp para ${move}` : 'sin pp';
+      case 'no_moves_left':
+        return actor ? `${actor} no tiene movimientos` : 'sin movimientos';
+      case 'battle_won':
+        return 'combate ganado';
+      case 'battle_lost':
+        return 'combate perdido';
+      default:
+        return '';
+    }
   }
 
-  private sanitizeCombatMessage(message: string): string {
-    const raw = (message ?? '').trim();
-    if (!raw) {
+  private normalizeDisplayToken(value: unknown): string {
+    if (typeof value !== 'string') {
       return '';
     }
 
-    const attackMatch = raw.match(/^(.+?) usa (.+?)\. Daño: \d+\.$/i);
-    if (attackMatch) {
-      return `${attackMatch[1]} usa ${attackMatch[2]}.`;
-    }
-
-    const statusDamageMatch = raw.match(/^(.+?) sufre daño por (.+?) \(\d+\s*PS\)\.$/i);
-    if (statusDamageMatch) {
-      return `${statusDamageMatch[1]} sufre daño por ${statusDamageMatch[2]}.`;
-    }
-
-    const loseHpMatch = raw.match(/^(.+?) pierde \d+\s*PS\.$/i);
-    if (loseHpMatch) {
-      return `${loseHpMatch[1]} sufre daño.`;
-    }
-
-    const drainLoseMatch = raw.match(/^(.+?) pierde \d+\s*PS por Drenadoras\.?$/i);
-    if (drainLoseMatch) {
-      return `${drainLoseMatch[1]} es afectado por Drenadoras.`;
-    }
-
-    const recoverMatch = raw.match(/^(.+?) recupera \d+\s*PS\.?$/i);
-    if (recoverMatch) {
-      return `${recoverMatch[1]} recupera PS.`;
-    }
-
-    const confusionSelfHitMatch = raw.match(/^(.+?) está confundido y se golpeó a sí mismo por \d+\s*PS\.$/i);
-    if (confusionSelfHitMatch) {
-      return `${confusionSelfHitMatch[1]} está confundido y se golpeó a sí mismo.`;
-    }
-
-    return raw
-      .replace(/\(\d+\s*PS\)/gi, '')
-      .replace(/Daño:\s*\d+\.?/gi, '')
-      .replace(/\s{2,}/g, ' ')
-      .replace(/\s+\./g, '.')
-      .trim();
+    return value
+      .trim()
+      .replace(/_/g, ' ');
   }
 
   private applyBattleEventState(event: BattleStateEventPayload, waitingForOpponent: boolean): void {

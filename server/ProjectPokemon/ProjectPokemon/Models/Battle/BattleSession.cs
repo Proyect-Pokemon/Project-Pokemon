@@ -85,6 +85,16 @@ public class BattleSide {
 
     public int ActiveSlot { get; set; } = 0; // 0-5
 
+    // Efectos de campo activos (duración en turnos)
+    // Mist: Protege las estadísticas de ser reducidas por el enemigo
+    public int MistTurnsRemaining { get; set; } = 0;
+
+    // Light Screen: Reduce el daño de ataques especiales enemigos a la mitad
+    public int LightScreenTurnsRemaining { get; set; } = 0;
+
+    // Reflect: Reduce el daño de ataques físicos enemigos a la mitad
+    public int ReflectTurnsRemaining { get; set; } = 0;
+
     public PokemonBattle? GetActivePokemon() {
         if (ActiveSlot < 0 || ActiveSlot >= Team.Count) return null;
 
@@ -115,6 +125,13 @@ public class BattleSide {
         if (previousPokemon != null && previousPokemon.HasSecondaryStatus(Enum.PokeSecondaryStatus.Seeded)) {
             previousPokemon.RemoveSecondaryStatus(Enum.PokeSecondaryStatus.Seeded);
             previousPokemon.LeechSeedSource = null;
+        }
+
+        // Eliminar Bound/Trap al salir del campo
+        if (previousPokemon != null && previousPokemon.HasSecondaryStatus(Enum.PokeSecondaryStatus.Bound)) {
+            previousPokemon.RemoveSecondaryStatus(Enum.PokeSecondaryStatus.Bound);
+            previousPokemon.BoundTurnsRemaining = 0;
+            previousPokemon.BoundSource = null;
         }
 
         ActiveSlot = newSlot;

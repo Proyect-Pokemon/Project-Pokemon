@@ -67,6 +67,15 @@ public class PokemonBattle {
     // Null si no está afectado por Seeded
     public PokemonBattle? LeechSeedSource { get; set; } = null;
 
+    // Contador de turnos de atrapamiento (Bound)
+    // Cuando SecondaryStatuses tiene Bound, indica cuántos turnos quedan atrapado
+    // Movimientos como Bind, Wrap, Fire Spin, Clamp
+    public int BoundTurnsRemaining { get; set; } = 0;
+
+    // Referencia al Pokémon que aplicó Bound
+    // Null si no está afectado por Bound
+    public PokemonBattle? BoundSource { get; set; } = null;
+
     // Movimientos disponibles en el combate
     public List<BattleMovement> Movements { get; private set; }
 
@@ -471,6 +480,24 @@ public class PokemonBattle {
         // Solo aplica efectos si el Pokémon está activo (no debilitado)
         if (IsFainted()) {
             return null;
+        }
+
+        // Bound (Trap): pierde 1/16 de sus PS máximos mientras esté atrapado
+        if (HasSecondaryStatus(PokeSecondaryStatus.Bound) && BoundSource != null) {
+            int trapDamage = Math.Max(1, MaxHp / 16);
+            TakeDamage(trapDamage);
+
+            // Decrementar turnos restantes
+            BoundTurnsRemaining--;
+
+            // Si se acabaron los turnos, quitar el estado
+            if (BoundTurnsRemaining <= 0) {
+                RemoveSecondaryStatus(PokeSecondaryStatus.Bound);
+                BoundSource = null;
+                return $"{GetDisplayName()} sufre {trapDamage} PS por atrapamiento y queda libre.";
+            }
+
+            return $"{GetDisplayName()} sufre {trapDamage} PS por atrapamiento.";
         }
 
         // Leech Seed: pierde 1/8 de sus PS máximos y el atacante original los recupera

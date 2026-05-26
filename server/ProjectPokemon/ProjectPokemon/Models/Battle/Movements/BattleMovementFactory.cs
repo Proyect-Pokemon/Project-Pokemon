@@ -20,16 +20,48 @@ public static class BattleMovementFactory {
             return new StatChangeMovement(movement);
         }
 
+        // Si el movimiento tiene categoría "heal" es un HealMovement
+        if (movement.Category == "heal") {
+            return new HealMovement(movement);
+        }
+
+        // Si el movimiento tiene categoría "damage-heal" es un DamageHealMovement
+        if (movement.Category == "damage-heal") {
+            return new DamageHealMovement(movement);
+        }
+
+        // Si el movimiento tiene categoría "damage-lower" es un DamageLowerMovement
+        if (movement.Category == "damage-lower") {
+            return new DamageLowerMovement(movement);
+        }
+
+        // Si el movimiento tiene categoría "damage-ailment" es un DamageAilmentMovement
+        if (movement.Category == "damage-ailment") {
+            return new DamageAilmentMovement(movement);
+        }
+
+        // Si el movimiento tiene categoría "ohko" es un OhkoMovement
+        if (movement.Category == "ohko") {
+            return new OhkoMovement(movement);
+        }
+
+        // Si el movimiento tiene categoría "whole-field-effect" es un WholeFieldEffectMovement
+        if (movement.Category == "whole-field-effect") {
+            return new WholeFieldEffectMovement(movement);
+        }
+
+        // Si el movimiento tiene categoría "force-switch" es un ForceSwitchMovement
+        if (movement.Category == "force-switch") {
+            return new ForceSwitchMovement(movement);
+        }
+
+        // Si el movimiento tiene categoría "field-effect" es un FieldEffectMovement
+        if (movement.Category == "field-effect") {
+            return new FieldEffectMovement(movement);
+        }
+
         // TODO: Implementar otros tipos de movimientos según Category:
-        // - "damage-ailment": DamageAilmentMovement (movimiento que hace daño Y aplica estado)
-        // - "damage-heal": DamageHealMovement (movimiento que hace daño Y cura al atacante)
-        // - "damage-lower": DamageLowerMovement (movimiento que hace daño Y baja stats del defensor)
-        // - "field-effect": FieldEffectMovement (efectos de campo en un lado)
-        // - "force-switch": ForceSwitchMovement (movimientos que fuerzan cambio de pokémon)
-        // - "heal": HealMovement (movimientos que solo curan)
-        // - "ohko": OhkoMovement (movimientos fulminantes)
         // - "unique": UniqueMovement (movimientos especiales únicos)
-        // - "whole-field-effect": WholeFieldEffectMovement (efectos de campo globales)
         // Por ahora, devolver DamageMovement como fallback
         return new DamageMovement(movement);
     }

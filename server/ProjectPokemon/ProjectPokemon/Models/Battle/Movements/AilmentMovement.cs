@@ -20,20 +20,9 @@ public class AilmentMovement : BattleMovement {
             return;
         }
 
-        // Aplicar el estado alterado si el defensor no tiene ya uno
-        // if (TryApplyAilment()) {
         ApplyAilment(attacker, defender);
-        // }
     }
 
-    // private bool TryApplyAilment() {
-    //    if (AilmentChance == 0) {
-    //        return true; // Si no tiene probabilidad, tiene un 100% de probabilidad
-    //    }
-    //
-    //    Random random = new Random();
-    //    return random.Next(0, 100) < AilmentChance;
-    // }
 
     private void ApplyAilment(PokemonBattle attacker, PokemonBattle defender) {
         // Comprueba si es un estado alterado primario
