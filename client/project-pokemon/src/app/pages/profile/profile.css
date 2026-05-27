@@ -43,6 +43,19 @@
 	font-size: 0.95rem;
 }
 
+.profile-bio {
+	margin: 14px 0 0;
+	color: var(--text-main);
+	font-size: 1rem;
+	line-height: 1.6;
+	max-width: 720px;
+}
+
+.profile-bio-empty {
+	color: var(--text-muted);
+	font-style: italic;
+}
+
 .btn-logout {
 	padding: 10px 24px;
 	background: #dc2626;
@@ -145,6 +158,84 @@
 	border-color: var(--primary-color);
 	box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
 	transform: translateY(-4px);
+}
+
+.favorite-card,
+.favorite-empty,
+.favorite-selection-panel {
+	padding: 24px;
+	background: var(--surface-panel);
+	border: 1px solid var(--secondary-color-transparent-border);
+	border-radius: 16px;
+	box-shadow: 0 8px 20px rgba(19, 32, 58, 0.08);
+	margin-bottom: 24px;
+}
+
+.favorite-card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 16px;
+	margin-bottom: 16px;
+}
+
+.favorite-tag {
+	display: inline-flex;
+	padding: 6px 12px;
+	border-radius: 999px;
+	background: rgba(59, 130, 246, 0.15);
+	color: var(--primary-color);
+	font-size: 0.8rem;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.favorite-empty {
+	text-align: center;
+}
+
+.favorite-empty p {
+	margin: 0 0 20px;
+	color: var(--text-muted);
+	font-size: 1.05rem;
+}
+
+.btn-big {
+	padding: 14px 28px;
+	font-size: 1rem;
+}
+
+.favorite-selection-panel h3 {
+	margin: 0 0 16px;
+	font-size: 1.2rem;
+	color: var(--primary-color);
+}
+
+.favorite-team-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 14px;
+	margin-bottom: 16px;
+}
+
+.btn-select {
+	padding: 14px 18px;
+	border: 1px solid var(--secondary-color-transparent-border);
+	border-radius: 12px;
+	background: white;
+	color: var(--text-main);
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.btn-select:hover:not(:disabled) {
+	background: var(--secondary-color-transparent-medium);
+}
+
+.btn-select:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
 }
 
 .team-card-header {

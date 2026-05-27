@@ -8,13 +8,18 @@
 			<div class="profile-info">
 				<h1>{{ nickname() }}</h1>
 				<p class="profile-label">Mi Perfil</p>
+				@if (biography()) {
+				  <p class="profile-bio">{{ biography() }}</p>
+				} @else {
+				  <p class="profile-bio profile-bio-empty">Aún no has añadido una biografía.</p>
+				}
 			</div>
 			<button (click)="logout()" class="btn-logout">Cerrar sesión</button>
 		</div>
 
-		<div class="teams-section">
+		<div class="favorite-section">
 			<div class="section-header">
-				<h2>Mis Equipos de Pokémon</h2>
+				<h2>Equipo favorito</h2>
 				<button (click)="navigateToTeamBuilder()" class="btn-primary">Crear Equipo</button>
 			</div>
 
@@ -32,57 +37,68 @@
 					<button (click)="navigateToTeamBuilder()" class="btn-secondary">Crear tu primer equipo</button>
 				</div>
 			} @else {
-				<div class="teams-grid">
-					@for (team of userTeams(); track team.id) {
-						<div class="team-card">
-							<div class="team-card-header">
-								<h3>{{ team.name }}</h3>
-								<span class="pokemon-count">{{ team.pokemonCount }}/6</span>
+				@if (favoriteTeam()) {
+					<div class="favorite-card">
+						<div class="favorite-card-header">
+							<div>
+								<span class="favorite-tag">Favorito</span>
+								<h3>{{ favoriteTeam()?.name }}</h3>
 							</div>
-
-							@if (team.description) {
-								<p class="team-description">{{ team.description }}</p>
-							}
-
-							<div class="pokemon-list">
-								@for (pokemon of team.pokemons; track pokemon.slot) {
-									<div class="pokemon-item">
-										<div class="pokemon-sprite-container">
-											<img 
-												[src]="pokemon.sprite" 
-												[alt]="pokemon.pokemonName"
-												class="pokemon-sprite"
-											/>
-										</div>
-										<div class="pokemon-info">
-											<span class="pokemon-name">
-												{{ pokemon.nickname || pokemon.pokemonName }}
-											</span>
-											<span class="pokemon-species">
-												{{ pokemon.pokemonName }}
-											</span>
-											<div class="type-badges">
-												@for (type of pokemon.types; track $index) {
-													<span class="type-badge" [ngClass]="'type-' + type.toLowerCase()">
-														{{ type }}
-													</span>
-												}
-											</div>
-										</div>
-									</div>
-								}
-							</div>
-
-							<button 
-								(click)="navigateToTeamEdit(team.id)"
-								class="btn-secondary btn-edit"
-							>
-								Editar Equipo
+							<button (click)="openFavoriteSelection()" class="btn-secondary btn-edit">
+								Cambiar favorito
 							</button>
 						</div>
-					}
-				</div>
+
+						@if (favoriteTeam()?.description) {
+							<p class="team-description">{{ favoriteTeam()?.description }}</p>
+						}
+
+						<div class="pokemon-list">
+							@for (pokemon of favoriteTeam()?.pokemons; track pokemon.slot) {
+								<div class="pokemon-item">
+									<div class="pokemon-sprite-container">
+										<img [src]="pokemon.sprite" [alt]="pokemon.pokemonName" class="pokemon-sprite" />
+									</div>
+									<div class="pokemon-info">
+										<span class="pokemon-name">{{ pokemon.nickname || pokemon.pokemonName }}</span>
+										<span class="pokemon-species">{{ pokemon.pokemonName }}</span>
+										<div class="type-badges">
+											@for (type of pokemon.types; track $index) {
+												<span class="type-badge" [ngClass]="'type-' + type.toLowerCase()">{{ type }}</span>
+											}
+										</div>
+									</div>
+								</div>
+							}
+						</div>
+					</div>
+				} @else {
+					<div class="favorite-empty">
+						<p>No tienes un equipo favorito aún.</p>
+						<button (click)="openFavoriteSelection()" class="btn-primary btn-big">Añadir equipo favorito</button>
+					</div>
+				}
+
+				@if (favoriteSelectionOpen()) {
+					<div class="favorite-selection-panel">
+						<h3>Selecciona tu equipo favorito</h3>
+						@if (favoriteActionError()) {
+							<div class="error-message">{{ favoriteActionError() }}</div>
+						}
+						<div class="favorite-team-list">
+							@for (team of userTeams(); track team.id) {
+								<button
+									class="btn-select"
+									(click)="setFavoriteTeam(team.id)"
+									[disabled]="favoriteActionLoading()"
+								>
+									{{ team.name }} ({{ team.pokemonCount }}/6)
+								</button>
+							}
+						</div>
+						<button class="btn-secondary btn-edit" (click)="closeFavoriteSelection()">Cancelar</button>
+					</div>
+				}
 			}
 		</div>
 	}
-</div>

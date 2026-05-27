@@ -10,6 +10,8 @@ type JwtPayload = {
   role?: string;
   unique_name?: string;
   AvatarPath?: string | null;
+  favoriteTeamId?: string | number | null;
+  FavoriteTeamId?: string | number | null;
 };
 
 @Injectable({
@@ -52,6 +54,17 @@ export class AuthService {
   readonly isAdmin = computed(() =>
     this.decodedPayload()?.role?.toLowerCase() === 'admin'
   );
+
+  readonly favoriteTeamId = computed(() => {
+    const decoded = this.decodedPayload();
+    const value = decoded?.favoriteTeamId ?? decoded?.FavoriteTeamId ?? null;
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    const numeric = Number(value);
+    return Number.isNaN(numeric) ? null : numeric;
+  });
 
   readonly nickname = computed(() => {
     const name = this.decodedPayload()?.unique_name?.trim();

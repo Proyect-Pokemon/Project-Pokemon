@@ -14,8 +14,10 @@ public class User {
     public string? Biography { get; set; }
     public DateTime CreationDate { get; set; } = DateTime.UtcNow;
     public string? GoogleId { get; set; }
+    public int? FavoriteTeamId { get; set; }
     //public int VictoryCount { get; set; } = 0;
     //TO DO: Shiny token
 
+    public Team? FavoriteTeam { get; set; }
     public ICollection<Team> Teams { get; set; } = [];
 }

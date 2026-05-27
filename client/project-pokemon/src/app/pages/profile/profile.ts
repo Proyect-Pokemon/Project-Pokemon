@@ -1,6 +1,7 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth';
+import { ApiService } from '../../services/api';
 import { Router } from '@angular/router';
 import { TeamService } from '../../services/team-service';
 import { PokemonTeamService } from '../../services/pokemon-team-service';
@@ -8,6 +9,13 @@ import { PokemonService } from '../../services/pokemon-service';
 import { Team } from '../../models/team';
 import { Pokemon } from '../../models/pokemon';
 import { GetAllPokemonTeamDto } from '../../models/pokemon-team';
+
+interface UserProfileDto {
+  email: string;
+  nickname: string;
+  biography?: string | null;
+  favoriteTeamId?: number | null;
+}
 
 interface TeamDisplay {
   id: number;
@@ -33,6 +41,7 @@ interface TeamDisplay {
 })
 export class Profile implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly teamService = inject(TeamService);
   private readonly pokemonTeamService = inject(PokemonTeamService);
@@ -43,6 +52,16 @@ export class Profile implements OnInit {
   protected readonly isOwnProfile = signal(true);
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal('');
+
+  // Favorite team state
+  protected readonly favoriteTeamId = signal<number | null>(null);
+  protected readonly biography = signal<string | null>(null);
+  protected readonly favoriteTeam = computed(() =>
+    this.userTeams().find((team) => team.id === this.favoriteTeamId()) ?? null
+  );
+  protected readonly favoriteSelectionOpen = signal(false);
+  protected readonly favoriteActionLoading = signal(false);
+  protected readonly favoriteActionError = signal('');
 
   // Teams
   protected readonly userTeams = signal<TeamDisplay[]>([]);
@@ -62,8 +81,12 @@ export class Profile implements OnInit {
       return;
     }
 
+    await Promise.all([
+      this.loadUserProfile(currentUserId),
+      this.loadUserTeams(currentUserId),
+    ]);
+
     this.loading.set(false);
-    await this.loadUserTeams(currentUserId);
   }
 
   private async loadUserTeams(userId: number): Promise<void> {
@@ -125,6 +148,59 @@ export class Profile implements OnInit {
 
   protected navigateToTeamBuilder(): void {
     this.router.navigate(['/team-builder']);
+  }
+
+  protected openFavoriteSelection(): void {
+    this.favoriteSelectionOpen.set(true);
+    this.favoriteActionError.set('');
+  }
+
+  protected closeFavoriteSelection(): void {
+    this.favoriteSelectionOpen.set(false);
+    this.favoriteActionError.set('');
+  }
+
+  protected async setFavoriteTeam(teamId: number): Promise<void> {
+    if (this.favoriteTeamId() === teamId) {
+      this.favoriteSelectionOpen.set(false);
+      return;
+    }
+
+    const currentUserId = this.auth.currentUserId();
+    if (!currentUserId) {
+      this.favoriteActionError.set(
+        'No se pudo identificar el usuario para actualizar el equipo favorito.'
+      );
+      return;
+    }
+
+    this.favoriteActionLoading.set(true);
+    this.favoriteActionError.set('');
+
+    try {
+      await this.api.put(`users?id=${currentUserId}`, { favoriteTeamId: teamId });
+      this.favoriteTeamId.set(teamId);
+      this.favoriteSelectionOpen.set(false);
+    } catch (error) {
+      console.error('Error actualizando equipo favorito:', error);
+      this.favoriteActionError.set(
+        'No se pudo actualizar el equipo favorito. Intenta de nuevo.'
+      );
+    } finally {
+      this.favoriteActionLoading.set(false);
+    }
+  }
+
+  private async loadUserProfile(userId: number): Promise<void> {
+    try {
+      const profile = await this.api.get<UserProfileDto>(`users/all?userId=${userId}`);
+      this.favoriteTeamId.set(profile.favoriteTeamId ?? null);
+      this.biography.set(profile.biography?.trim() ?? null);
+    } catch (error) {
+      console.error('Error cargando perfil de usuario:', error);
+      this.favoriteTeamId.set(null);
+      this.biography.set(null);
+    }
   }
 
   protected logout(): void {

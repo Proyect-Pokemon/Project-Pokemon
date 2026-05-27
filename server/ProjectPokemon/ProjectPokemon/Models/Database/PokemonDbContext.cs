@@ -20,6 +20,16 @@ public class PokemonDbContext : DbContext {
         ConfigureMovement(modelBuilder);
         ConfigureNature(modelBuilder);
         ConfigurePokemonMovement(modelBuilder);
+        ConfigureTeam(modelBuilder);
+    }
+
+    private static void ConfigureTeam(ModelBuilder modelBuilder) {
+        modelBuilder.Entity<User>(entity => {
+            entity.HasOne(u => u.FavoriteTeam)
+                  .WithMany()
+                  .HasForeignKey(u => u.FavoriteTeamId)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
     }
 
     private static void ConfigurePokemon(ModelBuilder modelBuilder) {
