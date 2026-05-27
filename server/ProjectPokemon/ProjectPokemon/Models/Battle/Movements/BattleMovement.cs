@@ -82,7 +82,7 @@ public abstract class BattleMovement : IMovement {
     }
 
     // Realizar el movimiento. Método abstracto que cada tipo de movimiento implementará diferente
-    public abstract void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender);
+    public abstract MovementResult ExecuteMovement(PokemonBattle attacker, PokemonBattle defender);
 
     // Resta PP al movimiento
     public void ConsumePp() {

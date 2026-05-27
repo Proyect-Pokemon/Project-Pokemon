@@ -9,22 +9,28 @@ public class AilmentMovement : BattleMovement {
 
     public AilmentMovement(Movement movement) : base(movement) { }
 
-    public override void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+    public override MovementResult ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+        var result = new MovementResult();
+
         if (!HasPpAvailable()) {
-            return;
+            result.FailedByNoPp = true;
+            return result;
         }
 
         ConsumePp();
 
         if (!CheckAccuracy(attacker, defender)) {
-            return;
+            result.FailedByAccuracy = true;
+            return result;
         }
 
-        ApplyAilment(attacker, defender);
+        result.Executed = true;
+        ApplyAilment(attacker, defender, result);
+        return result;
     }
 
 
-    private void ApplyAilment(PokemonBattle attacker, PokemonBattle defender) {
+    private void ApplyAilment(PokemonBattle attacker, PokemonBattle defender, MovementResult result) {
         // Comprueba si es un estado alterado primario
         var primaryStatus = ConvertToPrimaryStatus(Ailment);
         if (primaryStatus != PokeStatus.None) {
@@ -42,6 +48,9 @@ public class AilmentMovement : BattleMovement {
                 if (primaryStatus == PokeStatus.BadlyPoisoned) {
                     defender.BadlyPoisonedCounter = 1;
                 }
+            } else {
+                // El objetivo ya tiene un estado alterado primario
+                result.FailedByExistingStatus = true;
             }
             return;
         }
@@ -52,18 +61,21 @@ public class AilmentMovement : BattleMovement {
             // Verificar inmunidad para Leech Seed (tipo Planta es inmune)
             if (secondaryStatus == PokeSecondaryStatus.Seeded) {
                 if (defender.Type1 == PokeType.Grass || defender.Type2 == PokeType.Grass) {
+                    result.ImmuneToSeeded = true;
                     return; // Pokémon tipo Planta es inmune
                 }
-                // Guardar referencia al atacante para recuperar PS más tarde
-                defender.LeechSeedSource = attacker;
+                // Marcar que se aplicó Seeded
+                // La curación se aplicará al Pokémon activo del lado contrario, no a uno específico
+                result.AppliedSeeded = true;
             }
 
             defender.AddSecondaryStatus(secondaryStatus.Value);
 
-            // Si es Confuse, generar turnos aleatorios de confusión (1-4)
+            // Si es Confuse, generar turnos aleatorios de confusión (2-5)
+            // Se aumenta el rango para que no se cure en el mismo turno en que se aplica
             if (secondaryStatus == PokeSecondaryStatus.Confuse) {
                 Random random = new Random();
-                defender.ConfusionTurnsRemaining = random.Next(1, 5); // 1 a 4 turnos
+                defender.ConfusionTurnsRemaining = random.Next(2, 6); // 2 a 5 turnos
             }
         }
     }

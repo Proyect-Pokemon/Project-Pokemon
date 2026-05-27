@@ -10,21 +10,81 @@ public class DamageMovement : BattleMovement {
 
     public DamageMovement(Movement movement) : base(movement) { }
 
-    // Realizar el movimiento. Devuelve el daño realizado al defensor
-    public override void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+    // Realizar el movimiento. Devuelve el resultado con información de daño, crítico y efectividad
+    public override MovementResult ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+        var result = new MovementResult();
+
         if (!HasPpAvailable()) {
-            return; // No quedan PPs
+            result.FailedByNoPp = true;
+            return result;
         }
 
         ConsumePp();
 
         // Comprobar si acierta
         if (!CheckAccuracy(attacker, defender)) {
-            return; // El movimiento falla
+            result.FailedByAccuracy = true;
+            return result;
         }
 
-        int damage = CalculateDamage(attacker, defender);
+        result.Executed = true;
+        int damage = CalculateDamageWithMetadata(attacker, defender, result);
         defender.TakeDamage(damage);
+        result.Damage = damage;
+
+        return result;
+    }
+
+    // Nueva versión que también popula el resultado con metadata
+    protected virtual int CalculateDamageWithMetadata(PokemonBattle attacker, PokemonBattle defender, MovementResult result) {
+        // Averiguar si el movimiento es físico o especial, y usar el stat que corresponda con stages aplicados
+        StatType attackStatType = MovementClass == MovementClass.Physical ? StatType.Attack : StatType.SpecialAttack;
+        StatType defenseStatType = MovementClass == MovementClass.Physical ? StatType.Defense : StatType.SpecialDefense;
+
+        int attackStat = attacker.GetModifiedStat(attackStatType);
+        int defenseStat = defender.GetModifiedStat(defenseStatType);
+
+        // Calcular el daño base
+        int level = 50;
+
+        double baseDamage = ((2.0 * level / 5.0) + 2) * Power!.Value * attackStat / defenseStat;
+        baseDamage = (baseDamage / 50.0) + 2;
+
+        double damage = baseDamage;
+        damage *= GetStabModifier(attacker);
+
+        // Calcular efectividad y guardarla en el resultado
+        double effectiveness = GetEffectiveness(defender);
+        result.TypeEffectiveness = effectiveness;
+        damage *= effectiveness;
+
+        damage *= GetRandomModifier();
+
+        // Calcular crítico y guardarlo en el resultado
+        double critModifier = GetCriticalModifierWithMetadata(attacker, result);
+        damage *= critModifier;
+
+        return (int)Math.Floor(damage);
+    }
+
+    // Nueva versión que también indica si fue crítico
+    protected virtual double GetCriticalModifierWithMetadata(PokemonBattle attacker, MovementResult result) {
+        int critStage = CritRate;
+        double critChance = critStage switch {
+            0 => 1.0 / 16,  // 6.25%
+            1 => 1.0 / 8,   // 12.5%
+            2 => 1.0 / 4,   // 25%
+            3 => 1.0 / 3,   // 33.33%
+            4 => 1.0 / 2,   // 50%
+            _ => 1.0        // Siempre es crítico
+        };
+
+        Random random = new Random();
+        if (random.NextDouble() < critChance) {
+            result.IsCritical = true;
+            return 1.5; // Multiplicador de daño crítico
+        }
+        return 1.0; // No es crítico
     }
 
     public virtual int CalculateDamage(PokemonBattle attacker, PokemonBattle defender) {

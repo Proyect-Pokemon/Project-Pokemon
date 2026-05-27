@@ -19,21 +19,28 @@ public class DamageAilmentMovement : DamageMovement {
 
     public DamageAilmentMovement(Movement movement) : base(movement) { }
 
-    public override void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+    public override MovementResult ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+        var result = new MovementResult();
+
         if (!HasPpAvailable()) {
-            return;
+            result.FailedByNoPp = true;
+            return result;
         }
 
         ConsumePp();
 
         // Comprobar si acierta
         if (!CheckAccuracy(attacker, defender)) {
-            return; // El movimiento falla
+            result.FailedByAccuracy = true;
+            return result;
         }
 
-        // Calcular y aplicar daño usando la lógica de DamageMovement
-        int damage = CalculateDamage(attacker, defender);
+        result.Executed = true;
+
+        // Calcular y aplicar daño usando la lógica de DamageMovement con metadata
+        int damage = CalculateDamageWithMetadata(attacker, defender, result);
         defender.TakeDamage(damage);
+        result.Damage = damage;
 
         // Después del daño, aplicar efecto secundario de ailment
         // si el defensor sigue vivo y se cumple la probabilidad
@@ -45,6 +52,8 @@ public class DamageAilmentMovement : DamageMovement {
                 ApplyAilment(attacker, defender, random);
             }
         }
+
+        return result;
     }
 
     private void ApplyAilment(PokemonBattle attacker, PokemonBattle defender, Random random) {
@@ -117,7 +126,7 @@ public class DamageAilmentMovement : DamageMovement {
             if (!defender.HasSecondaryStatus(PokeSecondaryStatus.Confuse)) {
                 defender.AddSecondaryStatus(PokeSecondaryStatus.Confuse);
                 Random random = new Random();
-                defender.ConfusionTurnsRemaining = random.Next(1, 5); // 1-4 turnos
+                defender.ConfusionTurnsRemaining = random.Next(2, 6); // 2-5 turnos
             }
             return;
         }

@@ -9,20 +9,26 @@ public class StatChangeMovement : BattleMovement {
 
     public StatChangeMovement(Movement movement) : base(movement) { }
 
-    public override void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+    public override MovementResult ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+        var result = new MovementResult();
+
         if (!HasPpAvailable()) {
-            return;
+            result.FailedByNoPp = true;
+            return result;
         }
 
         ConsumePp();
 
         if (!CheckAccuracy(attacker, defender)) {
-            return;
+            result.FailedByAccuracy = true;
+            return result;
         }
+
+        result.Executed = true;
 
         // Verificar si hay cambios de estadísticas definidos
         if (StatChanges == null || StatChanges.Count == 0) {
-            return;
+            return result;
         }
 
         // Determinar el objetivo según el Target del movimiento
@@ -32,5 +38,7 @@ public class StatChangeMovement : BattleMovement {
         foreach (var statChange in StatChanges) {
             target.ModifyStage(statChange.Stat, statChange.Change);
         }
+
+        return result;
     }
 }

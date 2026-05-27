@@ -12,21 +12,28 @@ namespace ProjectPokemon.Models.Battle.Movements;
 public class DamageLowerMovement : DamageMovement {
     public DamageLowerMovement(Movement movement) : base(movement) { }
 
-    public override void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+    public override MovementResult ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+        var result = new MovementResult();
+
         if (!HasPpAvailable()) {
-            return;
+            result.FailedByNoPp = true;
+            return result;
         }
 
         ConsumePp();
 
         // Comprobar si acierta
         if (!CheckAccuracy(attacker, defender)) {
-            return; // El movimiento falla
+            result.FailedByAccuracy = true;
+            return result;
         }
 
-        // Calcular y aplicar daño usando la lógica de DamageMovement
-        int damage = CalculateDamage(attacker, defender);
+        result.Executed = true;
+
+        // Calcular y aplicar daño usando la lógica de DamageMovement con metadata
+        int damage = CalculateDamageWithMetadata(attacker, defender, result);
         defender.TakeDamage(damage);
+        result.Damage = damage;
 
         // Después del daño, aplicar efecto secundario de reducción de estadísticas
         // si el defensor sigue vivo y se cumple la probabilidad
@@ -42,5 +49,7 @@ public class DamageLowerMovement : DamageMovement {
                 }
             }
         }
+
+        return result;
     }
 }

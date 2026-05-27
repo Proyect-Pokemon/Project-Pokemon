@@ -11,19 +11,27 @@ namespace ProjectPokemon.Models.Battle.Movements;
 public class ForceSwitchMovement : BattleMovement {
     public ForceSwitchMovement(Movement movement) : base(movement) { }
 
-    public override void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+    public override MovementResult ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+        var result = new MovementResult();
+
         if (!HasPpAvailable()) {
-            return;
+            result.FailedByNoPp = true;
+            return result;
         }
 
         ConsumePp();
 
         // Comprobar si acierta
         if (!CheckAccuracy(attacker, defender)) {
-            return; // El movimiento falla
+            result.FailedByAccuracy = true;
+            return result;
         }
+
+        result.Executed = true;
 
         // El movimiento no causa daño, solo fuerza el cambio
         // La lógica de cambio se manejará en BattleService ya que necesita acceso al BattleSide
+
+        return result;
     }
 }

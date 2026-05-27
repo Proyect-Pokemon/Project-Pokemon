@@ -12,12 +12,17 @@ public class WholeFieldEffectMovement : BattleMovement {
 
     public WholeFieldEffectMovement(Movement movement) : base(movement) { }
 
-    public override void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+    public override MovementResult ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+        var result = new MovementResult();
+
         if (!HasPpAvailable()) {
-            return;
+            result.FailedByNoPp = true;
+            return result;
         }
 
         ConsumePp();
+
+        result.Executed = true;
 
         // Haze (ID 114): Resetea todos los stages de ambos Pokémon en combate
         if (Id == HAZE_ID) {
@@ -30,5 +35,7 @@ public class WholeFieldEffectMovement : BattleMovement {
 
         // Nota: Si en el futuro se añaden más movimientos a esta categoría,
         // se pueden agregar más casos especiales aquí
+
+        return result;
     }
 }

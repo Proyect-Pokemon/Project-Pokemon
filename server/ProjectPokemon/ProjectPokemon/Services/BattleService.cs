@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Battle;
+using ProjectPokemon.Models.Battle.Movements;
 using ProjectPokemon.Networking.Messages.Battle;
 
 namespace ProjectPokemon.Services;
@@ -331,6 +332,24 @@ public class BattleService {
         result.StructuredMessages.Add(BattleMessageBuilder.Create(code, args));
     }
 
+    // Helper para añadir mensaje de efectividad según el multiplicador
+    private void AddEffectivenessMessage(
+        TurnResolutionResult result,
+        double effectiveness,
+        Dictionary<string, object> args) {
+
+        if (effectiveness == 0) {
+            result.Messages.Add("No afecta...");
+            AddStructuredMessage(result, BattleMessageCode.NoEffect, args);
+        } else if (effectiveness < 1.0) {
+            result.Messages.Add("No es muy eficaz...");
+            AddStructuredMessage(result, BattleMessageCode.NotVeryEffective, args);
+        } else if (effectiveness > 1.0) {
+            result.Messages.Add("¡Es muy eficaz!");
+            AddStructuredMessage(result, BattleMessageCode.SuperEffective, args);
+        }
+    }
+
     private bool IsValidActionPayload(
         BattleSession battle,
         int userId,
@@ -583,75 +602,86 @@ public class BattleService {
         var defenderId = rivalUserId.HasValue ? CreatePokemonIdentifier(battle, rivalUserId.Value, defender) : null;
 
         // Verificar si el Pokémon puede atacar (estados como Freeze, Sleep, Paralysis, Confusion)
-        var (canAttack, statusMessage) = attacker.CanAttack();
+        var (canAttack, statusMessage, resultMessage) = attacker.CanAttack();
+
+        // Si hay mensaje de estado, mostrarlo primero
         if (statusMessage != null) {
             result.Messages.Add(statusMessage);
+        }
 
-            // Si no puede atacar, registrar evento de bloqueo
-            if (!canAttack) {
-                var move = attacker.Movements
-                    .FirstOrDefault(m => string.Equals(m.Name, action.MoveName, StringComparison.OrdinalIgnoreCase));
-
-                string blockReason = attacker.Status switch {
-                    Enum.PokeStatus.Freeze => "frozen",
-                    Enum.PokeStatus.Sleep => "asleep",
-                    Enum.PokeStatus.Paralysis => "paralyzed",
-                    _ => attacker.HasSecondaryStatus(Enum.PokeSecondaryStatus.Confuse) ? "confused" : "unknown"
-                };
-
-                // Generar mensaje estructurado segun el estado
-                var actorArgs = CreateActorArgs(battle, userId, attacker);
-
-                if (attacker.Status == Enum.PokeStatus.Freeze) {
-                    AddStructuredMessage(result, BattleMessageCode.FrozenSolid, actorArgs);
-                } else if (attacker.Status == Enum.PokeStatus.Sleep) {
-                    AddStructuredMessage(result, BattleMessageCode.FastAsleep, actorArgs);
-                } else if (attacker.Status == Enum.PokeStatus.Paralysis) {
-                    AddStructuredMessage(result, BattleMessageCode.ParalyzedCantMove, actorArgs);
-                } else if (attacker.HasSecondaryStatus(Enum.PokeSecondaryStatus.Confuse)) {
-                    // Confusion self-hit: NO emitir attack_used
-                    // El daño ya fue aplicado en CanAttack(), solo registramos el evento
-                    // Extraer el daño del mensaje de estado si es posible
-                    int confusionDamage = 0;
-                    if (statusMessage.Contains(" por ")) {
-                        var parts = statusMessage.Split(" por ");
-                        if (parts.Length > 1) {
-                            var damagePart = parts[1].Replace(" PS.", "").Trim();
-                            int.TryParse(damagePart, out confusionDamage);
-                        }
-                    }
-
-                    var confusionArgs = new Dictionary<string, object>(actorArgs) {
-                        { "damage", confusionDamage }
-                    };
-                    AddStructuredMessage(result, BattleMessageCode.ConfusionSelfHit, confusionArgs);
-                }
-
-                if (defenderId != null) {
-                    result.Events.Add(new Networking.Messages.Battle.AttackEvent {
-                        Message = statusMessage,
-                        Attacker = attackerId,
-                        Defender = defenderId,
-                        MoveName = move?.Name ?? action.MoveName ?? "Unknown",
-                        Hit = false,
-                        Blocked = true,
-                        BlockReason = blockReason
-                    });
-                }
-
-                // Si se golpeó a sí mismo por confusión, ya se generó el evento de HP en CanAttack
-                return;
+        // Si no puede atacar, mostrar mensaje de resultado y terminar
+        if (!canAttack) {
+            if (resultMessage != null) {
+                result.Messages.Add(resultMessage);
             }
 
-            // Puede atacar pero hay un mensaje (ej: "se despertó", "se descongeló", "curó confusión")
-            var actorArgs2 = CreateActorArgs(battle, userId, attacker);
+            var move = attacker.Movements
+                .FirstOrDefault(m => string.Equals(m.Name, action.MoveName, StringComparison.OrdinalIgnoreCase));
 
-            if (statusMessage.Contains("despertado")) {
-                AddStructuredMessage(result, BattleMessageCode.WokeUp, actorArgs2);
-            } else if (statusMessage.Contains("descongelado")) {
-                AddStructuredMessage(result, BattleMessageCode.Thawed, actorArgs2);
-            } else if (statusMessage.Contains("confundido") && statusMessage.Contains("ya no")) {
-                AddStructuredMessage(result, BattleMessageCode.ConfusionEnd, actorArgs2);
+            string blockReason = attacker.Status switch {
+                Enum.PokeStatus.Freeze => "frozen",
+                Enum.PokeStatus.Sleep => "asleep",
+                Enum.PokeStatus.Paralysis => "paralyzed",
+                _ => attacker.HasSecondaryStatus(Enum.PokeSecondaryStatus.Confuse) ? "confused" : "unknown"
+            };
+
+            // Generar mensaje estructurado segun el estado
+            var actorArgs = CreateActorArgs(battle, userId, attacker);
+
+            if (attacker.Status == Enum.PokeStatus.Freeze) {
+                AddStructuredMessage(result, BattleMessageCode.FrozenSolid, actorArgs);
+            } else if (attacker.Status == Enum.PokeStatus.Sleep) {
+                AddStructuredMessage(result, BattleMessageCode.FastAsleep, actorArgs);
+            } else if (attacker.Status == Enum.PokeStatus.Paralysis) {
+                AddStructuredMessage(result, BattleMessageCode.ParalyzedCantMove, actorArgs);
+            } else if (attacker.HasSecondaryStatus(Enum.PokeSecondaryStatus.Confuse)) {
+                // Confusion self-hit: NO emitir attack_used
+                // El daño ya fue aplicado en CanAttack()
+                var confusionArgs = actorArgs;
+                AddStructuredMessage(result, BattleMessageCode.ConfusionSelfHit, confusionArgs);
+            }
+
+            if (defenderId != null) {
+                result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                    Message = resultMessage ?? statusMessage ?? "No puede atacar",
+                    Attacker = attackerId,
+                    Defender = defenderId,
+                    MoveName = move?.Name ?? action.MoveName ?? "Unknown",
+                    Hit = false,
+                    Blocked = true,
+                    BlockReason = blockReason
+                });
+            }
+
+            // Si se golpeó a sí mismo por confusión, generar evento de HP
+            if (attacker.HasSecondaryStatus(Enum.PokeSecondaryStatus.Confuse) && resultMessage != null) {
+                // El daño ya fue aplicado en CanAttack(), solo necesitamos el evento
+                result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                    Message = resultMessage,
+                    Target = attackerId,
+                    BeforeHp = attacker.CurrentHp, // Ya se aplicó el daño
+                    AfterHp = attacker.CurrentHp,
+                    MaxHp = attacker.MaxHp,
+                    Amount = 0, // No tenemos el valor exacto aquí
+                    Cause = "confusion"
+                });
+            }
+
+            return;
+        }
+
+        // Puede atacar - mostrar mensaje de resultado si existe (ej: "ya no está confundido", "se descongeló")
+        if (resultMessage != null) {
+            result.Messages.Add(resultMessage);
+
+            var actorArgs = CreateActorArgs(battle, userId, attacker);
+
+            if (resultMessage.Contains("despertado") || resultMessage.Contains("despierto")) {
+                AddStructuredMessage(result, BattleMessageCode.WokeUp, actorArgs);
+            } else if (resultMessage.Contains("descongelado")) {
+                AddStructuredMessage(result, BattleMessageCode.Thawed, actorArgs);
+            } else if (resultMessage.Contains("ya no está confundido")) {
+                AddStructuredMessage(result, BattleMessageCode.ConfusionEnd, actorArgs);
             }
         }
 
@@ -691,11 +721,83 @@ public class BattleService {
             { "Evasion", defender.EvasionStage }
         };
 
-        selectedMove.ExecuteMovement(attacker, defender);
+        MovementResult movementResult = selectedMove.ExecuteMovement(attacker, defender);
+
+        // Manejar caso de fallo por falta de PP
+        if (movementResult.FailedByNoPp) {
+            string noPpMsg = $"{attacker.GetDisplayName()} no tiene PP para usar {selectedMove.Name}.";
+            result.Messages.Add(noPpMsg);
+
+            var noPpArgs = CreateActorArgs(battle, userId, attacker);
+            AddStructuredMessage(result, BattleMessageCode.OutOfPp, noPpArgs);
+
+            result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                Message = noPpMsg
+            });
+            return;
+        }
+
+        // Manejar caso de fallo por precisión
+        if (movementResult.FailedByAccuracy) {
+            string missMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}, ¡pero falla!";
+            result.Messages.Add(missMsg);
+
+            // Mensajes estructurados
+            var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
+                { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
+            };
+            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+
+            if (rivalUserId.HasValue) {
+                var missArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
+                AddStructuredMessage(result, BattleMessageCode.AttackMissed, missArgs);
+            }
+
+            if (defenderId != null) {
+                result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                    Message = missMsg,
+                    Attacker = attackerId,
+                    Defender = defenderId,
+                    MoveName = selectedMove.Name,
+                    Hit = false,
+                    Blocked = false
+                });
+            }
+            return;
+        }
+
+        // Manejar caso de fallo porque el objetivo ya tiene un estado alterado
+        if (movementResult.FailedByExistingStatus) {
+            string failMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}, ¡pero falla!";
+            result.Messages.Add(failMsg);
+
+            // Mensajes estructurados
+            var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
+                { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
+            };
+            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+
+            if (rivalUserId.HasValue) {
+                var failArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
+                AddStructuredMessage(result, BattleMessageCode.AttackMissed, failArgs);
+            }
+
+            if (defenderId != null) {
+                result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                    Message = failMsg,
+                    Attacker = attackerId,
+                    Defender = defenderId,
+                    MoveName = selectedMove.Name,
+                    Hit = false,
+                    Blocked = false
+                });
+            }
+            return;
+        }
 
         int hpAfter = defender.CurrentHp;
         int hpAfterAttacker = attacker.CurrentHp;
-        int damage = Math.Max(0, hpBefore - hpAfter);
+        int damage = movementResult.Damage;
 
         // Aplicar reducción de daño por efectos de campo en el lado del defensor
         // Light Screen (ID 113): reduce daño de ataques especiales
@@ -727,7 +829,7 @@ public class BattleService {
             }
         }
 
-        int healing = Math.Max(0, hpAfterAttacker - hpBeforeAttacker);
+        int healing = movementResult.Healing;
 
         // Detectar cambios de estadísticas del atacante
         var attackerStatChanges = new List<(string stat, int change, int newStage)>();
@@ -816,7 +918,7 @@ public class BattleService {
 
         // Mensaje para movimientos de daño con curación (damage+heal)
         if (damage > 0 && healing > 0) {
-            string attackMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}. Daño: {damage}. Recupera {healing} PS.";
+            string attackMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}.";
             result.Messages.Add(attackMsg);
 
             // Mensajes estructurados
@@ -826,10 +928,25 @@ public class BattleService {
             AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
 
             if (rivalUserId.HasValue) {
+                // Añadir mensaje de efectividad si aplica
+                AddEffectivenessMessage(result, movementResult.TypeEffectiveness, CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender));
+
+                // Añadir mensaje de crítico si aplica
+                if (movementResult.IsCritical) {
+                    var critArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
+                    AddStructuredMessage(result, BattleMessageCode.CriticalHit, critArgs);
+                }
+
+                // Mensaje de daño recibido (sin números)
+                result.Messages.Add($"{defender.GetDisplayName()} ha recibido daño.");
+
                 var damageArgs = new Dictionary<string, object>(CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender)) {
                     { "damage", damage }
                 };
                 AddStructuredMessage(result, BattleMessageCode.DamageDealt, damageArgs);
+
+                // Mensaje de curación (sin números)
+                result.Messages.Add($"{attacker.GetDisplayName()} absorbe PS.");
 
                 var drainArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
                     { "amount", healing }
@@ -876,7 +993,7 @@ public class BattleService {
         }
         // Mensaje para movimientos de solo daño
         else if (damage > 0) {
-            string attackMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}. Daño: {damage}.";
+            string attackMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}.";
             result.Messages.Add(attackMsg);
 
             // Mensajes estructurados
@@ -886,6 +1003,18 @@ public class BattleService {
             AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
 
             if (rivalUserId.HasValue) {
+                // Añadir mensaje de efectividad si aplica
+                AddEffectivenessMessage(result, movementResult.TypeEffectiveness, CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender));
+
+                // Añadir mensaje de crítico si aplica
+                if (movementResult.IsCritical) {
+                    var critArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
+                    AddStructuredMessage(result, BattleMessageCode.CriticalHit, critArgs);
+                }
+
+                // Mensaje de daño recibido (sin números)
+                result.Messages.Add($"{defender.GetDisplayName()} ha recibido daño.");
+
                 var damageArgs = new Dictionary<string, object>(CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender)) {
                     { "damage", damage }
                 };
@@ -941,8 +1070,9 @@ public class BattleService {
         }
         // Mensaje para movimientos de solo curación
         else if (healing > 0) {
-            string healMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}. Recupera {healing} PS.";
+            string healMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}.";
             result.Messages.Add(healMsg);
+            result.Messages.Add($"{attacker.GetDisplayName()} recupera PS.");
 
             // Mensajes estructurados
             var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
@@ -965,7 +1095,7 @@ public class BattleService {
             });
 
             result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
-                Message = $"{attacker.GetDisplayName()} recupera {healing} PS.",
+                Message = $"{attacker.GetDisplayName()} recupera PS.",
                 Target = attackerId,
                 BeforeHp = hpBeforeAttacker,
                 AfterHp = hpAfterAttacker,
@@ -995,6 +1125,31 @@ public class BattleService {
                 Hit = true,
                 Blocked = false
             });
+
+            // Caso especial: Drenadoras (Leech Seed)
+            if (movementResult.AppliedSeeded && rivalUserId.HasValue) {
+                string seededMsg = $"{defender.GetDisplayName()} ha sido infectado.";
+                result.Messages.Add(seededMsg);
+
+                var seededArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
+                AddStructuredMessage(result, BattleMessageCode.Seeded, seededArgs);
+
+                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                    Message = seededMsg
+                });
+            }
+            // Inmunidad a Drenadoras (tipo Planta)
+            else if (movementResult.ImmuneToSeeded && rivalUserId.HasValue) {
+                string immuneMsg = $"No afecta a {defender.GetDisplayName()}.";
+                result.Messages.Add(immuneMsg);
+
+                var immuneArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
+                AddStructuredMessage(result, BattleMessageCode.NoEffect, immuneArgs);
+
+                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                    Message = immuneMsg
+                });
+            }
 
             // Caso especial: Haze (ID 114) resetea todas las características
             // Emitir un mensaje general en lugar de listar cada cambio
@@ -1344,7 +1499,22 @@ public class BattleService {
             if (hpBefore != hpAfter && pokemon.HasSecondaryStatus(Enum.PokeSecondaryStatus.Seeded)) {
                 int damage = Math.Max(0, hpBefore - hpAfter);
 
-                // Crear evento de HP para el Pokémon afectado
+                // Obtener el Pokémon activo del lado contrario para curarlo
+                int? opponentUserId = battle.GetOpponentUserId(userId);
+                BattleSide? opponentSide = opponentUserId.HasValue ? battle.GetSideForUser(opponentUserId.Value) : null;
+                PokemonBattle? opponentActivePokemon = opponentSide?.GetActivePokemon();
+
+                // Mensaje estructurado para el drenaje de Drenadoras
+                var drainArgs = new Dictionary<string, object> {
+                    { "target", pokemon.GetDisplayName() },
+                    { "amount", damage }
+                };
+                if (opponentActivePokemon != null) {
+                    drainArgs["source"] = opponentActivePokemon.GetDisplayName();
+                }
+                AddStructuredMessage(result, BattleMessageCode.SeededDrain, drainArgs);
+
+                // Crear evento de HP para el Pokémon afectado (pierde vida)
                 result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
                     Message = $"{pokemon.GetDisplayName()} pierde {damage} PS por Drenadoras.",
                     Target = pokemonId,
@@ -1353,29 +1523,32 @@ public class BattleService {
                     MaxHp = pokemon.MaxHp,
                     Amount = -damage,
                     Cause = "leech_seed",
-                    SourcePokemon = pokemon.LeechSeedSource != null 
-                        ? CreatePokemonIdentifier(battle, 
-                            battle.PlayerUserId == userId ? (battle.Player2UserId ?? 0) : battle.PlayerUserId,
-                            pokemon.LeechSeedSource)
+                    SourcePokemon = opponentActivePokemon != null && opponentUserId.HasValue
+                        ? CreatePokemonIdentifier(battle, opponentUserId.Value, opponentActivePokemon)
                         : null
                 });
 
-                // Si la fuente del Leech Seed también se curó, agregar evento de curación
-                if (pokemon.LeechSeedSource != null && !pokemon.LeechSeedSource.IsFainted()) {
-                    var sourceId = CreatePokemonIdentifier(battle,
-                        battle.PlayerUserId == userId ? (battle.Player2UserId ?? 0) : battle.PlayerUserId,
-                        pokemon.LeechSeedSource);
+                // Curar al Pokémon activo del lado contrario (si existe y no está debilitado)
+                if (opponentActivePokemon != null && !opponentActivePokemon.IsFainted() && opponentUserId.HasValue) {
+                    int hpBeforeHeal = opponentActivePokemon.CurrentHp;
+                    opponentActivePokemon.Heal(damage);
+                    int hpAfterHeal = opponentActivePokemon.CurrentHp;
+                    int actualHealing = hpAfterHeal - hpBeforeHeal;
 
-                    result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
-                        Message = $"{pokemon.LeechSeedSource.GetDisplayName()} recupera {damage} PS.",
-                        Target = sourceId,
-                        BeforeHp = pokemon.LeechSeedSource.CurrentHp - damage,
-                        AfterHp = pokemon.LeechSeedSource.CurrentHp,
-                        MaxHp = pokemon.LeechSeedSource.MaxHp,
-                        Amount = damage,
-                        Cause = "leech_seed",
-                        SourcePokemon = pokemonId
-                    });
+                    if (actualHealing > 0) {
+                        var sourceId = CreatePokemonIdentifier(battle, opponentUserId.Value, opponentActivePokemon);
+
+                        result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                            Message = $"{opponentActivePokemon.GetDisplayName()} recupera {actualHealing} PS.",
+                            Target = sourceId,
+                            BeforeHp = hpBeforeHeal,
+                            AfterHp = hpAfterHeal,
+                            MaxHp = opponentActivePokemon.MaxHp,
+                            Amount = actualHealing,
+                            Cause = "leech_seed",
+                            SourcePokemon = pokemonId
+                        });
+                    }
                 }
             }
 

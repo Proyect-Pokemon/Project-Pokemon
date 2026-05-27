@@ -19,12 +19,17 @@ public class FieldEffectMovement : BattleMovement {
 
     public FieldEffectMovement(Movement movement) : base(movement) { }
 
-    public override void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+    public override MovementResult ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+        var result = new MovementResult();
+
         if (!HasPpAvailable()) {
-            return;
+            result.FailedByNoPp = true;
+            return result;
         }
 
         ConsumePp();
+
+        result.Executed = true;
 
         // Los efectos de campo no requieren accuracy check
         // Se aplican directamente al lado del usuario
@@ -33,5 +38,7 @@ public class FieldEffectMovement : BattleMovement {
         // ya que necesita acceso al BattleSide para establecer los contadores de turnos
 
         // Aquí solo validamos que el movimiento se ejecute correctamente
+
+        return result;
     }
 }

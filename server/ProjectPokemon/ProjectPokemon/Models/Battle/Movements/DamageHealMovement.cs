@@ -13,9 +13,12 @@ public class DamageHealMovement : DamageMovement {
 
     public DamageHealMovement(Movement movement) : base(movement) { }
 
-    public override void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+    public override MovementResult ExecuteMovement(PokemonBattle attacker, PokemonBattle defender) {
+        var result = new MovementResult();
+
         if (!HasPpAvailable()) {
-            return;
+            result.FailedByNoPp = true;
+            return result;
         }
 
         ConsumePp();
@@ -23,19 +26,24 @@ public class DamageHealMovement : DamageMovement {
         // Dream Eater (ID 138) requiere que el objetivo esté dormido
         if (Id == DREAM_EATER_ID && defender.Status != PokeStatus.Sleep) {
             // El movimiento falla si el objetivo no está dormido
-            return;
+            result.FailedByAccuracy = true; // Usamos este flag para indicar fallo general
+            return result;
         }
 
         // Comprobar si acierta
         if (!CheckAccuracy(attacker, defender)) {
-            return; // El movimiento falla
+            result.FailedByAccuracy = true;
+            return result;
         }
 
-        // Calcular daño usando la lógica de DamageMovement
-        int damage = CalculateDamage(attacker, defender);
+        result.Executed = true;
+
+        // Calcular daño usando la lógica de DamageMovement con metadata
+        int damage = CalculateDamageWithMetadata(attacker, defender, result);
 
         if (damage > 0) {
             defender.TakeDamage(damage);
+            result.Damage = damage;
 
             // Calcular curación basada en el daño infligido
             int drainPercent = Drain ?? 50; // Por defecto 50% si no está especificado
@@ -47,6 +55,10 @@ public class DamageHealMovement : DamageMovement {
             if (actualHealing > 0) {
                 attacker.Heal(actualHealing);
             }
+
+            result.Healing = actualHealing;
         }
+
+        return result;
     }
 }
