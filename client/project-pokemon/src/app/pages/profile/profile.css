@@ -1,5 +1,330 @@
-:host {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
+.profile-container {
+	width: min(1200px, 96%);
+	margin: 0 auto;
+	padding: clamp(16px, 3vw, 40px);
+}
+
+.loading-state {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 300px;
+	color: var(--text-muted);
+	font-size: 1.1rem;
+}
+
+.error-message {
+	padding: 16px 20px;
+	border-radius: 8px;
+	background: rgba(220, 38, 38, 0.1);
+	color: #dc2626;
+	border-left: 4px solid #dc2626;
+}
+
+.profile-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 40px;
+	padding-bottom: 24px;
+	border-bottom: 2px solid var(--secondary-color-transparent-border);
+}
+
+.profile-info h1 {
+	margin: 0;
+	font-size: 2.5rem;
+	color: var(--primary-color);
+	font-weight: 700;
+}
+
+.profile-label {
+	margin: 8px 0 0;
+	color: var(--text-muted);
+	font-size: 0.95rem;
+}
+
+.btn-logout {
+	padding: 10px 24px;
+	background: #dc2626;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+	background: #b91c1c;
+	transform: translateY(-2px);
+}
+
+.teams-section {
+	margin-bottom: 40px;
+}
+
+.section-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 24px;
+}
+
+.section-header h2 {
+	margin: 0;
+	font-size: 1.8rem;
+	color: var(--primary-color);
+	font-weight: 700;
+}
+
+.btn-primary,
+.btn-secondary {
+	padding: 10px 24px;
+	border: none;
+	border-radius: 8px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	font-size: 0.95rem;
+}
+
+.btn-primary {
+	background: var(--primary-color);
+	color: white;
+}
+
+.btn-primary:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary {
+	background: var(--secondary-color-transparent-medium);
+	color: var(--primary-color);
+}
+
+.btn-secondary:hover {
+	background: var(--secondary-color-transparent-strong);
+}
+
+.btn-edit {
+	width: 100%;
+	margin-top: 16px;
+}
+
+.empty-state {
+	text-align: center;
+	padding: 60px 20px;
+	background: var(--surface-panel);
+	border-radius: 12px;
+	border: 2px dashed var(--secondary-color-transparent-border);
+}
+
+.empty-state p {
+	margin: 0 0 24px;
+	color: var(--text-muted);
+	font-size: 1.1rem;
+}
+
+.teams-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+	gap: 24px;
+}
+
+.team-card {
+	padding: 20px;
+	background: var(--surface-panel);
+	border: 1px solid var(--secondary-color-transparent-border);
+	border-radius: 12px;
+	box-shadow: 0 2px 8px rgba(19, 32, 58, 0.1);
+	transition: all 0.3s ease;
+}
+
+.team-card:hover {
+	border-color: var(--primary-color);
+	box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+	transform: translateY(-4px);
+}
+
+.team-card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 12px;
+	gap: 16px;
+}
+
+.team-card-header h3 {
+	margin: 0;
+	font-size: 1.4rem;
+	color: var(--primary-color);
+	font-weight: 700;
+}
+
+.pokemon-count {
+	display: inline-block;
+	padding: 4px 12px;
+	background: var(--secondary-color-transparent-medium);
+	color: var(--primary-color);
+	border-radius: 20px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.team-description {
+	margin: 0 0 16px;
+	color: var(--text-muted);
+	font-size: 0.95rem;
+	line-height: 1.4;
+}
+
+.pokemon-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 16px;
+	max-height: 400px;
+	overflow-y: auto;
+	padding-right: 8px;
+}
+
+.pokemon-item {
+	display: flex;
+	gap: 12px;
+	padding: 10px;
+	background: rgba(59, 130, 246, 0.05);
+	border-radius: 8px;
+	border: 1px solid var(--secondary-color-transparent-border);
+	transition: all 0.2s ease;
+}
+
+.pokemon-item:hover {
+	background: rgba(59, 130, 246, 0.1);
+	border-color: var(--primary-color);
+}
+
+.pokemon-sprite-container {
+	flex-shrink: 0;
+	width: 60px;
+	height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.6);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.pokemon-sprite {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.pokemon-info {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 4px;
+}
+
+.pokemon-name {
+	font-weight: 600;
+	color: var(--primary-color);
+	font-size: 0.95rem;
+}
+
+.pokemon-species {
+	font-size: 0.8rem;
+	color: var(--text-muted);
+}
+
+.type-badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.type-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 12px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: white;
+	text-transform: capitalize;
+}
+
+/* Type colors */
+.type-badge.type-normal { background: #A8A878; }
+.type-badge.type-fire { background: #F08030; }
+.type-badge.type-water { background: #6890F0; }
+.type-badge.type-grass { background: #78C850; }
+.type-badge.type-electric { background: #F8D030; color: #333; }
+.type-badge.type-ice { background: #98D8D8; color: #333; }
+.type-badge.type-fighting { background: #C03028; }
+.type-badge.type-poison { background: #A040A0; }
+.type-badge.type-ground { background: #E0C068; color: #333; }
+.type-badge.type-flying { background: #A890F0; }
+.type-badge.type-psychic { background: #F85888; }
+.type-badge.type-bug { background: #A8B820; }
+.type-badge.type-rock { background: #B8A038; }
+.type-badge.type-ghost { background: #705898; }
+.type-badge.type-dragon { background: #7038F8; }
+.type-badge.type-dark { background: #705848; }
+.type-badge.type-steel { background: #B8B8D0; }
+.type-badge.type-fairy { background: #EE99AC; }
+
+/* Responsive design */
+@media (max-width: 768px) {
+	.profile-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 16px;
+	}
+
+	.profile-info h1 {
+		font-size: 1.8rem;
+	}
+
+	.section-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 12px;
+	}
+
+	.teams-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.btn-primary {
+		width: 100%;
+	}
+}
+
+@media (max-width: 980px) {
+	.profile-layout {
+		grid-template-columns: 1fr;
+		gap: 24px;
+	}
+}
+
+@media (max-width: 640px) {
+	.container {
+		width: min(98%, 100%);
+		padding: 16px 14px 20px;
+	}
+
+	.delete-post-modal-actions {
+		justify-content: stretch;
+	}
+
+	.delete-post-cancel-btn,
+	.delete-post-confirm-btn {
+		flex: 1;
+	}
 }

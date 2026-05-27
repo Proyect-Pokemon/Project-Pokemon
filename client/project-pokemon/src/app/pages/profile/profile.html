@@ -1,1 +1,88 @@
-<p>profile works!</p>
+<div class="profile-container">
+	@if (loading()) {
+		<div class="loading-state">
+			<p>Cargando perfil...</p>
+		</div>
+	} @else {
+		<div class="profile-header">
+			<div class="profile-info">
+				<h1>{{ nickname() }}</h1>
+				<p class="profile-label">Mi Perfil</p>
+			</div>
+			<button (click)="logout()" class="btn-logout">Cerrar sesión</button>
+		</div>
+
+		<div class="teams-section">
+			<div class="section-header">
+				<h2>Mis Equipos de Pokémon</h2>
+				<button (click)="navigateToTeamBuilder()" class="btn-primary">Crear Equipo</button>
+			</div>
+
+			@if (teamsLoading()) {
+				<div class="loading-state">
+					<p>Cargando equipos...</p>
+				</div>
+			} @else if (teamsError()) {
+				<div class="error-message">
+					{{ teamsError() }}
+				</div>
+			} @else if (userTeams().length === 0) {
+				<div class="empty-state">
+					<p>No tienes equipos creados aún.</p>
+					<button (click)="navigateToTeamBuilder()" class="btn-secondary">Crear tu primer equipo</button>
+				</div>
+			} @else {
+				<div class="teams-grid">
+					@for (team of userTeams(); track team.id) {
+						<div class="team-card">
+							<div class="team-card-header">
+								<h3>{{ team.name }}</h3>
+								<span class="pokemon-count">{{ team.pokemonCount }}/6</span>
+							</div>
+
+							@if (team.description) {
+								<p class="team-description">{{ team.description }}</p>
+							}
+
+							<div class="pokemon-list">
+								@for (pokemon of team.pokemons; track pokemon.slot) {
+									<div class="pokemon-item">
+										<div class="pokemon-sprite-container">
+											<img 
+												[src]="pokemon.sprite" 
+												[alt]="pokemon.pokemonName"
+												class="pokemon-sprite"
+											/>
+										</div>
+										<div class="pokemon-info">
+											<span class="pokemon-name">
+												{{ pokemon.nickname || pokemon.pokemonName }}
+											</span>
+											<span class="pokemon-species">
+												{{ pokemon.pokemonName }}
+											</span>
+											<div class="type-badges">
+												@for (type of pokemon.types; track $index) {
+													<span class="type-badge" [ngClass]="'type-' + type.toLowerCase()">
+														{{ type }}
+													</span>
+												}
+											</div>
+										</div>
+									</div>
+								}
+							</div>
+
+							<button 
+								(click)="navigateToTeamEdit(team.id)"
+								class="btn-secondary btn-edit"
+							>
+								Editar Equipo
+							</button>
+						</div>
+					}
+				</div>
+			}
+		</div>
+	}
+</div>
