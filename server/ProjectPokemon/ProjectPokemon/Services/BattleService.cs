@@ -28,6 +28,12 @@ public class BattleService {
         public List<StructuredBattleMessage> StructuredMessages { get; set; } = new(); // Nuevo
         public List<Networking.Messages.Battle.BattleEvent> Timeline { get; set; } = new();
         public int? WinnerUserId { get; set; }
+
+        // Indica si el jugador necesita elegir un Pokémon de reemplazo
+        public bool RequiresSwitchSelection { get; set; }
+
+        // Slots disponibles para cambio forzoso (solo Pokémon no debilitados)
+        public List<int> AvailableSlotsForSwitch { get; set; } = new();
     }
 
     // Clase interna para resolver turnos
@@ -216,6 +222,40 @@ public class BattleService {
                 };
             }
 
+            // Si esta es una acción de cambio forzoso (por debilitamiento), procesarla inmediatamente
+            bool isRequiredSwitch = battle.RequiredSwitchByUserId.Contains(userId) && action == BattleAction.Switch;
+            if (isRequiredSwitch) {
+                var switchResult = new TurnResolutionResult();
+                ExecuteSwitch(battle, userId, battle.PendingActionsByUserId[userId], switchResult);
+                battle.PendingActionsByUserId.Remove(userId);
+
+                // Verificar si aún quedan cambios requeridos pendientes para este usuario
+                bool stillRequiresSwitch = battle.RequiredSwitchByUserId.Contains(userId);
+                List<int> availableSwitchSlots = new List<int>();
+
+                if (stillRequiresSwitch) {
+                    var side = battle.GetSideForUser(userId);
+                    if (side != null) {
+                        for (int i = 0; i < side.Team.Count; i++) {
+                            if (i != side.ActiveSlot && !side.Team[i].IsFainted()) {
+                                availableSwitchSlots.Add(i);
+                            }
+                        }
+                    }
+                }
+
+                return new SubmitBattleActionResult {
+                    Accepted = true,
+                    TurnResolved = false,
+                    Messages = switchResult.Messages,
+                    StructuredMessages = switchResult.StructuredMessages,
+                    Timeline = switchResult.Events,
+                    WinnerUserId = battle.WinnerUserId,
+                    RequiresSwitchSelection = stillRequiresSwitch,
+                    AvailableSlotsForSwitch = availableSwitchSlots
+                };
+            }
+
             if (!battle.PendingActionsByUserId.ContainsKey(opponentUserId.Value)) {
                 return new SubmitBattleActionResult {
                     Accepted = true,
@@ -250,13 +290,30 @@ public class BattleService {
             battle.PendingActionsByUserId.Clear();
             battle.Turn++;
 
+            // Verificar si el usuario actual necesita elegir un Pokémon de reemplazo
+            bool requiresSwitch = battle.RequiredSwitchByUserId.Contains(userId);
+            List<int> availableSlotsForSwitch = new List<int>();
+
+            if (requiresSwitch) {
+                var side = battle.GetSideForUser(userId);
+                if (side != null) {
+                    for (int i = 0; i < side.Team.Count; i++) {
+                        if (i != side.ActiveSlot && !side.Team[i].IsFainted()) {
+                            availableSlotsForSwitch.Add(i);
+                        }
+                    }
+                }
+            }
+
             return new SubmitBattleActionResult {
                 Accepted = true,
                 TurnResolved = true,
                 Messages = turnResult.Messages,
                 StructuredMessages = turnResult.StructuredMessages,
                 Timeline = turnResult.Events,
-                WinnerUserId = battle.WinnerUserId
+                WinnerUserId = battle.WinnerUserId,
+                RequiresSwitchSelection = requiresSwitch,
+                AvailableSlotsForSwitch = availableSlotsForSwitch
             };
         }
     }
@@ -369,6 +426,13 @@ public class BattleService {
         var myActive = mySide.GetActivePokemon();
         if (myActive == null) {
             errorMessage = "No tienes Pokémon activo.";
+            return false;
+        }
+
+        // Si el usuario necesita hacer un cambio forzoso, solo se permite Switch
+        bool requiresForcedSwitch = battle.RequiredSwitchByUserId.Contains(userId);
+        if (requiresForcedSwitch && action != BattleAction.Switch) {
+            errorMessage = "Debes elegir un Pokémon de reemplazo.";
             return false;
         }
 
@@ -558,6 +622,9 @@ public class BattleService {
             });
             return;
         }
+
+        // Remover el userId de cambios requeridos si estaba presente
+        battle.RequiredSwitchByUserId.Remove(userId);
 
         var active = mySide.GetActivePokemon();
         string name = active?.GetDisplayName() ?? "Pokémon";
@@ -1307,23 +1374,10 @@ public class BattleService {
                 });
             }
 
-            int? autoSwitchSlot = rivalSide.GetFirstNonFaintedSlot();
-            if (autoSwitchSlot.HasValue) {
-                int prevSlot = rivalSide.ActiveSlot;
-                rivalSide.SwitchPokemon(autoSwitchSlot.Value);
-                var newActive = rivalSide.GetActivePokemon();
-                string switchMsg = $"Entra {newActive?.GetDisplayName() ?? "Pokémon"} automáticamente.";
-                result.Messages.Add(switchMsg);
-
-                string rivalSideStr = battle.PlayerUserId == userId ? "opponent" : "player";
-                result.Events.Add(new Networking.Messages.Battle.SwitchEvent {
-                    Message = switchMsg,
-                    Side = rivalSideStr,
-                    PreviousActiveSlot = prevSlot,
-                    NewActiveSlot = autoSwitchSlot.Value,
-                    NewPokemonName = newActive?.GetDisplayName() ?? "Pokémon",
-                    IsAutomatic = true
-                });
+            // Marcar que el rival necesita elegir un Pokémon de reemplazo
+            // en lugar de hacer cambio automático
+            if (rivalUserId.HasValue && rivalSide != null && !rivalSide.IsDefeated()) {
+                battle.RequiredSwitchByUserId.Add(rivalUserId.Value);
             }
         }
     }
@@ -1466,23 +1520,9 @@ public class BattleService {
                     Target = pokemonId
                 });
 
-                int? autoSwitchSlot = side.GetFirstNonFaintedSlot();
-                if (autoSwitchSlot.HasValue) {
-                    int prevSlot = side.ActiveSlot;
-                    side.SwitchPokemon(autoSwitchSlot.Value);
-                    var newActive = side.GetActivePokemon();
-                    string switchMsg = $"Entra {newActive?.GetDisplayName() ?? "Pokémon"} automáticamente.";
-                    result.Messages.Add(switchMsg);
-
-                    string sideStr = battle.PlayerUserId == userId ? "player" : "opponent";
-                    result.Events.Add(new Networking.Messages.Battle.SwitchEvent {
-                        Message = switchMsg,
-                        Side = sideStr,
-                        PreviousActiveSlot = prevSlot,
-                        NewActiveSlot = autoSwitchSlot.Value,
-                        NewPokemonName = newActive?.GetDisplayName() ?? "Pokémon",
-                        IsAutomatic = true
-                    });
+                // Marcar que el jugador necesita elegir un Pokémon de reemplazo
+                if (!side.IsDefeated()) {
+                    battle.RequiredSwitchByUserId.Add(userId);
                 }
                 return; // No aplicar efectos secundarios si está debilitado
             }
@@ -1561,23 +1601,9 @@ public class BattleService {
                     Target = pokemonId
                 });
 
-                int? autoSwitchSlot = side.GetFirstNonFaintedSlot();
-                if (autoSwitchSlot.HasValue) {
-                    int prevSlot = side.ActiveSlot;
-                    side.SwitchPokemon(autoSwitchSlot.Value);
-                    var newActive = side.GetActivePokemon();
-                    string switchMsg = $"Entra {newActive?.GetDisplayName() ?? "Pokémon"} automáticamente.";
-                    result.Messages.Add(switchMsg);
-
-                    string sideStr = battle.PlayerUserId == userId ? "player" : "opponent";
-                    result.Events.Add(new Networking.Messages.Battle.SwitchEvent {
-                        Message = switchMsg,
-                        Side = sideStr,
-                        PreviousActiveSlot = prevSlot,
-                        NewActiveSlot = autoSwitchSlot.Value,
-                        NewPokemonName = newActive?.GetDisplayName() ?? "Pokémon",
-                        IsAutomatic = true
-                    });
+                // Marcar que el jugador necesita elegir un Pokémon de reemplazo
+                if (!side.IsDefeated()) {
+                    battle.RequiredSwitchByUserId.Add(userId);
                 }
             }
         }

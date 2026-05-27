@@ -33,8 +33,6 @@ public class MovementResult {
     // Indica si el objetivo era inmune a Drenadoras (tipo Planta)
     public bool ImmuneToSeeded { get; set; } = false;
 
-    /// <summary>
-    /// Indica si el movimiento falló porque el objetivo ya tiene un estado alterado primario
-    /// </summary>
+    // Indica si el movimiento falló porque el objetivo ya tiene un estado alterado primario
     public bool FailedByExistingStatus { get; set; } = false;
 }

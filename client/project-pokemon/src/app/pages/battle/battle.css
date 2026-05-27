@@ -333,6 +333,27 @@ app-battle-chat {
     letter-spacing: 0.2px;
 }
 
+.forced-switch-prompt {
+    margin-bottom: 2px;
+}
+
+.forced-switch-grid {
+    gap: 10px;
+}
+
+.forced-switch-option {
+    border: 1px solid transparent;
+}
+
+.forced-switch-option.forced-available {
+    border-color: rgba(128, 240, 180, 0.6);
+    box-shadow: 0 0 0 1px rgba(128, 240, 180, 0.2) inset;
+}
+
+.forced-switch-option.forced-disabled {
+    opacity: 0.35;
+}
+
 .leave-confirm-dialog {
     position: absolute;
     inset: 0;

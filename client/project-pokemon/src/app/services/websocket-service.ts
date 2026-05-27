@@ -13,6 +13,8 @@ export interface BattleStateEvent {
   structuredMessages: Array<{ code: string; args: Record<string, any> }>;
   timeline: any[];
   requiresSwitch: boolean;
+  requiresSwitchSelection: boolean;
+  availableSlotsForSwitch: number[];
   winnerUserId: number | null;
 }
 
@@ -116,6 +118,8 @@ export class SocketService {
       action: message.action,
       battleId: message.battle?.battleId,
       requiresSwitch: message.requiresSwitch ?? false,
+      requiresSwitchSelection: message.requiresSwitchSelection ?? false,
+      availableSlotsForSwitch: message.availableSlotsForSwitch ?? [],
       winnerUserId: message.winnerUserId ?? null,
       messages: message.messages ?? [],
       structuredMessages: message.structuredMessages ?? [],
@@ -129,6 +133,8 @@ export class SocketService {
       structuredMessages: message.structuredMessages ?? [],
       timeline: message.timeline ?? [],
       requiresSwitch: message.requiresSwitch ?? false,
+      requiresSwitchSelection: message.requiresSwitchSelection ?? message.requiresSwitch ?? false,
+      availableSlotsForSwitch: message.availableSlotsForSwitch ?? [],
       winnerUserId: message.winnerUserId ?? null,
     });
   }

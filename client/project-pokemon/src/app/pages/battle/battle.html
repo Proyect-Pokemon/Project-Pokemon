@@ -31,13 +31,34 @@
             </div>
             <div id="moves">
                 @if (actionPanel() === 'root') {
-                    <div class="action-panel-prompt">Elige una accion</div>
-                    <button class="action-button action-attack" [disabled]="attacksDisabled()" (click)="openAttackPanel()">
-                        Atacar
-                    </button>
-                    <button class="action-button action-switch" [disabled]="attacksDisabled()" (click)="openSwitchPanel()">
-                        Cambiar
-                    </button>
+                    @if (requiresSwitchSelection()) {
+                        <div class="action-panel-prompt forced-switch-prompt">Tu Pokémon se debilitó. Elige un reemplazo:</div>
+
+                        <div class="switch-grid forced-switch-grid">
+                            @for (option of switchOptions(); track option.index) {
+                                <button
+                                    class="switch-option forced-switch-option"
+                                    [class.forced-available]="isAvailableForcedSwitchSlot(option.index)"
+                                    [class.forced-disabled]="!isAvailableForcedSwitchSlot(option.index)"
+                                    [disabled]="!isAvailableForcedSwitchSlot(option.index) || isSubmittingForcedSwitch()"
+                                    (click)="selectForcedSwitch(option.index)">
+                                    <img [src]="option.sprite" [alt]="option.name">
+                                    <div class="switch-option-text">
+                                        <strong>{{ option.name }}</strong>
+                                        <span>{{ option.hpLabel }}</span>
+                                    </div>
+                                </button>
+                            }
+                        </div>
+                    } @else {
+                        <div class="action-panel-prompt">Elige una accion</div>
+                        <button class="action-button action-attack" [disabled]="attacksDisabled()" (click)="openAttackPanel()">
+                            Atacar
+                        </button>
+                        <button class="action-button action-switch" [disabled]="attacksDisabled()" (click)="openSwitchPanel()">
+                            Cambiar
+                        </button>
+                    }
                 }
 
                 @if (actionPanel() === 'attack') {
@@ -67,7 +88,7 @@
                         @for (option of switchOptions(); track option.index) {
                             <button
                                 class="switch-option"
-                                [disabled]="option.isActive || option.isFainted || attacksDisabled()"
+                                [disabled]="option.isActive || option.isFainted || attacksDisabled() || requiresSwitchSelection()"
                                 (click)="switchPokemon(option.index)">
                                 <img [src]="option.sprite" [alt]="option.name">
                                 <div class="switch-option-text">
@@ -84,6 +105,7 @@
                         <div class="waiting-overlay-card">Esperando la acción del oponente...</div>
                     </div>
                 }
+
             </div>
 
             @if (showFinishDialog()) {

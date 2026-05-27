@@ -19,7 +19,8 @@ interface BattleStateEventPayload {
   battle: any;
   messages: string[];
   timeline: any[];
-  requiresSwitch: boolean;
+  requiresSwitchSelection: boolean;
+  availableSlotsForSwitch: number[];
   winnerUserId: number | null;
 }
 
@@ -50,6 +51,9 @@ export class Battle {
   isLoadingBattle = signal(true);
   attacksDisabled = signal(true);
   isWaitingForOpponent = signal(false);
+  requiresSwitchSelection = signal(false);
+  availableSlotsForSwitch = signal<number[]>([]);
+  isSubmittingForcedSwitch = signal(false);
   actionPanel = signal<BattleActionPanel>('root');
 
   combatChatMessages = signal<string[]>([]);
@@ -112,6 +116,7 @@ export class Battle {
       this.latestBattleSnapshot.set(battleEvent.battle);
       this.isLoadingBattle.set(false);
       this.clearOnlineBattleBootstrapTimeout();
+      this.isSubmittingForcedSwitch.set(false);
 
       const waitingForOpponent = this.hasWaitingMessage(battleEvent.messages);
       const backendMessages = (battleEvent.messages ?? []).filter((message) => !!message?.trim());
@@ -128,7 +133,8 @@ export class Battle {
           battle: battleEvent.battle,
           messages: backendMessages,
           timeline: filteredTimeline,
-          requiresSwitch: battleEvent.requiresSwitch ?? false,
+          requiresSwitchSelection: battleEvent.requiresSwitchSelection ?? battleEvent.requiresSwitch ?? false,
+          availableSlotsForSwitch: (battleEvent.availableSlotsForSwitch ?? []).filter((slot: unknown) => Number.isInteger(slot)) as number[],
           winnerUserId: battleEvent.winnerUserId ?? null,
         });
         return;
@@ -234,14 +240,14 @@ export class Battle {
   }
 
   openAttackPanel(): void {
-    if (this.attacksDisabled()) {
+    if (this.attacksDisabled() || this.requiresSwitchSelection()) {
       return;
     }
     this.actionPanel.set('attack');
   }
 
   openSwitchPanel(): void {
-    if (this.attacksDisabled()) {
+    if (this.attacksDisabled() || this.requiresSwitchSelection()) {
       return;
     }
     this.actionPanel.set('switch');
@@ -252,7 +258,7 @@ export class Battle {
       return;
     }
 
-    if (this.socketService.onBattleState()?.requiresSwitch) {
+    if (this.requiresSwitchSelection()) {
       return;
     }
 
@@ -260,7 +266,7 @@ export class Battle {
   }
 
   async attack(move: BattleMove): Promise<void> {
-    if (this.mode() === 'cpu') {
+    if (this.mode() === 'cpu' || this.requiresSwitchSelection()) {
       return;
     }
 
@@ -279,6 +285,11 @@ export class Battle {
       return;
     }
 
+    if (this.requiresSwitchSelection()) {
+      this.selectForcedSwitch(targetSlot);
+      return;
+    }
+
     const battleId = this.battleId();
     if (!battleId) {
       return;
@@ -287,6 +298,34 @@ export class Battle {
     this.attacksDisabled.set(true);
     this.isWaitingForOpponent.set(true);
     this.socketService.switchPokemon(battleId, targetSlot);
+  }
+
+  selectForcedSwitch(targetSlot: number): void {
+    if (!this.requiresSwitchSelection()) {
+      return;
+    }
+
+    if (!this.isAvailableForcedSwitchSlot(targetSlot)) {
+      return;
+    }
+
+    const battleId = this.battleId();
+    if (!battleId) {
+      return;
+    }
+
+    this.isSubmittingForcedSwitch.set(true);
+    this.attacksDisabled.set(true);
+    this.isWaitingForOpponent.set(false);
+    this.socketService.switchPokemon(battleId, targetSlot);
+  }
+
+  isAvailableForcedSwitchSlot(slot: number): boolean {
+    if (!this.requiresSwitchSelection()) {
+      return false;
+    }
+
+    return this.availableSlotsForSwitch().includes(slot);
   }
 
   private hasWaitingMessage(messages: string[]): boolean {
@@ -414,21 +453,94 @@ export class Battle {
       this.showFinishDialog.set(true);
       this.isWaitingForOpponent.set(false);
       this.attacksDisabled.set(true);
+      this.requiresSwitchSelection.set(false);
+      this.availableSlotsForSwitch.set([]);
+      this.isSubmittingForcedSwitch.set(false);
       this.actionPanel.set('root');
       return;
     }
 
     this.showFinishDialog.set(false);
     this.battleResult.set(null);
-    this.isWaitingForOpponent.set(waitingForOpponent);
-    this.attacksDisabled.set(waitingForOpponent);
+    const resolvedForcedSwitch = this.resolveForcedSwitchState(event);
+    this.requiresSwitchSelection.set(resolvedForcedSwitch.requiresSwitchSelection);
+    this.availableSlotsForSwitch.set(resolvedForcedSwitch.availableSlotsForSwitch);
 
-    if (event.requiresSwitch) {
-      this.actionPanel.set('switch');
+    if (resolvedForcedSwitch.requiresSwitchSelection) {
+      this.isWaitingForOpponent.set(false);
+      this.attacksDisabled.set(true);
+      this.actionPanel.set('root');
       return;
     }
 
+    this.isWaitingForOpponent.set(waitingForOpponent);
+    this.attacksDisabled.set(waitingForOpponent);
+
     this.actionPanel.set('root');
+  }
+
+  private resolveForcedSwitchState(event: BattleStateEventPayload): {
+    requiresSwitchSelection: boolean;
+    availableSlotsForSwitch: number[];
+  } {
+    const explicitSlots = (event.availableSlotsForSwitch ?? []).filter((slot) => Number.isInteger(slot));
+    if (event.requiresSwitchSelection) {
+      return {
+        requiresSwitchSelection: true,
+        availableSlotsForSwitch: explicitSlots.length > 0
+          ? explicitSlots
+          : this.deriveAvailableSwitchSlotsFromSnapshot(event.battle),
+      };
+    }
+
+    const activeIsFainted = this.isPlayerActivePokemonFainted(event.battle);
+    if (!activeIsFainted) {
+      return {
+        requiresSwitchSelection: false,
+        availableSlotsForSwitch: [],
+      };
+    }
+
+    return {
+      requiresSwitchSelection: true,
+      availableSlotsForSwitch: this.deriveAvailableSwitchSlotsFromSnapshot(event.battle),
+    };
+  }
+
+  private isPlayerActivePokemonFainted(snapshot: any): boolean {
+    const team = snapshot?.playerSide?.team;
+    const activeSlot = snapshot?.playerSide?.activeSlot ?? 0;
+    if (!Array.isArray(team) || team.length === 0) {
+      return false;
+    }
+
+    const activePokemon = team[activeSlot] ?? team[0];
+    if (!activePokemon) {
+      return false;
+    }
+
+    const currentHp = Number(activePokemon?.currentHp ?? 0);
+    return !!activePokemon?.isFainted || currentHp <= 0;
+  }
+
+  private deriveAvailableSwitchSlotsFromSnapshot(snapshot: any): number[] {
+    const team = snapshot?.playerSide?.team;
+    const activeSlot = snapshot?.playerSide?.activeSlot ?? 0;
+    if (!Array.isArray(team)) {
+      return [];
+    }
+
+    return team
+      .map((pokemon: any, index: number) => ({ pokemon, index }))
+      .filter(({ pokemon, index }) => {
+        if (index === activeSlot) {
+          return false;
+        }
+
+        const currentHp = Number(pokemon?.currentHp ?? 0);
+        return !pokemon?.isFainted && currentHp > 0;
+      })
+      .map(({ index }) => index);
   }
 
   private applySnapshotToView(snapshot: any): void {

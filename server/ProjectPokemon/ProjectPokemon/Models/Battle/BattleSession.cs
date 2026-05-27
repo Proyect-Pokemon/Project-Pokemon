@@ -17,6 +17,9 @@ public class BattleSession {
     // Key = userId
     public Dictionary<int, PendingBattleAction> PendingActionsByUserId { get; } = new();
 
+    // Set de userIds que necesitan elegir un Pokémon de reemplazo (cambio forzoso)
+    public HashSet<int> RequiredSwitchByUserId { get; } = new();
+
     public List<string> BattleLog { get; set; } = new();
 
     // UserId del ganador de la batalla
