@@ -1,4 +1,4 @@
-import { Component, inject, Input, signal, effect, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, inject, Input, signal, effect, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SocketService } from '../../services/websocket-service';
 

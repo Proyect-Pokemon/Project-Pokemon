@@ -15,14 +15,9 @@ type BattleActionPanel = 'root' | 'attack' | 'switch';
 type BattleResult = 'victory' | 'defeat' | null;
 type BattleSideKey = 'player' | 'opponent';
 
-interface StructuredBattleMessage {
-  code: string;
-  args: Record<string, any>;
-}
-
 interface BattleStateEventPayload {
   battle: any;
-  structuredMessages: StructuredBattleMessage[];
+  messages: string[];
   timeline: any[];
   requiresSwitch: boolean;
   winnerUserId: number | null;
@@ -38,7 +33,6 @@ interface BattleStateEventPayload {
 export class Battle {
   private readonly FALLBACK_SPRITE = '/assets/error/missing-no.png';
   private readonly WAITING_MESSAGE_SNIPPET = 'esperando al rival';
-  private readonly INTRO_MESSAGE_SNIPPET = 'la batalla comienza';
   private readonly ONLINE_BATTLE_BOOTSTRAP_TIMEOUT_MS = 8000;
   private readonly TURN_MESSAGE_DURATION_MS = 1000;
   private readonly TURN_EFFECT_DELAY_MS = 220;
@@ -120,9 +114,9 @@ export class Battle {
       this.clearOnlineBattleBootstrapTimeout();
 
       const waitingForOpponent = this.hasWaitingMessage(battleEvent.messages);
+      const backendMessages = (battleEvent.messages ?? []).filter((message) => !!message?.trim());
       const filteredTimeline = battleEvent.timeline ?? [];
-      const structuredMessages = battleEvent.structuredMessages ?? [];
-      const hasPlaybackContent = filteredTimeline.length > 0 || structuredMessages.length > 0;
+      const hasPlaybackContent = backendMessages.length > 0 || filteredTimeline.length > 0;
       const shouldPlayTurn = hasPlaybackContent && !waitingForOpponent;
 
       if (!untracked(() => this.battleInfo())) {
@@ -132,7 +126,7 @@ export class Battle {
       if (shouldPlayTurn) {
         this.enqueueBattlePlayback({
           battle: battleEvent.battle,
-          structuredMessages,
+          messages: backendMessages,
           timeline: filteredTimeline,
           requiresSwitch: battleEvent.requiresSwitch ?? false,
           winnerUserId: battleEvent.winnerUserId ?? null,
@@ -363,12 +357,13 @@ export class Battle {
         return;
       }
 
-      const structuredChatMessages = event.structuredMessages
-        .map((message) => this.formatStructuredCombatMessage(message))
+      const backendChatMessages = event.messages
+        .map((message) => message.trim())
         .filter((message): message is string => !!message);
+      const playbackChatMessages = backendChatMessages;
       const playbackItems = event.timeline;
 
-      if (!playbackItems.length && !structuredChatMessages.length) {
+      if (!playbackItems.length && !playbackChatMessages.length) {
         this.applySnapshotToView(event.battle);
         this.applyBattleEventState(event, false);
         return;
@@ -380,14 +375,14 @@ export class Battle {
       this.isWaitingForOpponent.set(false);
 
       try {
-        const totalSteps = Math.max(playbackItems.length, structuredChatMessages.length);
+        const totalSteps = Math.max(playbackItems.length, playbackChatMessages.length);
         for (let index = 0; index < totalSteps; index++) {
           const item = playbackItems[index];
           if (this.isDestroyed) {
             return;
           }
 
-          const combatMessage = structuredChatMessages[index] ?? '';
+          const combatMessage = playbackChatMessages[index] ?? '';
 
           if (combatMessage) {
             this.combatChatMessages.update((current) => [...current, combatMessage]);
@@ -409,105 +404,6 @@ export class Battle {
         }
       }
     });
-  }
-
-  private formatStructuredCombatMessage(message: StructuredBattleMessage): string {
-    const args = message?.args ?? {};
-    const actor = this.normalizeDisplayToken(args['actor']);
-    const target = this.normalizeDisplayToken(args['target']);
-    const move = this.normalizeDisplayToken(args['move']);
-    const stat = this.normalizeDisplayToken(args['stat']);
-    const damage = args['damage'];
-    const stages = args['stages'];
-
-    switch (message?.code) {
-      case 'attack_used':
-        return actor && move ? `${actor} usa ${move}` : '';
-      case 'attack_missed':
-        return actor ? `${actor} fallo el ataque` : 'fallo el ataque';
-      case 'avoided_attack':
-        return target ? `${target} evito el ataque` : 'evito el ataque';
-      case 'critical_hit':
-        return 'golpe critico';
-      case 'super_effective':
-        return 'muy eficaz';
-      case 'not_very_effective':
-        return 'no muy eficaz';
-      case 'no_effect':
-        return target ? `no afecta a ${target}` : 'no afecta';
-      case 'damage_dealt':
-        return target && Number.isFinite(Number(damage)) ? `${target} recibe ${damage} danio` : '';
-      case 'hp_restored':
-        return actor ? `${actor} recupera ps` : 'recupera ps';
-      case 'confusion_start':
-        return actor ? `${actor} esta confuso` : 'esta confuso';
-      case 'confusion_end':
-        return actor ? `${actor} ya no esta confuso` : 'ya no esta confuso';
-      case 'confusion_self_hit':
-        return 'esta tan confuso que se hirio a si mismo';
-      case 'paralyzed_cant_move':
-        return actor ? `${actor} esta paralizado y no puede moverse` : 'esta paralizado y no puede moverse';
-      case 'asleep':
-        return actor ? `${actor} se durmio` : 'se durmio';
-      case 'poisoned':
-      case 'badly_poisoned':
-        return actor ? `${actor} se enveneno` : 'se enveneno';
-      case 'flinched':
-        return actor ? `${actor} retrocedio` : 'retrocedio';
-      case 'fainted':
-        return actor ? `${actor} se debilito` : 'se debilito';
-      case 'send_out':
-        return actor ? `adelante ${actor}` : 'adelante';
-      case 'withdraw':
-        return actor ? `vuelve ${actor}` : 'vuelve';
-      case 'forced_switch': {
-        const next = this.normalizeDisplayToken(args['next']);
-        if (actor && next) {
-          return `${actor} es forzado a retirarse. adelante ${next}`;
-        }
-        return actor ? `${actor} es forzado a retirarse` : 'cambio forzado';
-      }
-      case 'light_screen_start':
-        return 'pantalla de luz activa';
-      case 'light_screen_end':
-        return 'pantalla de luz termina';
-      case 'reflect_start':
-        return 'reflejo activo';
-      case 'reflect_end':
-        return 'reflejo termina';
-      case 'mist_start':
-        return 'niebla activa';
-      case 'mist_end':
-        return 'niebla termina';
-      case 'stat_protected':
-        return actor ? `${actor} protege sus stats` : 'stats protegidas';
-      case 'stats_reset':
-        return 'stats reseteadas';
-      case 'stat_rose':
-        return actor && stat ? `${actor} sube ${stat}${Number.isFinite(Number(stages)) ? ` x${stages}` : ''}` : 'stat sube';
-      case 'stat_fell':
-        return actor && stat ? `${actor} baja ${stat}${Number.isFinite(Number(stages)) ? ` x${stages}` : ''}` : 'stat baja';
-      case 'out_of_pp':
-        return actor && move ? `${actor} no tiene pp para ${move}` : 'sin pp';
-      case 'no_moves_left':
-        return actor ? `${actor} no tiene movimientos` : 'sin movimientos';
-      case 'battle_won':
-        return 'combate ganado';
-      case 'battle_lost':
-        return 'combate perdido';
-      default:
-        return '';
-    }
-  }
-
-  private normalizeDisplayToken(value: unknown): string {
-    if (typeof value !== 'string') {
-      return '';
-    }
-
-    return value
-      .trim()
-      .replace(/_/g, ' ');
   }
 
   private applyBattleEventState(event: BattleStateEventPayload, waitingForOpponent: boolean): void {
