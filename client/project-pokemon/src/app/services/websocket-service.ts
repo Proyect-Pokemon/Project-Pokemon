@@ -12,6 +12,14 @@ export interface BattleStateEvent {
   messages: string[];
   structuredMessages: Array<{ code: string; args: Record<string, any> }>;
   timeline: any[];
+  replaySteps: Array<{
+    stepIndex: number;
+    message?: string | null;
+    structuredMessage?: { code: string; args: Record<string, any> } | null;
+    events: any[];
+    delayMs?: number | null;
+    metadata?: Record<string, any> | null;
+  }>;
   requiresSwitch: boolean;
   requiresSwitchSelection: boolean;
   availableSlotsForSwitch: number[];
@@ -121,6 +129,7 @@ export class SocketService {
       requiresSwitchSelection: message.requiresSwitchSelection ?? false,
       availableSlotsForSwitch: message.availableSlotsForSwitch ?? [],
       winnerUserId: message.winnerUserId ?? null,
+      replaySteps: message.replaySteps ?? [],
       messages: message.messages ?? [],
       structuredMessages: message.structuredMessages ?? [],
       timeline: message.timeline ?? [],
@@ -129,6 +138,7 @@ export class SocketService {
     this.onBattleState.set({
       action: message.action ?? 0,
       battle: message.battle,
+      replaySteps: message.replaySteps ?? [],
       messages: message.messages ?? [],
       structuredMessages: message.structuredMessages ?? [],
       timeline: message.timeline ?? [],

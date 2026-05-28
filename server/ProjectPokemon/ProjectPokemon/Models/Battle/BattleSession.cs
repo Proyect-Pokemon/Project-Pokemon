@@ -31,6 +31,10 @@ public class BattleSession {
     public required int PlayerUserId { get; set; }
     public int? Player2UserId { get; set; }
 
+    // Nombres de los jugadores para mostrar en mensajes
+    public string? PlayerUserName { get; set; }
+    public string? Player2UserName { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public bool IsParticipant(int userId) {
@@ -55,6 +59,14 @@ public class BattleSession {
         if (PlayerUserId == userId) return OpponentSide;
         if (Player2UserId == userId) return PlayerSide;
 
+        return null;
+    }
+
+    // Obtiene el nombre del usuario ganador
+    public string? GetWinnerName() {
+        if (WinnerUserId == null) return null;
+        if (WinnerUserId == PlayerUserId) return PlayerUserName;
+        if (WinnerUserId == Player2UserId) return Player2UserName;
         return null;
     }
 

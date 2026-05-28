@@ -3,6 +3,7 @@ using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Battle;
 using ProjectPokemon.Models.Battle.Movements;
 using ProjectPokemon.Networking.Messages.Battle;
+using ProjectPokemon.Services.Battle;
 
 namespace ProjectPokemon.Services;
 
@@ -24,9 +25,30 @@ public class BattleService {
     public class SubmitBattleActionResult {
         public bool Accepted { get; set; }
         public bool TurnResolved { get; set; }
-        public List<string> Messages { get; set; } = new(); // Legacy (deprecated)
-        public List<StructuredBattleMessage> StructuredMessages { get; set; } = new(); // Nuevo
+
+        /// <summary>
+        /// [NUEVO RECOMENDADO] Lista ordenada de pasos de replay para reproducción determinista
+        /// </summary>
+        public List<ReplayStep> ReplaySteps { get; set; } = new();
+
+        /// <summary>
+        /// [LEGACY - DEPRECATED] Usar ReplaySteps en su lugar
+        /// </summary>
+        [Obsolete("Use ReplaySteps instead")]
+        public List<string> Messages { get; set; } = new();
+
+        /// <summary>
+        /// [LEGACY - DEPRECATED] Usar ReplaySteps en su lugar
+        /// </summary>
+        [Obsolete("Use ReplaySteps instead")]
+        public List<StructuredBattleMessage> StructuredMessages { get; set; } = new();
+
+        /// <summary>
+        /// [LEGACY - DEPRECATED] Usar ReplaySteps en su lugar
+        /// </summary>
+        [Obsolete("Use ReplaySteps instead")]
         public List<Networking.Messages.Battle.BattleEvent> Timeline { get; set; } = new();
+
         public int? WinnerUserId { get; set; }
 
         // Indica si el jugador necesita elegir un Pokémon de reemplazo
@@ -38,8 +60,24 @@ public class BattleService {
 
     // Clase interna para resolver turnos
     private class TurnResolutionResult {
+        /// <summary>
+        /// Builder para construir steps ordenados durante la resolución del turno
+        /// </summary>
+        public ReplayStepBuilder StepBuilder { get; set; } = new();
+
+        /// <summary>
+        /// [LEGACY] Mantener para compatibilidad durante transición
+        /// </summary>
         public List<string> Messages { get; set; } = new();
+
+        /// <summary>
+        /// [LEGACY] Mantener para compatibilidad durante transición
+        /// </summary>
         public List<StructuredBattleMessage> StructuredMessages { get; set; } = new();
+
+        /// <summary>
+        /// [LEGACY] Mantener para compatibilidad durante transición
+        /// </summary>
         public List<Networking.Messages.Battle.BattleEvent> Events { get; set; } = new();
     }
 
@@ -47,6 +85,10 @@ public class BattleService {
     public async Task<BattleSession?> StartBattleAsync(int userId, int teamId) {
         var playerTeam = await LoadTeamAsync(userId, teamId);
         if (playerTeam == null) return null;
+
+        // Cargar nombre del jugador
+        var player = await _context.Users.FindAsync(userId);
+        string playerName = player?.Nickname ?? "Jugador";
 
         // Equipo rival temporal (placeholder) para modo CPU
         var opponentPokemonEntity = await _context.PokemonTeams
@@ -73,6 +115,7 @@ public class BattleService {
 
         var session = new BattleSession {
             PlayerUserId = userId,
+            PlayerUserName = playerName,
             PlayerSide = new BattleSide { Team = playerTeam, ActiveSlot = 0 },
             OpponentSide = new BattleSide { Team = opponentTeam, ActiveSlot = 0 }
         };
@@ -96,9 +139,17 @@ public class BattleService {
             return null;
         }
 
+        // Cargar nombres de ambos jugadores
+        var player1 = await _context.Users.FindAsync(player1UserId);
+        var player2 = await _context.Users.FindAsync(player2UserId);
+        string player1Name = player1?.Nickname ?? "Jugador 1";
+        string player2Name = player2?.Nickname ?? "Jugador 2";
+
         var session = new BattleSession {
             PlayerUserId = player1UserId,
             Player2UserId = player2UserId,
+            PlayerUserName = player1Name,
+            Player2UserName = player2Name,
             PlayerSide = new BattleSide { Team = team1, ActiveSlot = 0 },
             OpponentSide = new BattleSide { Team = team2, ActiveSlot = 0 }
         };
@@ -189,10 +240,16 @@ public class BattleService {
                 battle.Status = ProjectPokemon.Enum.BattleStatus.Finished;
                 battle.PendingActionsByUserId.Clear();
 
+                // Obtener nombre del jugador que se rindió
+                string forfeitPlayerName = userId == battle.PlayerUserId 
+                    ? (battle.PlayerUserName ?? "Jugador") 
+                    : (battle.Player2UserName ?? "Jugador");
+                string forfeitMessage = $"{forfeitPlayerName} se rindió.";
+
                 return new SubmitBattleActionResult {
                     Accepted = true,
                     TurnResolved = true,
-                    Messages = new List<string> { "Un jugador se rindió." },
+                    Messages = new List<string> { forfeitMessage },
                     WinnerUserId = battle.WinnerUserId
                 };
             }
@@ -247,6 +304,7 @@ public class BattleService {
                 return new SubmitBattleActionResult {
                     Accepted = true,
                     TurnResolved = false,
+                    ReplaySteps = switchResult.StepBuilder.Build(),
                     Messages = switchResult.Messages,
                     StructuredMessages = switchResult.StructuredMessages,
                     Timeline = switchResult.Events,
@@ -308,6 +366,7 @@ public class BattleService {
             return new SubmitBattleActionResult {
                 Accepted = true,
                 TurnResolved = true,
+                ReplaySteps = turnResult.StepBuilder.Build(),
                 Messages = turnResult.Messages,
                 StructuredMessages = turnResult.StructuredMessages,
                 Timeline = turnResult.Events,
@@ -341,6 +400,38 @@ public class BattleService {
     // Helper para obtener el nombre del owner (player/opponent)
     private string GetOwnerName(BattleSession battle, int userId) {
         return battle.PlayerUserId == userId ? "player" : "opponent";
+    }
+
+    // Helper para traducir nombres de estadísticas al español
+    private string TranslateStatName(string stat) {
+        return stat switch {
+            "Attack" => "Ataque",
+            "Defense" => "Defensa",
+            "SpecialAttack" => "Ataque Especial",
+            "SpecialDefense" => "Defensa Especial",
+            "Speed" => "Velocidad",
+            "Accuracy" => "Precisión",
+            "Evasion" => "Evasión",
+            _ => stat
+        };
+    }
+
+    // Helper para generar mensaje de cambio de estadística
+    private string GetStatChangeMessage(string pokemonName, string stat, int change) {
+        string statNameEs = TranslateStatName(stat);
+        int absChange = Math.Abs(change);
+
+        if (change > 0) {
+            // Aumento
+            return absChange >= 2 
+                ? $"{statNameEs} de {pokemonName} ha subido mucho."
+                : $"{statNameEs} de {pokemonName} ha subido.";
+        } else {
+            // Reducción
+            return absChange >= 2 
+                ? $"{statNameEs} de {pokemonName} ha bajado mucho."
+                : $"{statNameEs} de {pokemonName} ha bajado.";
+        }
     }
 
     // Helper para crear args basicos de actor
@@ -406,6 +497,88 @@ public class BattleService {
             AddStructuredMessage(result, BattleMessageCode.SuperEffective, args);
         }
     }
+
+    // ========== REPLAY STEP HELPERS ==========
+
+    /// <summary>
+    /// Crea un step de ataque usado (mensaje + AttackEvent)
+    /// </summary>
+    private void AddAttackUsedStep(
+        TurnResolutionResult result,
+        string message,
+        StructuredBattleMessage? structuredMessage,
+        AttackEvent attackEvent) {
+
+        result.StepBuilder.AddStep(
+            textMessage: message,
+            structuredMessage: structuredMessage,
+            singleEvent: attackEvent
+        );
+    }
+
+    /// <summary>
+    /// Crea un step de cambio de HP (mensaje + HpChangeEvent)
+    /// </summary>
+    private void AddHpChangeStep(
+        TurnResolutionResult result,
+        string message,
+        StructuredBattleMessage? structuredMessage,
+        HpChangeEvent hpEvent) {
+
+        result.StepBuilder.AddStep(
+            textMessage: message,
+            structuredMessage: structuredMessage,
+            singleEvent: hpEvent
+        );
+    }
+
+    /// <summary>
+    /// Crea un step de mensaje estructurado (crítico, efectividad, etc.)
+    /// </summary>
+    private void AddMessageStep(
+        TurnResolutionResult result,
+        string? message,
+        StructuredBattleMessage? structuredMessage) {
+
+        if (message != null || structuredMessage != null) {
+            result.StepBuilder.AddStep(
+                textMessage: message,
+                structuredMessage: structuredMessage
+            );
+        }
+    }
+
+    /// <summary>
+    /// Crea un step de cambio de estadística (mensaje + StatStageChangeEvent)
+    /// </summary>
+    private void AddStatChangeStep(
+        TurnResolutionResult result,
+        string message,
+        StatStageChangeEvent statEvent) {
+
+        result.StepBuilder.AddStep(
+            textMessage: message,
+            singleEvent: statEvent
+        );
+    }
+
+    /// <summary>
+    /// Crea un step genérico con mensaje y/o evento
+    /// </summary>
+    private void AddGenericStep(
+        TurnResolutionResult result,
+        string? message,
+        BattleEvent? battleEvent = null,
+        StructuredBattleMessage? structuredMessage = null) {
+
+        result.StepBuilder.AddStep(
+            textMessage: message,
+            structuredMessage: structuredMessage,
+            singleEvent: battleEvent
+        );
+    }
+
+    // ========== FIN REPLAY STEP HELPERS ==========
 
     private bool IsValidActionPayload(
         BattleSession battle,
@@ -503,22 +676,46 @@ public class BattleService {
         // Rendirse tiene prioridad total y termina la batalla inmediatamente.
         if (player1Action.Action == BattleAction.Forfeit) {
             battle.WinnerUserId = player2UserId;
-            result.Messages.Add("El jugador 1 se rindió.");
-            result.Events.Add(new Networking.Messages.Battle.BattleEndEvent {
-                Message = "El jugador 1 se rindió.",
+            string player1Name = battle.PlayerUserName ?? "Jugador 1";
+            string forfeitMsg = $"{player1Name} se rindió.";
+            var forfeitEvent = new Networking.Messages.Battle.BattleEndEvent {
+                Message = forfeitMsg,
                 Winner = "opponent",
                 WinnerUserId = player2UserId
-            });
+            };
+
+            // Legacy
+            result.Messages.Add(forfeitMsg);
+            result.Events.Add(forfeitEvent);
+
+            // ReplayStep
+            result.StepBuilder.AddStep(
+                textMessage: forfeitMsg,
+                singleEvent: forfeitEvent
+            );
+
             return result;
         }
         if (player2Action.Action == BattleAction.Forfeit) {
             battle.WinnerUserId = player1UserId;
-            result.Messages.Add("El jugador 2 se rindió.");
-            result.Events.Add(new Networking.Messages.Battle.BattleEndEvent {
-                Message = "El jugador 2 se rindió.",
+            string player2Name = battle.Player2UserName ?? "Jugador 2";
+            string forfeitMsg = $"{player2Name} se rindió.";
+            var forfeitEvent = new Networking.Messages.Battle.BattleEndEvent {
+                Message = forfeitMsg,
                 Winner = "player",
                 WinnerUserId = player1UserId
-            });
+            };
+
+            // Legacy
+            result.Messages.Add(forfeitMsg);
+            result.Events.Add(forfeitEvent);
+
+            // ReplayStep
+            result.StepBuilder.AddStep(
+                textMessage: forfeitMsg,
+                singleEvent: forfeitEvent
+            );
+
             return result;
         }
 
@@ -552,13 +749,23 @@ public class BattleService {
         // Si la batalla terminó, agregar evento de fin
         if (battle.WinnerUserId != null) {
             string winner = battle.WinnerUserId == player1UserId ? "player" : "opponent";
-            string winnerName = winner == "player" ? "Jugador" : "Oponente";
-            result.Messages.Add($"{winnerName} ganó la batalla.");
-            result.Events.Add(new Networking.Messages.Battle.BattleEndEvent {
-                Message = $"{winnerName} ganó la batalla.",
+            string winnerName = battle.GetWinnerName() ?? "Desconocido";
+            string winMsg = $"{winnerName} ganó la batalla.";
+            var winEvent = new Networking.Messages.Battle.BattleEndEvent {
+                Message = winMsg,
                 Winner = winner,
                 WinnerUserId = battle.WinnerUserId
-            });
+            };
+
+            // Legacy
+            result.Messages.Add(winMsg);
+            result.Events.Add(winEvent);
+
+            // ReplayStep
+            result.StepBuilder.AddStep(
+                textMessage: winMsg,
+                singleEvent: winEvent
+            );
         }
 
         return result;
@@ -616,10 +823,22 @@ public class BattleService {
         int previousSlot = mySide.ActiveSlot;
         bool switched = mySide.SwitchPokemon(action.TargetSlot.Value);
         if (!switched) {
-            result.Messages.Add("No se pudo realizar el cambio de Pokémon.");
+            string errorMsg = "No se pudo realizar el cambio de Pokémon.";
+
+            // Legacy
+            result.Messages.Add(errorMsg);
             result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                Message = "No se pudo realizar el cambio de Pokémon."
+                Message = errorMsg
             });
+
+            // ReplayStep
+            result.StepBuilder.AddStep(
+                textMessage: errorMsg,
+                singleEvent: new Networking.Messages.Battle.MessageEvent {
+                    Message = errorMsg
+                }
+            );
+
             return;
         }
 
@@ -631,15 +850,24 @@ public class BattleService {
         string side = battle.PlayerUserId == userId ? "player" : "opponent";
         string message = $"Cambio realizado: entra {name}.";
 
-        result.Messages.Add(message);
-        result.Events.Add(new Networking.Messages.Battle.SwitchEvent {
+        var switchEvent = new Networking.Messages.Battle.SwitchEvent {
             Message = message,
             Side = side,
             PreviousActiveSlot = previousSlot,
             NewActiveSlot = action.TargetSlot.Value,
             NewPokemonName = name,
             IsAutomatic = false
-        });
+        };
+
+        // Legacy
+        result.Messages.Add(message);
+        result.Events.Add(switchEvent);
+
+        // ReplayStep - switch es una acción atómica con su evento
+        result.StepBuilder.AddStep(
+            textMessage: message,
+            singleEvent: switchEvent
+        );
     }
 
     private void ExecuteAttack(BattleSession battle, int userId, PendingBattleAction action, TurnResolutionResult result) {
@@ -1007,6 +1235,11 @@ public class BattleService {
                 // Mensaje de daño recibido (sin números)
                 result.Messages.Add($"{defender.GetDisplayName()} ha recibido daño.");
 
+                // Si es un movimiento multi-golpe, indicar el número de golpes
+                if (movementResult.HitCount > 1) {
+                    result.Messages.Add($"¡Golpeó {movementResult.HitCount} veces!");
+                }
+
                 var damageArgs = new Dictionary<string, object>(CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender)) {
                     { "damage", damage }
                 };
@@ -1081,6 +1314,11 @@ public class BattleService {
 
                 // Mensaje de daño recibido (sin números)
                 result.Messages.Add($"{defender.GetDisplayName()} ha recibido daño.");
+
+                // Si es un movimiento multi-golpe, indicar el número de golpes
+                if (movementResult.HitCount > 1) {
+                    result.Messages.Add($"¡Golpeó {movementResult.HitCount} veces!");
+                }
 
                 var damageArgs = new Dictionary<string, object>(CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender)) {
                     { "damage", damage }
@@ -1226,7 +1464,6 @@ public class BattleService {
 
                 // Mensaje estructurado para reset de stats
                 AddStructuredMessage(result, BattleMessageCode.StatsReset, new Dictionary<string, object>());
-                result.Messages.Add(hazeMsg);
 
                 result.Events.Add(new Networking.Messages.Battle.MessageEvent {
                     Message = hazeMsg
@@ -1236,15 +1473,13 @@ public class BattleService {
             else {
                 // Emitir eventos de cambio de estadísticas del defensor si ocurrieron
                 foreach (var (stat, change, newStage) in defenderStatChanges) {
-                    string statMsg = change > 0 
-                        ? $"{defender.GetDisplayName()} aumenta {stat} en {change}."
-                        : $"{defender.GetDisplayName()} reduce {stat} en {Math.Abs(change)}.";
+                    string statMsg = GetStatChangeMessage(defender.GetDisplayName(), stat, change);
                     result.Messages.Add(statMsg);
 
                     result.Events.Add(new Networking.Messages.Battle.StatStageChangeEvent {
                         Message = statMsg,
                         Target = defenderId,
-                        Stat = stat,
+                        Stat = TranslateStatName(stat),
                         Change = change,
                         NewStage = newStage
                     });
@@ -1257,15 +1492,13 @@ public class BattleService {
         // Para Haze, estos eventos no se emiten porque ya se emitió el mensaje general
         if (selectedMove.Id != 114) {
             foreach (var (stat, change, newStage) in attackerStatChanges) {
-                string statMsg = change > 0 
-                    ? $"{attacker.GetDisplayName()} aumenta {stat} en {change}."
-                    : $"{attacker.GetDisplayName()} reduce {stat} en {Math.Abs(change)}.";
+                string statMsg = GetStatChangeMessage(attacker.GetDisplayName(), stat, change);
                 result.Messages.Add(statMsg);
 
                 result.Events.Add(new Networking.Messages.Battle.StatStageChangeEvent {
                     Message = statMsg,
                     Target = attackerId,
-                    Stat = stat,
+                    Stat = TranslateStatName(stat),
                     Change = change,
                     NewStage = newStage
                 });
@@ -1417,17 +1650,25 @@ public class BattleService {
             side.MistTurnsRemaining--;
             if (side.MistTurnsRemaining == 0) {
                 string mistEndMsg = "¡El efecto de niebla se disipó!";
-                result.Messages.Add(mistEndMsg);
-
-                // Mensaje estructurado
                 var mistArgs = new Dictionary<string, object> {
                     { "owner", GetOwnerName(battle, userId) }
                 };
-                AddStructuredMessage(result, BattleMessageCode.MistEnd, mistArgs);
-
-                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                var mistStructuredMsg = BattleMessageBuilder.Create(BattleMessageCode.MistEnd, mistArgs);
+                var mistEvent = new Networking.Messages.Battle.MessageEvent {
                     Message = mistEndMsg
-                });
+                };
+
+                // Legacy
+                result.Messages.Add(mistEndMsg);
+                AddStructuredMessage(result, BattleMessageCode.MistEnd, mistArgs);
+                result.Events.Add(mistEvent);
+
+                // ReplayStep
+                result.StepBuilder.AddStep(
+                    textMessage: mistEndMsg,
+                    structuredMessage: mistStructuredMsg,
+                    singleEvent: mistEvent
+                );
             }
         }
 
@@ -1436,17 +1677,25 @@ public class BattleService {
             side.LightScreenTurnsRemaining--;
             if (side.LightScreenTurnsRemaining == 0) {
                 string lightScreenEndMsg = "¡El efecto de Pantalla de Luz se disipó!";
-                result.Messages.Add(lightScreenEndMsg);
-
-                // Mensaje estructurado
                 var lightScreenArgs = new Dictionary<string, object> {
                     { "owner", GetOwnerName(battle, userId) }
                 };
-                AddStructuredMessage(result, BattleMessageCode.LightScreenEnd, lightScreenArgs);
-
-                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                var lightScreenStructuredMsg = BattleMessageBuilder.Create(BattleMessageCode.LightScreenEnd, lightScreenArgs);
+                var lightScreenEvent = new Networking.Messages.Battle.MessageEvent {
                     Message = lightScreenEndMsg
-                });
+                };
+
+                // Legacy
+                result.Messages.Add(lightScreenEndMsg);
+                AddStructuredMessage(result, BattleMessageCode.LightScreenEnd, lightScreenArgs);
+                result.Events.Add(lightScreenEvent);
+
+                // ReplayStep
+                result.StepBuilder.AddStep(
+                    textMessage: lightScreenEndMsg,
+                    structuredMessage: lightScreenStructuredMsg,
+                    singleEvent: lightScreenEvent
+                );
             }
         }
 
@@ -1455,17 +1704,25 @@ public class BattleService {
             side.ReflectTurnsRemaining--;
             if (side.ReflectTurnsRemaining == 0) {
                 string reflectEndMsg = "¡El efecto de Reflejo se disipó!";
-                result.Messages.Add(reflectEndMsg);
-
-                // Mensaje estructurado
                 var reflectArgs = new Dictionary<string, object> {
                     { "owner", GetOwnerName(battle, userId) }
                 };
-                AddStructuredMessage(result, BattleMessageCode.ReflectEnd, reflectArgs);
-
-                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
+                var reflectStructuredMsg = BattleMessageBuilder.Create(BattleMessageCode.ReflectEnd, reflectArgs);
+                var reflectEvent = new Networking.Messages.Battle.MessageEvent {
                     Message = reflectEndMsg
-                });
+                };
+
+                // Legacy
+                result.Messages.Add(reflectEndMsg);
+                AddStructuredMessage(result, BattleMessageCode.ReflectEnd, reflectArgs);
+                result.Events.Add(reflectEvent);
+
+                // ReplayStep
+                result.StepBuilder.AddStep(
+                    textMessage: reflectEndMsg,
+                    structuredMessage: reflectStructuredMsg,
+                    singleEvent: reflectEvent
+                );
             }
         }
     }
@@ -1489,8 +1746,6 @@ public class BattleService {
         int hpAfter = pokemon.CurrentHp;
 
         if (effect != null) {
-            result.Messages.Add(effect);
-
             if (hpBefore != hpAfter) {
                 string cause = pokemon.Status switch {
                     Enum.PokeStatus.Burn => "burn",
@@ -1500,7 +1755,7 @@ public class BattleService {
                 };
 
                 int damage = Math.Max(0, hpBefore - hpAfter);
-                result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                var hpChangeEvent = new Networking.Messages.Battle.HpChangeEvent {
                     Message = effect,
                     Target = pokemonId,
                     BeforeHp = hpBefore,
@@ -1508,17 +1763,39 @@ public class BattleService {
                     MaxHp = pokemon.MaxHp,
                     Amount = -damage,
                     Cause = cause
-                });
+                };
+
+                // Legacy
+                result.Messages.Add(effect);
+                result.Events.Add(hpChangeEvent);
+
+                // ReplayStep
+                result.StepBuilder.AddStep(
+                    textMessage: effect,
+                    singleEvent: hpChangeEvent
+                );
+            } else {
+                // Solo mensaje sin cambio de HP (legacy)
+                result.Messages.Add(effect);
             }
 
             // Verificar si se debilitó por el efecto de estado
             if (pokemon.IsFainted()) {
                 string faintMsg = $"{pokemon.GetDisplayName()} se debilitó.";
-                result.Messages.Add(faintMsg);
-                result.Events.Add(new Networking.Messages.Battle.FaintEvent {
+                var faintEvent = new Networking.Messages.Battle.FaintEvent {
                     Message = faintMsg,
                     Target = pokemonId
-                });
+                };
+
+                // Legacy
+                result.Messages.Add(faintMsg);
+                result.Events.Add(faintEvent);
+
+                // ReplayStep
+                result.StepBuilder.AddStep(
+                    textMessage: faintMsg,
+                    singleEvent: faintEvent
+                );
 
                 // Marcar que el jugador necesita elegir un Pokémon de reemplazo
                 if (!side.IsDefeated()) {

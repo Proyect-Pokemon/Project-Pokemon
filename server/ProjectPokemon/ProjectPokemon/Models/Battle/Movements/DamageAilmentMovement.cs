@@ -37,10 +37,29 @@ public class DamageAilmentMovement : DamageMovement {
 
         result.Executed = true;
 
-        // Calcular y aplicar daño usando la lógica de DamageMovement con metadata
-        int damage = CalculateDamageWithMetadata(attacker, defender, result);
-        defender.TakeDamage(damage);
-        result.Damage = damage;
+        // Determinar el número de golpes si es un movimiento multi-golpe
+        int hitCount = 1;
+        if (MinHits.HasValue && MaxHits.HasValue) {
+            Random random = new Random();
+            hitCount = random.Next(MinHits.Value, MaxHits.Value + 1);
+        }
+        result.HitCount = hitCount;
+
+        // Ejecutar cada golpe
+        int totalDamage = 0;
+        for (int i = 0; i < hitCount; i++) {
+            int damage = CalculateDamageWithMetadata(attacker, defender, result);
+            defender.TakeDamage(damage);
+            totalDamage += damage;
+
+            // Si el defensor se debilita, detener los golpes
+            if (defender.IsFainted()) {
+                result.HitCount = i + 1; // Actualizar al número real de golpes
+                break;
+            }
+        }
+
+        result.Damage = totalDamage;
 
         // Después del daño, aplicar efecto secundario de ailment
         // si el defensor sigue vivo y se cumple la probabilidad

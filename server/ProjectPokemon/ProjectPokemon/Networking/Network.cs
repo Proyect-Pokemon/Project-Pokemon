@@ -222,10 +222,11 @@ public class Network {
             await client.SendAsync(new BattleStateUpdate {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle, userId.Value),
+                ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, userId.Value),
                 Messages = result.Messages,
                 StructuredMessages = result.StructuredMessages,
                 Timeline = result.Timeline,
-                RequiresSwitch = false,
+                RequiresSwitch = result.RequiresSwitchSelection,
                 WinnerUserId = battle.WinnerUserId
             });
             return;
@@ -242,10 +243,11 @@ public class Network {
             await client.SendAsync(new BattleStateUpdate {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle, userId.Value),
+                ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, userId.Value),
                 Messages = result.Messages,
                 StructuredMessages = result.StructuredMessages,
                 Timeline = result.Timeline,
-                RequiresSwitch = false,
+                RequiresSwitch = result.RequiresSwitchSelection,
                 WinnerUserId = battle.WinnerUserId
             });
             return;
@@ -270,10 +272,11 @@ public class Network {
                     var update = new BattleStateUpdate {
                         Action = actionRequest.Action,
                         Battle = CreateBattleSnapshot(battle, perspectiveUserId),
+                        ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, perspectiveUserId),
                         Messages = result.Messages,
                         StructuredMessages = result.StructuredMessages,
                         Timeline = result.Timeline,
-                        RequiresSwitch = false,
+                        RequiresSwitch = result.RequiresSwitchSelection && perspectiveUserId == userId.Value,
                         WinnerUserId = battle.WinnerUserId
                     };
                     return _clients[id].SendAsync(update);
@@ -448,6 +451,136 @@ public class Network {
                 ActiveSlot = theirSide.ActiveSlot
             }
         };
+    }
+
+    /// <summary>
+    /// Remapea las perspectivas (player/opponent) en los ReplaySteps según el userId del receptor.
+    /// Crea una copia profunda de los steps para evitar mutación compartida entre clientes.
+    /// </summary>
+    private List<ReplayStep> RemapReplayStepPerspectives(
+        List<ReplayStep> originalSteps,
+        Models.Battle.BattleSession battle,
+        int perspectiveUserId) {
+
+        var remappedSteps = new List<ReplayStep>();
+
+        foreach (var step in originalSteps) {
+            var newStep = new ReplayStep {
+                StepIndex = step.StepIndex,
+                Message = step.Message,
+                StructuredMessage = step.StructuredMessage,
+                DelayMs = step.DelayMs,
+                Metadata = step.Metadata != null ? new Dictionary<string, object>(step.Metadata) : null
+            };
+
+            // Remapear eventos
+            foreach (var evt in step.Events) {
+                var remappedEvent = RemapEventPerspective(evt, battle, perspectiveUserId);
+                newStep.Events.Add(remappedEvent);
+            }
+
+            remappedSteps.Add(newStep);
+        }
+
+        return remappedSteps;
+    }
+
+    /// <summary>
+    /// Remapea la perspectiva de un solo evento de batalla.
+    /// </summary>
+    private BattleEvent RemapEventPerspective(
+        BattleEvent originalEvent,
+        Models.Battle.BattleSession battle,
+        int perspectiveUserId) {
+
+        // Función helper para remapear PokemonIdentifier
+        PokemonIdentifier RemapIdentifier(PokemonIdentifier original) {
+            bool isPlayerSide = original.Side == "player";
+            bool perspectiveIsPlayer1 = perspectiveUserId == battle.PlayerUserId;
+
+            string newSide = (isPlayerSide == perspectiveIsPlayer1) ? "player" : "opponent";
+
+            return new PokemonIdentifier {
+                Side = newSide,
+                Slot = original.Slot,
+                DisplayName = original.DisplayName
+            };
+        }
+
+        // Remapear según el tipo de evento
+        return originalEvent switch {
+            AttackEvent attack => new AttackEvent {
+                Message = attack.Message,
+                Attacker = RemapIdentifier(attack.Attacker),
+                Defender = RemapIdentifier(attack.Defender),
+                MoveName = attack.MoveName,
+                Hit = attack.Hit,
+                Blocked = attack.Blocked,
+                BlockReason = attack.BlockReason
+            },
+            HpChangeEvent hpChange => new HpChangeEvent {
+                Message = hpChange.Message,
+                Target = RemapIdentifier(hpChange.Target),
+                BeforeHp = hpChange.BeforeHp,
+                AfterHp = hpChange.AfterHp,
+                MaxHp = hpChange.MaxHp,
+                Amount = hpChange.Amount,
+                Cause = hpChange.Cause,
+                SourceMove = hpChange.SourceMove,
+                SourcePokemon = hpChange.SourcePokemon != null ? RemapIdentifier(hpChange.SourcePokemon) : null
+            },
+            StatusChangeEvent statusChange => new StatusChangeEvent {
+                Message = statusChange.Message,
+                Target = RemapIdentifier(statusChange.Target),
+                BeforeStatus = statusChange.BeforeStatus,
+                AfterStatus = statusChange.AfterStatus,
+                Cause = statusChange.Cause
+            },
+            SecondaryStatusChangeEvent secondaryStatus => new SecondaryStatusChangeEvent {
+                Message = secondaryStatus.Message,
+                Target = RemapIdentifier(secondaryStatus.Target),
+                SecondaryStatus = secondaryStatus.SecondaryStatus,
+                Added = secondaryStatus.Added
+            },
+            FaintEvent faint => new FaintEvent {
+                Message = faint.Message,
+                Target = RemapIdentifier(faint.Target)
+            },
+            SwitchEvent switchEvt => new SwitchEvent {
+                Message = switchEvt.Message,
+                Side = RemapSide(switchEvt.Side, battle, perspectiveUserId),
+                PreviousActiveSlot = switchEvt.PreviousActiveSlot,
+                NewActiveSlot = switchEvt.NewActiveSlot,
+                NewPokemonName = switchEvt.NewPokemonName,
+                IsAutomatic = switchEvt.IsAutomatic
+            },
+            StatStageChangeEvent statChange => new StatStageChangeEvent {
+                Message = statChange.Message,
+                Target = RemapIdentifier(statChange.Target),
+                Stat = statChange.Stat,
+                Change = statChange.Change,
+                NewStage = statChange.NewStage
+            },
+            BattleEndEvent battleEnd => new BattleEndEvent {
+                Message = battleEnd.Message,
+                Winner = RemapSide(battleEnd.Winner, battle, perspectiveUserId),
+                WinnerUserId = battleEnd.WinnerUserId
+            },
+            MessageEvent message => new MessageEvent {
+                Message = message.Message
+            },
+            _ => originalEvent // Fallback: devolver evento original si es tipo desconocido
+        };
+    }
+
+    /// <summary>
+    /// Remapea un string "player"/"opponent" según la perspectiva del receptor.
+    /// </summary>
+    private string RemapSide(string originalSide, Models.Battle.BattleSession battle, int perspectiveUserId) {
+        bool isPlayerSide = originalSide == "player";
+        bool perspectiveIsPlayer1 = perspectiveUserId == battle.PlayerUserId;
+
+        return (isPlayerSide == perspectiveIsPlayer1) ? "player" : "opponent";
     }
 
     // Overload sin perspectiva (para modo CPU, player1 siempre es el jugador)

@@ -35,4 +35,7 @@ public class MovementResult {
 
     // Indica si el movimiento falló porque el objetivo ya tiene un estado alterado primario
     public bool FailedByExistingStatus { get; set; } = false;
+
+    // Número de golpes realizados (para movimientos multi-golpe como Doble Bofetón, Púas, etc.)
+    public int HitCount { get; set; } = 1;
 }

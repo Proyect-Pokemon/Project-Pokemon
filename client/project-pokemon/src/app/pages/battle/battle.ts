@@ -17,6 +17,12 @@ type BattleSideKey = 'player' | 'opponent';
 
 interface BattleStateEventPayload {
   battle: any;
+  replaySteps: Array<{
+    stepIndex: number;
+    message?: string | null;
+    events: any[];
+    delayMs?: number | null;
+  }>;
   messages: string[];
   timeline: any[];
   requiresSwitchSelection: boolean;
@@ -35,8 +41,9 @@ export class Battle {
   private readonly FALLBACK_SPRITE = '/assets/error/missing-no.png';
   private readonly WAITING_MESSAGE_SNIPPET = 'esperando al rival';
   private readonly ONLINE_BATTLE_BOOTSTRAP_TIMEOUT_MS = 8000;
-  private readonly TURN_MESSAGE_DURATION_MS = 1000;
-  private readonly TURN_EFFECT_DELAY_MS = 220;
+  private readonly TURN_MESSAGE_DURATION_MS = 1500;
+  private readonly TURN_EFFECT_DELAY_MS = 500;
+  private readonly ATTACK_DASH_DURATION_MS = 220;
   private onlineBattleBootstrapTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private playbackChain: Promise<void> = Promise.resolve();
   private readonly playbackTimeouts = new Set<ReturnType<typeof setTimeout>>();
@@ -60,6 +67,8 @@ export class Battle {
   showFinishDialog = signal(false);
   battleResult = signal<BattleResult>(null);
   showLeaveConfirmation = signal(false);
+  playerAttackAnimating = signal(false);
+  opponentAttackAnimating = signal(false);
 
   private leaveDecisionResolver: ((decision: boolean) => void) | null = null;
   private leaveDecisionPromise: Promise<boolean> | null = null;
@@ -119,9 +128,10 @@ export class Battle {
       this.isSubmittingForcedSwitch.set(false);
 
       const waitingForOpponent = this.hasWaitingMessage(battleEvent.messages);
+      const replaySteps = (battleEvent.replaySteps ?? []).filter((step) => !!step);
       const backendMessages = (battleEvent.messages ?? []).filter((message) => !!message?.trim());
       const filteredTimeline = battleEvent.timeline ?? [];
-      const hasPlaybackContent = backendMessages.length > 0 || filteredTimeline.length > 0;
+      const hasPlaybackContent = replaySteps.length > 0 || backendMessages.length > 0 || filteredTimeline.length > 0;
       const shouldPlayTurn = hasPlaybackContent && !waitingForOpponent;
 
       if (!untracked(() => this.battleInfo())) {
@@ -131,6 +141,7 @@ export class Battle {
       if (shouldPlayTurn) {
         this.enqueueBattlePlayback({
           battle: battleEvent.battle,
+          replaySteps,
           messages: backendMessages,
           timeline: filteredTimeline,
           requiresSwitchSelection: battleEvent.requiresSwitchSelection ?? battleEvent.requiresSwitch ?? false,
@@ -400,9 +411,11 @@ export class Battle {
         .map((message) => message.trim())
         .filter((message): message is string => !!message);
       const playbackChatMessages = backendChatMessages;
-      const playbackItems = event.timeline;
+      const playbackTimelineQueue = [...(event.timeline ?? [])];
+      const playbackSteps = [...(event.replaySteps ?? [])].sort((a, b) => (a.stepIndex ?? 0) - (b.stepIndex ?? 0));
+      const canUseReplaySteps = this.shouldUseReplaySteps(playbackSteps, playbackChatMessages, playbackTimelineQueue);
 
-      if (!playbackItems.length && !playbackChatMessages.length) {
+      if (!playbackSteps.length && !playbackTimelineQueue.length && !playbackChatMessages.length) {
         this.applySnapshotToView(event.battle);
         this.applyBattleEventState(event, false);
         return;
@@ -414,27 +427,64 @@ export class Battle {
       this.isWaitingForOpponent.set(false);
 
       try {
-        const totalSteps = Math.max(playbackItems.length, playbackChatMessages.length);
-        for (let index = 0; index < totalSteps; index++) {
-          const item = playbackItems[index];
+        if (canUseReplaySteps) {
+          for (const step of playbackSteps) {
+            if (this.isDestroyed) {
+              return;
+            }
+
+            const stepMessage = step.message?.trim();
+            if (stepMessage) {
+              this.combatChatMessages.update((current) => [...current, stepMessage]);
+            }
+
+            await this.wait(this.TURN_EFFECT_DELAY_MS);
+
+            const stepEvents = Array.isArray(step.events) ? step.events : [];
+            for (const stepEvent of stepEvents) {
+              this.applyTimelineEvent(stepEvent, event.battle);
+            }
+
+            const stepDelay = Number(step.delayMs);
+            const normalizedStepDelay = Number.isFinite(stepDelay) && stepDelay > 0
+              ? stepDelay
+              : this.TURN_MESSAGE_DURATION_MS;
+            await this.wait(Math.max(0, normalizedStepDelay - this.TURN_EFFECT_DELAY_MS));
+          }
+
+          return;
+        }
+
+        for (const combatMessage of playbackChatMessages) {
           if (this.isDestroyed) {
             return;
           }
 
-          const combatMessage = playbackChatMessages[index] ?? '';
+          this.combatChatMessages.update((current) => [...current, combatMessage]);
+          await this.wait(this.TURN_EFFECT_DELAY_MS);
 
-          if (combatMessage) {
-            this.combatChatMessages.update((current) => [...current, combatMessage]);
+          // Prefer timeline-linked effects to avoid duplicated animations/effects.
+          const appliedFromTimeline = this.applyTimelineEffectForMessage(combatMessage, playbackTimelineQueue, event.battle);
+          if (!appliedFromTimeline) {
+            this.applyPlaybackEffect(combatMessage, event.battle);
           }
 
-          if (item) {
-            await this.wait(this.TURN_EFFECT_DELAY_MS);
-            this.applyPlaybackEffect(item, event.battle);
-            await this.wait(Math.max(0, this.TURN_MESSAGE_DURATION_MS - this.TURN_EFFECT_DELAY_MS));
+          await this.wait(Math.max(0, this.TURN_MESSAGE_DURATION_MS - this.TURN_EFFECT_DELAY_MS));
+        }
+
+        while (playbackTimelineQueue.length > 0) {
+          if (this.isDestroyed) {
+            return;
+          }
+
+          const timelineEvent = playbackTimelineQueue.shift();
+          if (!timelineEvent) {
             continue;
           }
 
-          await this.wait(this.TURN_MESSAGE_DURATION_MS);
+          await this.wait(this.TURN_EFFECT_DELAY_MS);
+          this.applyTimelineEvent(timelineEvent, event.battle);
+          await this.wait(Math.max(0, this.TURN_MESSAGE_DURATION_MS - this.TURN_EFFECT_DELAY_MS));
         }
       } finally {
         if (!this.isDestroyed) {
@@ -443,6 +493,33 @@ export class Battle {
         }
       }
     });
+  }
+
+  private shouldUseReplaySteps(
+    replaySteps: Array<{ stepIndex: number; message?: string | null; events: any[]; delayMs?: number | null }>,
+    legacyMessages: string[],
+    legacyTimeline: any[],
+  ): boolean {
+    if (replaySteps.length === 0) {
+      return false;
+    }
+
+    if (legacyMessages.length === 0 && legacyTimeline.length === 0) {
+      return true;
+    }
+
+    const replayMessageCount = replaySteps.filter((step) => !!step.message?.trim()).length;
+    const replayEventCount = replaySteps.reduce((total, step) => total + (Array.isArray(step.events) ? step.events.length : 0), 0);
+
+    const messageCoverage = legacyMessages.length === 0
+      ? 1
+      : replayMessageCount / legacyMessages.length;
+    const eventCoverage = legacyTimeline.length === 0
+      ? 1
+      : replayEventCount / legacyTimeline.length;
+
+    // If replay steps are significantly incomplete, prefer legacy payload for now.
+    return messageCoverage >= 0.8 && eventCoverage >= 0.8;
   }
 
   private applyBattleEventState(event: BattleStateEventPayload, waitingForOpponent: boolean): void {
@@ -558,11 +635,16 @@ export class Battle {
     }
 
     const message = playbackItem?.message ?? playbackItem;
-    const attackMatch = message.match(/^(.+?) usa (.+?)\. Daño: (\d+)\.$/);
+    const attackMatch = message.match(/^(.+?) usa (.+?)\.(?: Daño: (\d+)\.)?$/);
     if (attackMatch) {
       const side = this.resolveSideByVisibleName(attackMatch[1]);
       if (side) {
-        this.applyDamageToSide(this.getOppositeSide(side), Number(attackMatch[3]));
+        this.triggerAttackAnimation(side);
+      }
+
+      const damageValue = Number(attackMatch[3]);
+      if (side && Number.isFinite(damageValue) && damageValue > 0) {
+        this.applyDamageToSide(this.getOppositeSide(side), damageValue);
       }
       return;
     }
@@ -610,7 +692,19 @@ export class Battle {
   }
 
   private applyTimelineEvent(event: any, finalSnapshot: any): void {
-    switch (event.eventType) {
+    const eventType = event?.eventType ?? event?.EventType;
+    switch (eventType) {
+      case 'attack': {
+        const attackerSide = event?.attacker?.side ?? event?.Attacker?.Side;
+        if (attackerSide === 'player' || attackerSide === 'opponent') {
+          this.triggerAttackAnimation(attackerSide);
+        }
+        return;
+      }
+
+      case 'message':
+        return;
+
       case 'hp_change':
         if (event.target?.side === 'player' || event.target?.side === 'opponent') {
           this.setSideHp(event.target.side, event.afterHp ?? 0);
@@ -640,9 +734,97 @@ export class Battle {
     }
   }
 
+  private applyTimelineEffectForMessage(message: string, timelineQueue: any[], finalSnapshot: any): boolean {
+    if (!timelineQueue.length) {
+      return false;
+    }
+
+    const expectedEventType = this.getExpectedTimelineEventTypeForMessage(message);
+    if (!expectedEventType) {
+      return false;
+    }
+
+    const matchingIndex = timelineQueue.findIndex((event) => event?.eventType === expectedEventType);
+    if (matchingIndex < 0) {
+      return false;
+    }
+
+    const [event] = timelineQueue.splice(matchingIndex, 1);
+    if (!event) {
+      return false;
+    }
+
+    this.applyTimelineEvent(event, finalSnapshot);
+    return true;
+  }
+
+  private getExpectedTimelineEventTypeForMessage(message: string): 'attack' | 'switch' | 'hp_change' | 'status_change' | 'faint' | null {
+    const normalized = this.normalizeName(message);
+
+    if (normalized.includes(' usa ')) {
+      return 'attack';
+    }
+
+    if (normalized.match(/^(cambio realizado: entra|entra) /)) {
+      return 'switch';
+    }
+
+    if (normalized.includes(' se debilito.')) {
+      return 'faint';
+    }
+
+    if (
+      normalized.includes('ha recibido dano') ||
+      normalized.includes('sufre dano') ||
+      normalized.includes('pierde ') ||
+      normalized.includes('dano:')
+    ) {
+      return 'hp_change';
+    }
+
+    if (
+      normalized.includes('esta quemado') ||
+      normalized.includes('esta envenenado') ||
+      normalized.includes('esta paralizado') ||
+      normalized.includes('se ha dormido') ||
+      normalized.includes('esta congelado')
+    ) {
+      return 'status_change';
+    }
+
+    return null;
+  }
+
   private applyDamageToSide(side: BattleSideKey, damage: number): void {
     const currentHp = side === 'player' ? (this.hpA() ?? 0) : (this.hpB() ?? 0);
     this.setSideHp(side, Math.max(0, currentHp - Math.max(0, damage)));
+  }
+
+  private triggerAttackAnimation(side: BattleSideKey): void {
+    const animationSignal = side === 'player'
+      ? this.playerAttackAnimating
+      : this.opponentAttackAnimating;
+
+    animationSignal.set(false);
+
+    const restartTimeout = setTimeout(() => {
+      if (this.isDestroyed) {
+        this.playbackTimeouts.delete(restartTimeout);
+        return;
+      }
+
+      animationSignal.set(true);
+
+      const stopTimeout = setTimeout(() => {
+        animationSignal.set(false);
+        this.playbackTimeouts.delete(stopTimeout);
+      }, this.ATTACK_DASH_DURATION_MS);
+
+      this.playbackTimeouts.add(stopTimeout);
+      this.playbackTimeouts.delete(restartTimeout);
+    }, 0);
+
+    this.playbackTimeouts.add(restartTimeout);
   }
 
   private applyHealToSide(side: BattleSideKey, healing: number): void {

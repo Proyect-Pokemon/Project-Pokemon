@@ -85,15 +85,18 @@
 
 /* ─── Pokemon slots ────────────────────────────────────────────────────────── */
 .pokemon-slots {
-    display: flex;
+    --slot-size: 72px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--slot-size), var(--slot-size)));
     gap: 0.75rem;
     flex: 1;
+    min-width: 0;
     justify-content: center;
 }
 
 .pokemon-slot {
-    width: 72px;
-    height: 72px;
+    width: var(--slot-size);
+    height: var(--slot-size);
     border-radius: 14px;
     background-color: #e0d4f7;
     border: 2px solid #ffffff;
@@ -206,15 +209,18 @@
 }
 
 .skeleton-slots {
-    display: flex;
+    --slot-size: 72px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--slot-size), var(--slot-size)));
     gap: 0.75rem;
     flex: 1;
+    min-width: 0;
     justify-content: center;
 }
 
 .skeleton-slot {
-    width: 72px;
-    height: 72px;
+    width: var(--slot-size);
+    height: var(--slot-size);
     border-radius: 14px;
 }
 
@@ -252,13 +258,8 @@
     }
 
     .pokemon-slots {
+        --slot-size: 44px;
         justify-content: flex-start;
-        flex-wrap: wrap;
-    }
-
-    .pokemon-slot {
-        width: 44px;
-        height: 44px;
     }
 
     .mini-sprite {

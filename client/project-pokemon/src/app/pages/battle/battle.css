@@ -181,6 +181,30 @@ app-battle-chat {
     filter: drop-shadow(0 14px 18px rgba(27, 18, 39, 0.28));
 }
 
+.battle-sprite {
+    will-change: transform;
+}
+
+.enemy-sprite.attack-dash-left {
+    animation: attackDashLeft 220ms ease-out;
+}
+
+.ally-sprite.attack-dash-right {
+    animation: attackDashRight 220ms ease-out;
+}
+
+@keyframes attackDashRight {
+    0% { transform: translateX(0); }
+    35% { transform: translateX(32px); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes attackDashLeft {
+    0% { transform: translateX(0); }
+    35% { transform: translateX(-32px); }
+    100% { transform: translateX(0); }
+}
+
 #moves {
     display: grid;
     grid-template-columns: 1fr 1fr;

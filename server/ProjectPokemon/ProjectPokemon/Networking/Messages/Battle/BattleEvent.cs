@@ -1,6 +1,18 @@
+using System.Text.Json.Serialization;
+
 namespace ProjectPokemon.Networking.Messages.Battle;
 
 // Base para todos los eventos de batalla
+// Configuración de serialización polimórfica para System.Text.Json
+[JsonDerivedType(typeof(MessageEvent), typeDiscriminator: "message")]
+[JsonDerivedType(typeof(AttackEvent), typeDiscriminator: "attack")]
+[JsonDerivedType(typeof(HpChangeEvent), typeDiscriminator: "hp_change")]
+[JsonDerivedType(typeof(StatusChangeEvent), typeDiscriminator: "status_change")]
+[JsonDerivedType(typeof(SecondaryStatusChangeEvent), typeDiscriminator: "secondary_status_change")]
+[JsonDerivedType(typeof(FaintEvent), typeDiscriminator: "faint")]
+[JsonDerivedType(typeof(SwitchEvent), typeDiscriminator: "switch")]
+[JsonDerivedType(typeof(StatStageChangeEvent), typeDiscriminator: "stat_stage_change")]
+[JsonDerivedType(typeof(BattleEndEvent), typeDiscriminator: "battle_end")]
 public abstract class BattleEvent {
     public string EventType { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty; // Texto legacy para compatibilidad

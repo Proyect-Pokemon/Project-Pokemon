@@ -58,7 +58,7 @@ export class PokemonMovesGrid {
     }
 
     getTypeClass(type: string): string {
-        return 'type-' + type.toLowerCase();
+        return 'type-' + this.normalizeTypeKey(type);
     }
 
     getClassLabel(movementClass: string): string {
@@ -71,6 +71,7 @@ export class PokemonMovesGrid {
     }
 
     getTypeLabel(type: string): string {
+        const normalizedType = this.normalizeTypeKey(type);
         const typeMap: Record<string, string> = {
             normal: 'Normal',
             fire: 'Fuego',
@@ -92,7 +93,7 @@ export class PokemonMovesGrid {
             fairy: 'Hada',
         };
 
-        return typeMap[type?.toLowerCase()] ?? type;
+        return typeMap[normalizedType] ?? type;
     }
 
     onTypeIconLoad(event: Event): void {
@@ -104,18 +105,45 @@ export class PokemonMovesGrid {
     }
 
     private readonly TYPE_ICON_MAP: Record<string, string> = {
+        normal: 'normal',
+        fire: 'fire',
+        water: 'water',
+        electric: 'electric',
         grass: 'leaf',
+        planta: 'leaf',
+        ice: 'ice',
+        fighting: 'fighting',
+        poison: 'poison',
+        ground: 'ground',
+        flying: 'flying',
+        psychic: 'psychic',
+        psiquico: 'psychic',
+        bug: 'bug',
+        rock: 'rock',
+        ghost: 'ghost',
+        dragon: 'dragon',
+        dark: 'dark',
+        steel: 'steel',
+        fairy: 'fairy',
     };
 
     getTypeIconSrc(type: string): string {
-        const key = type.toLowerCase();
+        const key = this.normalizeTypeKey(type);
         const filename = this.TYPE_ICON_MAP[key] ?? key;
-        return `assets/icons/types/${filename}.svg`;
+        return `/assets/icons/types/${filename}.svg`;
     }
 
     private normalizeSearchText(value: string): string {
         return value
             .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+    }
+
+    private normalizeTypeKey(type: string): string {
+        return type
+            ?.normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
             .toLowerCase()
             .trim();

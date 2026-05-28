@@ -16,10 +16,16 @@
                     [maxHp]="battleInfo()!.pokemonB.maxHp"
                     [status]="battleInfo()!.pokemonB.statusCondition ?? ''">
                 </app-life-bar>
-                <img [src]="battleInfo()!.pokemonB.sprite">
+                <img
+                    class="battle-sprite enemy-sprite"
+                    [class.attack-dash-left]="opponentAttackAnimating()"
+                    [src]="battleInfo()!.pokemonB.sprite">
             </div>
             <div class="ally">
-                <img [src]="battleInfo()!.pokemonA.sprite">
+                <img
+                    class="battle-sprite ally-sprite"
+                    [class.attack-dash-right]="playerAttackAnimating()"
+                    [src]="battleInfo()!.pokemonA.sprite">
                 <app-life-bar
                     [pokemonName]="battleInfo()!.pokemonA.name"
                     [pokemonSex]="battleInfo()!.pokemonA.sex ?? null"

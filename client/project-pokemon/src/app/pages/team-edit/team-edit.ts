@@ -444,20 +444,36 @@ export class TeamEdit {
 
   getTypeIconSrc(type: string): string | null {
     const map: Record<string, string> = {
-      grass: 'leaf', fire: 'fire', water: 'water', electric: 'electric',
+      grass: 'leaf', planta: 'leaf', fire: 'fire', water: 'water', electric: 'electric',
       ice: 'ice', fighting: 'fighting', poison: 'poison', ground: 'ground',
       flying: 'flying', bug: 'bug', rock: 'rock', ghost: 'ghost',
       dark: 'dark', steel: 'steel', fairy: 'fairy', normal: 'normal',
+      psychic: 'psychic', psiquico: 'psychic', dragon: 'dragon',
     };
-    const file = map[type?.toLowerCase()];
+    const normalizedType = type
+      ?.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+    const file = map[normalizedType];
     return file ? `/assets/icons/types/${file}.svg` : null;
   }
 
   getTypeClass(type: string): string {
-    return type ? `type-${type.toLowerCase()}` : '';
+    const normalizedType = type
+      ?.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+    return normalizedType ? `type-${normalizedType}` : '';
   }
 
   getTypeColor(type: string): string {
+    const normalizedType = type
+      ?.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
     const colors: Record<string, string> = {
       grass: 'var(--grass-color)',     fire: 'var(--fire-color)',
       water: 'var(--water-color)',     electric: 'var(--electric-color)',
@@ -469,7 +485,7 @@ export class TeamEdit {
       steel: 'var(--steel-color)',     bug: 'var(--bug-color)',
       dragon: 'var(--dragon-color)',   fairy: 'var(--fairy-color)',
     };
-    return colors[type?.toLowerCase()] ?? '#aaa';
+    return colors[normalizedType] ?? '#aaa';
   }
 
   capitalize(s: string): string {
