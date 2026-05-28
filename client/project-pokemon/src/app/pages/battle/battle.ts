@@ -695,7 +695,8 @@ export class Battle {
     const eventType = event?.eventType ?? event?.EventType;
     switch (eventType) {
       case 'attack': {
-        const attackerSide = event?.attacker?.side ?? event?.Attacker?.Side;
+        const attacker = event?.attacker ?? event?.Attacker;
+        const attackerSide = this.resolveIdentifierSide(attacker);
         if (attackerSide === 'player' || attackerSide === 'opponent') {
           this.triggerAttackAnimation(attackerSide);
         }
@@ -706,20 +707,36 @@ export class Battle {
         return;
 
       case 'hp_change':
-        if (event.target?.side === 'player' || event.target?.side === 'opponent') {
-          this.setSideHp(event.target.side, event.afterHp ?? 0);
+        {
+          const target = event?.target ?? event?.Target;
+          const beforeHp = event?.beforeHp ?? event?.BeforeHp;
+          const afterHp = event?.afterHp ?? event?.AfterHp;
+          const resolvedSide = this.resolveIdentifierSide(target, beforeHp);
+          if ((resolvedSide === 'player' || resolvedSide === 'opponent') && Number.isFinite(Number(afterHp))) {
+            this.setSideHp(resolvedSide, Number(afterHp));
+          }
         }
         return;
 
       case 'status_change':
-        if (event.target?.side === 'player' || event.target?.side === 'opponent') {
-          this.setSideStatus(event.target.side, event.afterStatus ?? 'None');
+        {
+          const target = event?.target ?? event?.Target;
+          const beforeHp = event?.beforeHp ?? event?.BeforeHp;
+          const resolvedSide = this.resolveIdentifierSide(target, beforeHp);
+          if (resolvedSide === 'player' || resolvedSide === 'opponent') {
+            this.setSideStatus(resolvedSide, event?.afterStatus ?? event?.AfterStatus ?? 'None');
+          }
         }
         return;
 
       case 'faint':
-        if (event.target?.side === 'player' || event.target?.side === 'opponent') {
-          this.setSideHp(event.target.side, 0);
+        {
+          const target = event?.target ?? event?.Target;
+          const beforeHp = event?.beforeHp ?? event?.BeforeHp;
+          const resolvedSide = this.resolveIdentifierSide(target, beforeHp);
+          if (resolvedSide === 'player' || resolvedSide === 'opponent') {
+            this.setSideHp(resolvedSide, 0);
+          }
         }
         return;
 
@@ -732,6 +749,54 @@ export class Battle {
       default:
         return;
     }
+  }
+
+  private resolveIdentifierSide(identifier: any, referenceHp?: number): BattleSideKey | null {
+    const rawSide = identifier?.side ?? identifier?.Side;
+    const rawResolvedSide: BattleSideKey | null = rawSide === 'player' || rawSide === 'opponent'
+      ? rawSide
+      : null;
+
+    const current = this.battleInfo();
+    if (!current) {
+      return rawResolvedSide;
+    }
+
+    const targetName = this.normalizeName(identifier?.displayName ?? identifier?.DisplayName ?? '');
+    const playerName = this.normalizeName(current.pokemonA.name || '');
+    const opponentName = this.normalizeName(current.pokemonB.name || '');
+
+    const nameMatchSides: BattleSideKey[] = [];
+    if (targetName && targetName === playerName) {
+      nameMatchSides.push('player');
+    }
+    if (targetName && targetName === opponentName) {
+      nameMatchSides.push('opponent');
+    }
+
+    if (nameMatchSides.length === 1) {
+      return nameMatchSides[0];
+    }
+
+    if (nameMatchSides.length > 1 && Number.isFinite(Number(referenceHp))) {
+      const hpRef = Number(referenceHp);
+      const playerDiff = Math.abs((this.hpA() ?? 0) - hpRef);
+      const opponentDiff = Math.abs((this.hpB() ?? 0) - hpRef);
+      return playerDiff <= opponentDiff ? 'player' : 'opponent';
+    }
+
+    if (rawResolvedSide) {
+      return rawResolvedSide;
+    }
+
+    if (Number.isFinite(Number(referenceHp))) {
+      const hpRef = Number(referenceHp);
+      const playerDiff = Math.abs((this.hpA() ?? 0) - hpRef);
+      const opponentDiff = Math.abs((this.hpB() ?? 0) - hpRef);
+      return playerDiff <= opponentDiff ? 'player' : 'opponent';
+    }
+
+    return null;
   }
 
   private applyTimelineEffectForMessage(message: string, timelineQueue: any[], finalSnapshot: any): boolean {
@@ -894,18 +959,25 @@ export class Battle {
   }
 
   private applySwitchFromTimeline(event: any, finalSnapshot: any): void {
-    const switchedPokemon = this.getSnapshotPokemonBySlot(finalSnapshot, event.side, event.newActiveSlot);
+    const newPokemonName = event?.newPokemonName ?? event?.NewPokemonName ?? '';
+    const newActiveSlot = event?.newActiveSlot ?? event?.NewActiveSlot;
+    const side = this.resolveTimelineSwitchSide(event, finalSnapshot, newPokemonName, newActiveSlot);
+    if (!side) {
+      return;
+    }
+
+    const switchedPokemon = this.getSnapshotPokemonBySlot(finalSnapshot, side, newActiveSlot, newPokemonName);
     if (!switchedPokemon) {
       return;
     }
 
-    const nextPokemonView = this.mapSnapshotPokemonToView(switchedPokemon, event.side === 'player');
+    const nextPokemonView = this.mapSnapshotPokemonToView(switchedPokemon, side === 'player');
     const current = this.battleInfo();
     if (!current) {
       return;
     }
 
-    if (event.side === 'player') {
+    if (side === 'player') {
       this.battleInfo.set({ ...current, pokemonA: nextPokemonView });
       this.hpA.set(nextPokemonView.currentHp ?? 0);
       return;
@@ -976,14 +1048,75 @@ export class Battle {
     return team[activeSlot] ?? team[0] ?? null;
   }
 
-  private getSnapshotPokemonBySlot(snapshot: any, side: BattleSideKey, slot: number): any | null {
+  private getSnapshotPokemonBySlot(snapshot: any, side: BattleSideKey, slot: number, expectedName?: string): any | null {
     const sideKey = side === 'player' ? 'playerSide' : 'opponentSide';
     const team = snapshot?.[sideKey]?.team;
     if (!Array.isArray(team)) {
       return null;
     }
 
-    return team.find((pokemon: any) => pokemon?.slot === slot) ?? team[slot] ?? null;
+    const normalizedExpectedName = this.normalizeName(expectedName ?? '');
+    const normalizedSlot = Number(slot);
+    const isValidIndex = Number.isInteger(normalizedSlot) && normalizedSlot >= 0 && normalizedSlot < team.length;
+
+    const byIndex = isValidIndex ? (team[normalizedSlot] ?? null) : null;
+    const byOneBasedSlot = Number.isInteger(normalizedSlot)
+      ? (team.find((pokemon: any) => Number(pokemon?.slot) === normalizedSlot + 1) ?? null)
+      : null;
+    const byExactSlot = Number.isInteger(normalizedSlot)
+      ? (team.find((pokemon: any) => Number(pokemon?.slot) === normalizedSlot) ?? null)
+      : null;
+
+    const candidates = [byIndex, byOneBasedSlot, byExactSlot].filter(Boolean);
+    if (normalizedExpectedName) {
+      const byName = candidates.find((pokemon: any) => {
+        const pokemonName = pokemon?.nickname || pokemon?.name || '';
+        return this.normalizeName(pokemonName) === normalizedExpectedName;
+      });
+      if (byName) {
+        return byName;
+      }
+    }
+
+    return candidates[0] ?? null;
+  }
+
+  private resolveTimelineSwitchSide(event: any, finalSnapshot: any, newPokemonName: string, newActiveSlot: number): BattleSideKey | null {
+    const rawSide = event?.side ?? event?.Side;
+    const eventSide: BattleSideKey | null = rawSide === 'player' || rawSide === 'opponent' ? rawSide : null;
+
+    if (eventSide) {
+      const pokemonFromEventSide = this.getSnapshotPokemonBySlot(finalSnapshot, eventSide, newActiveSlot, newPokemonName);
+      if (pokemonFromEventSide) {
+        return eventSide;
+      }
+    }
+
+    if (newPokemonName) {
+      const resolvedByName = this.resolveSwitchSide(newPokemonName, finalSnapshot);
+      if (resolvedByName) {
+        return resolvedByName;
+      }
+    }
+
+    const current = this.battleInfo();
+    const finalPlayer = this.getActiveSnapshotPokemon(finalSnapshot, 'player');
+    const finalOpponent = this.getActiveSnapshotPokemon(finalSnapshot, 'opponent');
+
+    const finalPlayerName = this.normalizeName(finalPlayer?.nickname || finalPlayer?.name || '');
+    const finalOpponentName = this.normalizeName(finalOpponent?.nickname || finalOpponent?.name || '');
+    const currentPlayerName = this.normalizeName(current?.pokemonA.name || '');
+    const currentOpponentName = this.normalizeName(current?.pokemonB.name || '');
+
+    if (finalPlayerName && finalPlayerName !== currentPlayerName) {
+      return 'player';
+    }
+
+    if (finalOpponentName && finalOpponentName !== currentOpponentName) {
+      return 'opponent';
+    }
+
+    return eventSide;
   }
 
   private mapSnapshotPokemonToView(pokemon: any, preferBackSprite: boolean) {
