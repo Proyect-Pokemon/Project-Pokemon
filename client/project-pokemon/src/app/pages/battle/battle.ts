@@ -132,7 +132,9 @@ export class Battle {
       const backendMessages = (battleEvent.messages ?? []).filter((message) => !!message?.trim());
       const filteredTimeline = battleEvent.timeline ?? [];
       const hasPlaybackContent = replaySteps.length > 0 || backendMessages.length > 0 || filteredTimeline.length > 0;
-      const shouldPlayTurn = hasPlaybackContent && !waitingForOpponent;
+      const hasVisualPlaybackContent = filteredTimeline.length > 0
+        || replaySteps.some((step) => Array.isArray(step?.events) && step.events.length > 0);
+      const shouldPlayTurn = hasPlaybackContent && (!waitingForOpponent || hasVisualPlaybackContent);
 
       if (!untracked(() => this.battleInfo())) {
         this.applySnapshotToView(battleEvent.battle);
@@ -152,6 +154,7 @@ export class Battle {
       }
 
       this.applySnapshotToView(battleEvent.battle);
+      this.syncActivePokemonAfterFaint(battleEvent.battle);
       this.applyBattleEventState(battleEvent, waitingForOpponent);
     });
   }
@@ -425,6 +428,7 @@ export class Battle {
       this.battleResult.set(null);
       this.attacksDisabled.set(true);
       this.isWaitingForOpponent.set(false);
+      this.syncActivePokemonAfterFaint(event.battle);
 
       try {
         if (canUseReplaySteps) {
@@ -985,6 +989,46 @@ export class Battle {
 
     this.battleInfo.set({ ...current, pokemonB: nextPokemonView });
     this.hpB.set(nextPokemonView.currentHp ?? 0);
+  }
+
+  private syncActivePokemonAfterFaint(snapshot: any): void {
+    const current = this.battleInfo();
+    if (!current) {
+      return;
+    }
+
+    const shouldReplacePlayer = (this.hpA() ?? 0) <= 0;
+    const shouldReplaceOpponent = (this.hpB() ?? 0) <= 0;
+
+    if (!shouldReplacePlayer && !shouldReplaceOpponent) {
+      return;
+    }
+
+    if (shouldReplacePlayer) {
+      const playerActive = this.getActiveSnapshotPokemon(snapshot, 'player');
+      const playerActiveHp = Number(playerActive?.currentHp ?? 0);
+      if (playerActive && playerActiveHp > 0) {
+        const nextPlayer = this.mapSnapshotPokemonToView(playerActive, true);
+        this.battleInfo.set({
+          ...this.battleInfo()!,
+          pokemonA: nextPlayer,
+        });
+        this.hpA.set(nextPlayer.currentHp ?? 0);
+      }
+    }
+
+    if (shouldReplaceOpponent) {
+      const opponentActive = this.getActiveSnapshotPokemon(snapshot, 'opponent');
+      const opponentActiveHp = Number(opponentActive?.currentHp ?? 0);
+      if (opponentActive && opponentActiveHp > 0) {
+        const nextOpponent = this.mapSnapshotPokemonToView(opponentActive, false);
+        this.battleInfo.set({
+          ...this.battleInfo()!,
+          pokemonB: nextOpponent,
+        });
+        this.hpB.set(nextOpponent.currentHp ?? 0);
+      }
+    }
   }
 
   private resolveSwitchSide(nextPokemonName: string, finalSnapshot: any): BattleSideKey | null {

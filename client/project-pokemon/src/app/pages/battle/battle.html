@@ -9,31 +9,35 @@
     <div class="battle-container">
         <div id="canvas">
             <div class="enemy">
-                <app-life-bar
-                    [pokemonName]="battleInfo()!.pokemonB.name"
-                    [pokemonSex]="battleInfo()!.pokemonB.sex ?? null"
-                    [currentHp]="hpB()"
-                    [maxHp]="battleInfo()!.pokemonB.maxHp"
-                    [status]="battleInfo()!.pokemonB.statusCondition ?? ''">
-                </app-life-bar>
-                <img
-                    class="battle-sprite enemy-sprite"
-                    [class.attack-dash-left]="opponentAttackAnimating()"
-                    [src]="battleInfo()!.pokemonB.sprite">
+                @if ((hpB() ?? 0) > 0) {
+                    <app-life-bar
+                        [pokemonName]="battleInfo()!.pokemonB.name"
+                        [pokemonSex]="battleInfo()!.pokemonB.sex ?? null"
+                        [currentHp]="hpB()"
+                        [maxHp]="battleInfo()!.pokemonB.maxHp"
+                        [status]="battleInfo()!.pokemonB.statusCondition ?? ''">
+                    </app-life-bar>
+                    <img
+                        class="battle-sprite enemy-sprite"
+                        [class.attack-dash-left]="opponentAttackAnimating()"
+                        [src]="battleInfo()!.pokemonB.sprite">
+                }
             </div>
             <div class="ally">
-                <img
-                    class="battle-sprite ally-sprite"
-                    [class.attack-dash-right]="playerAttackAnimating()"
-                    [src]="battleInfo()!.pokemonA.sprite">
-                <app-life-bar
-                    [pokemonName]="battleInfo()!.pokemonA.name"
-                    [pokemonSex]="battleInfo()!.pokemonA.sex ?? null"
-                    [currentHp]="hpA()"
-                    [maxHp]="battleInfo()!.pokemonA.maxHp"
-                    [status]="battleInfo()!.pokemonA.statusCondition ?? ''"
-                    [showHp]="true">
-                </app-life-bar>
+                @if ((hpA() ?? 0) > 0) {
+                    <img
+                        class="battle-sprite ally-sprite"
+                        [class.attack-dash-right]="playerAttackAnimating()"
+                        [src]="battleInfo()!.pokemonA.sprite">
+                    <app-life-bar
+                        [pokemonName]="battleInfo()!.pokemonA.name"
+                        [pokemonSex]="battleInfo()!.pokemonA.sex ?? null"
+                        [currentHp]="hpA()"
+                        [maxHp]="battleInfo()!.pokemonA.maxHp"
+                        [status]="battleInfo()!.pokemonA.statusCondition ?? ''"
+                        [showHp]="true">
+                    </app-life-bar>
+                }
             </div>
             <div id="moves">
                 @if (actionPanel() === 'root') {
