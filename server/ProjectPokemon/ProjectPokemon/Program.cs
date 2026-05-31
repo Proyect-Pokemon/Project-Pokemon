@@ -191,7 +191,14 @@ public class Program {
         app.MapControllers();        // mapea los endpoints de los controladores
 
         // Llamar al método antes de ejecutar la app
-        await SeedDatabase(app.Services);
+        try
+        {
+            await SeedDatabase(app.Services);
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogError(ex, "DB seed failed");
+        }
 
         app.Run();
     }
