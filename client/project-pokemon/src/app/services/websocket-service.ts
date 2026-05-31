@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { environment } from '../enviroments/enviroment';
 
 export interface BattleMatchedEvent {
   battleId: string;
@@ -143,7 +144,7 @@ export class SocketService {
       return;
     }
 
-    const wsUrl = `wss://${location.hostname}:7277/ws?access_token=${encodeURIComponent(jwt)}`;
+    const wsUrl =`${environment.wsUrl}?access_token=${encodeURIComponent(jwt)}`;
     console.info('[WS] Intentando conectar', wsUrl);
     this.socket = new WebSocket(wsUrl);
 

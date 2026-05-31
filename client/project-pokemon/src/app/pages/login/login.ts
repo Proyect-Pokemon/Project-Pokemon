@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthRequest } from '../../models/auth-request';
 import { AuthService } from '../../services/auth';
 import { SocketService } from '../../services/websocket-service';
+import { environment } from '../../enviroments/enviroment';
 
 declare const google: any;
 
@@ -30,7 +31,7 @@ export class Login implements OnInit, OnDestroy {
 
   canSubmit(): boolean {
     return this.nickname.trim().length > 0 &&
-           this.password.trim().length > 0;
+      this.password.trim().length > 0;
   }
 
   async submit() {
@@ -76,8 +77,8 @@ export class Login implements OnInit, OnDestroy {
         typeof err?.error === 'string'
           ? err.error
           : err?.error?.error ||
-            err?.error?.message ||
-            err?.message;
+          err?.error?.message ||
+          err?.message;
 
       this.errorMessage.set(
         backendError || 'Error de conexión con el servidor.'
@@ -103,7 +104,7 @@ export class Login implements OnInit, OnDestroy {
     try {
 
       google.accounts.id.initialize({
-        client_id: 'TU_CLIENT_ID.apps.googleusercontent.com',
+        client_id: environment.GOOGLE_CLIENT_ID,
         callback: (response: any) => this.handleGoogle(response)
       });
 
@@ -115,7 +116,7 @@ export class Login implements OnInit, OnDestroy {
       this.googleInitialized = true;
 
     } catch {
-      // silencioso: no rompe login si Google falla
+      this.errorMessage.set('No se pudo inicializar el inicio de sesión con Google.');
     }
   }
 

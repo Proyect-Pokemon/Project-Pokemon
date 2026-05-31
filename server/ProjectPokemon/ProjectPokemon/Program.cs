@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -112,9 +113,40 @@ public class Program {
             );
         });
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("Frontend", policy =>
+            {
+                policy.WithOrigins("https://projectpokemon.runasp.net")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
+        });
+
+        /*
+        builder.Services.ConfigureApplicationCookie(options =>
+        {
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        });
+        */
+
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders =
+                ForwardedHeaders.XForwardedFor |
+                ForwardedHeaders.XForwardedProto;
+        });
+
+        builder.Services.AddHttpsRedirection(options =>
+        {
+            options.HttpsPort = 443;
+        });
+
         var app = builder.Build();
 
-        if (app.Environment.IsDevelopment()) {
+        /*
+         if (app.Environment.IsDevelopment()) {
             app.UseSwagger();
             app.UseSwaggerUI();
             app.UseCors(policy =>
@@ -122,8 +154,11 @@ public class Program {
                       .AllowAnyHeader()
                       .AllowAnyMethod());
         }
+        */
 
+        app.UseForwardedHeaders();
         app.UseHttpsRedirection();   // redirige HTTP a HTTPS
+        app.UseCors("Frontend");
         app.UseStaticFiles();        // permite servir archivos desde wwwroot
 
         app.UseWebSockets();
