@@ -158,6 +158,7 @@ public class Program {
         app.UseForwardedHeaders();
         app.UseHttpsRedirection();   // redirige HTTP a HTTPS
         app.UseCors("Frontend");
+        app.UseDefaultFiles();
         app.UseStaticFiles();        // permite servir archivos desde wwwroot
 
         app.UseWebSockets();
