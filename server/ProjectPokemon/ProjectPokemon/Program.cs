@@ -38,12 +38,11 @@ public class Program {
 
         // DbContext
         string? connectionString =
-            Environment.GetEnvironmentVariable("DB_CONNECTION");
+        builder.Configuration["DB_CONNECTION"];
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw new InvalidOperationException(
-                "DB_CONNECTION no definida.");
+            throw new InvalidOperationException("DB_CONNECTION no definida.");
         }
 
         builder.Services.AddDbContext<PokemonDbContext>(options =>
