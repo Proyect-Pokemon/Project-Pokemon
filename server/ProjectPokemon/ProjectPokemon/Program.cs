@@ -189,6 +189,7 @@ public class Program {
         });
 
         app.MapControllers();        // mapea los endpoints de los controladores
+        app.MapFallbackToFile("index.html");
 
         // Llamar al método antes de ejecutar la app
         try
