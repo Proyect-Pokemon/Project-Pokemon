@@ -36,8 +36,21 @@ public class Program {
         builder.Services.AddScoped<UnitOfWork>();
 
         // DbContext
-        builder.Services.AddDbContext<PokemonDbContext>(options => {
-            options.UseSqlite("Data Source=pokemon.db");
+        string? connectionString =
+            Environment.GetEnvironmentVariable("DB_CONNECTION");
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "DB_CONNECTION no definida.");
+        }
+
+        builder.Services.AddDbContext<PokemonDbContext>(options =>
+        {
+            options.UseMySql(
+                connectionString,
+                ServerVersion.AutoDetect(connectionString)
+            );
         });
 
         // Internal Services
@@ -48,9 +61,6 @@ public class Program {
         // Auth & JWT
         builder.Services.AddScoped<TokenService>();
         builder.Services.AddScoped<AuthService>();
-
-        builder.Services.Configure<GoogleAuthSettings>(
-            builder.Configuration.GetSection("GoogleAuth"));
         builder.Services.AddScoped<GoogleAuthService>();
 
         // Battle Services - WebSocket Nativo
