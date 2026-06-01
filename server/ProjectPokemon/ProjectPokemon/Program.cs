@@ -182,11 +182,11 @@ public class Program {
             var network = context.RequestServices.GetRequiredService<Network>();
             var socket = await context.WebSockets.AcceptWebSocketAsync();
 
-            app.Logger.LogInformation("[WS] Conectado usuario={UserId} nick={Nickname}", parsedUserId, userNickname);
+            //app.Logger.LogInformation("[WS] Conectado usuario={UserId} nick={Nickname}", parsedUserId, userNickname);
 
             await network.ConnectAsync(socket, parsedUserId, userNickname);
 
-            app.Logger.LogInformation("[WS] Desconectado usuario={UserId} nick={Nickname}", parsedUserId, userNickname);
+            //app.Logger.LogInformation("[WS] Desconectado usuario={UserId} nick={Nickname}", parsedUserId, userNickname);
         });
 
         app.MapControllers();        // mapea los endpoints de los controladores
