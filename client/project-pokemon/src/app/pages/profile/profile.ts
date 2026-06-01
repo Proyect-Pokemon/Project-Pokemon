@@ -49,6 +49,10 @@ export class Profile implements OnInit {
 
   // User info
   protected readonly nickname = this.auth.nickname;
+  protected readonly avatar = this.auth.avatarPath;
+  protected readonly avatarPath = this.auth.avatarPath;
+  // Some templates or bindings might use PascalCase 'AvatarPath'
+  protected readonly AvatarPath = this.auth.avatarPath;
   protected readonly isOwnProfile = signal(true);
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal('');

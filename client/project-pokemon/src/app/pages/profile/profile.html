@@ -6,13 +6,25 @@
 	} @else {
 		<div class="profile-header">
 			<div class="profile-info">
-				<h1>{{ nickname() }}</h1>
-				<p class="profile-label">Mi Perfil</p>
-				@if (biography()) {
-					<p class="profile-bio">{{ biography() }}</p>
+				@if (AvatarPath()) {
+					<div class="profile-avatar-container">
+						<img src="{{ AvatarPath() }}" alt="Foto de perfil" class="profile-avatar" />
+					</div>
 				} @else {
-					<p class="profile-bio profile-bio-empty">Aún no has añadido una biografía.</p>
+					<div class="profile-avatar-container">
+						<div class="profile-avatar profile-avatar-empty"></div>
+					</div>
 				}
+
+				<div class="profile-meta">
+					<h1>{{ nickname() }}</h1>
+					<p class="profile-label">Mi Perfil</p>
+					@if (biography()) {
+						<p class="profile-bio">{{ biography() }}</p>
+					} @else {
+						<p class="profile-bio profile-bio-empty">Aún no has añadido una biografía.</p>
+					}
+				</div>
 			</div>
 			<button (click)="logout()" class="btn-logout">Cerrar sesión</button>
 		</div>

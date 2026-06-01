@@ -30,7 +30,7 @@ public class UsersController : ControllerBase {
         return getUsersDto;
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet("all")]
     public async Task<GetUserProfileExtendDto> GetProfileUsers(int userId) {
         User? user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
@@ -41,6 +41,7 @@ public class UsersController : ControllerBase {
             Email = user.Email,
             Nickname = user.Nickname,
             Biography = user.Biography,
+            AvatarPath = user.AvatarPath,
             FavoriteTeamId = user.FavoriteTeamId
         };
         return dto;

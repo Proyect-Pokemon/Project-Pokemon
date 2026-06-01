@@ -10,6 +10,9 @@ type JwtPayload = {
   role?: string;
   unique_name?: string;
   AvatarPath?: string | null;
+  // Some backends may return the field with a typo 'AvatarPaht' or lowercase 'avatarPath'
+  AvatarPaht?: string | null;
+  avatarPath?: string | null;
   favoriteTeamId?: string | number | null;
   FavoriteTeamId?: string | number | null;
 };
@@ -72,8 +75,10 @@ export class AuthService {
   });
 
   readonly avatarPath = computed(() => {
-    const path = this.decodedPayload()?.AvatarPath?.trim();
-    return path?.length ? path : '/assets/avatar-default.png';
+    const decoded = this.decodedPayload();
+    const raw = decoded?.AvatarPath ?? decoded?.AvatarPaht ?? decoded?.avatarPath ?? null;
+    const path = typeof raw === 'string' ? raw.trim() : null;
+    return path && path.length ? path : '/assets/Images/avatar-default.jpg';
   });
 
   get jwt(): string | null {

@@ -10,7 +10,7 @@ public class User {
     public required string Nickname { get; set; }
     public string? Password { get; set; }
     public string Role { get; set; } = "user";
-    public string? AvatarPath { get; set; } = "/defaultAvatar.png";
+    public string? AvatarPath { get; set; } = null;
     public string? Biography { get; set; }
     public DateTime CreationDate { get; set; } = DateTime.UtcNow;
     public string? GoogleId { get; set; }
