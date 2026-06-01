@@ -390,6 +390,26 @@
     background-color: #0b4153;
 }
 
+.show-all-pokemon-button {
+    margin-top: 0.5rem;
+    border: 2px solid #0f5368;
+    border-radius: 8px;
+    background-color: transparent;
+    color: #0f5368;
+    font-weight: 700;
+    padding: 0.55rem 1.1rem;
+    cursor: pointer;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.show-all-pokemon-button:hover {
+    background-color: #0f5368;
+    color: #ffffff;
+}
+
 .pokemon-grid {
     margin-top: 1rem;
     display: grid;

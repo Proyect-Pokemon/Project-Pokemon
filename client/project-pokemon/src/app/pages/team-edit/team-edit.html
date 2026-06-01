@@ -127,6 +127,9 @@
                                 <button class="add-pokemon-button" (click)="onAddPokemonFromSearch()">
                                     Añadir a equipo
                                 </button>
+                                <button class="show-all-pokemon-button" (click)="showAllPokemonFromSearch()">
+                                    Ver todos los Pokémon
+                                </button>
                             }
 
                             @if (searchResults().length > 0 && !selectedPokemonFromSearch()) {

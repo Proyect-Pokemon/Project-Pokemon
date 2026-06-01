@@ -2,7 +2,7 @@
     <div class="battle-loading" role="status" aria-live="polite">
         <div class="battle-loading-card">
             <span class="battle-loading-title">Cargando combate...</span>
-            <span class="battle-loading-subtitle">Preparando el estado de la batalla online</span>
+            <span class="battle-loading-subtitle">Preparando el estado del combate online</span>
         </div>
     </div>
 } @else {
@@ -42,7 +42,7 @@
             <div id="moves">
                 @if (actionPanel() === 'root') {
                     @if (requiresSwitchSelection()) {
-                        <div class="action-panel-prompt forced-switch-prompt">Tu Pokémon se debilitó. Elige un reemplazo:</div>
+                        <div class="action-panel-prompt forced-switch-prompt">Tu Pokémon se debilitó. Elige otro de tu equipo:</div>
 
                         <div class="switch-grid forced-switch-grid">
                             @for (option of switchOptions(); track option.index) {
@@ -61,7 +61,7 @@
                             }
                         </div>
                     } @else {
-                        <div class="action-panel-prompt">Elige una accion</div>
+                        <div class="action-panel-prompt">Elige una acción</div>
                         <button class="action-button action-attack" [disabled]="attacksDisabled()" (click)="openAttackPanel()">
                             Atacar
                         </button>
@@ -74,7 +74,7 @@
                 @if (actionPanel() === 'attack') {
                     <div class="submenu-header">
                         <button class="back-button" [disabled]="isWaitingForOpponent()" (click)="backToActionMenu()">← Volver</button>
-                        <span>Elige movimiento</span>
+                        <span>Elige un movimiento</span>
                     </div>
 
                     <div class="moves-grid">
@@ -91,7 +91,7 @@
                 @if (actionPanel() === 'switch') {
                     <div class="submenu-header">
                         <button class="back-button" [disabled]="isWaitingForOpponent()" (click)="backToActionMenu()">← Volver</button>
-                        <span>Elige Pokémon</span>
+                        <span>Elige un Pokémon</span>
                     </div>
 
                     <div class="switch-grid">

@@ -211,10 +211,16 @@ app-battle-chat {
     gap: 10px;
     margin: 0 8px 8px;
     position: relative;
+    min-height: clamp(220px, 28vh, 280px);
+    align-content: center;
 }
 
 .action-panel-prompt {
     grid-column: 1 / -1;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     font-weight: 700;
     color: #d7f5ff;
@@ -224,6 +230,7 @@ app-battle-chat {
 .action-button {
     border: 0;
     border-radius: 16px;
+    min-height: 78px;
     padding: 14px 18px;
     font-size: 1.05rem;
     font-weight: 800;
@@ -252,6 +259,7 @@ app-battle-chat {
 
 .submenu-header {
     grid-column: 1 / -1;
+    min-height: 32px;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -280,6 +288,7 @@ app-battle-chat {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
+    align-content: center;
 }
 
 .switch-grid {
@@ -287,6 +296,7 @@ app-battle-chat {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
+    align-content: center;
 }
 
 .switch-option {

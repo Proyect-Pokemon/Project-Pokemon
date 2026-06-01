@@ -292,6 +292,14 @@ export class TeamEdit {
     this.resetSearchState();
   }
 
+  showAllPokemonFromSearch(): void {
+    this.selectedPokemonFromSearch.set(null);
+    this.searchError.set(null);
+    this.searchQuery.set('');
+    this.updateSearchResults();
+    this.focusSearchInput();
+  }
+
   private updateSearchResults() {
     const cache = this.allPokemonCache();
     if (!cache.length) {

@@ -21,9 +21,8 @@ export class PokemonMovesGrid {
     filteredMovements = computed(() => {
         const query = this.normalizeSearchText(this.pickerSearchQuery());
         if (!query) return this.allMovements;
-        return this.allMovements.filter(m =>
-            this.normalizeSearchText(m.name).includes(query) ||
-            this.normalizeSearchText(m.type).includes(query)
+        return this.allMovements.filter((movement) =>
+            this.getMovementSearchTokens(movement).some((token) => token.includes(query))
         );
     });
 
@@ -127,10 +126,43 @@ export class PokemonMovesGrid {
         fairy: 'fairy',
     };
 
+    private readonly TYPE_SEARCH_ALIASES: Record<string, string[]> = {
+        normal: ['normal'],
+        fire: ['fire', 'fuego'],
+        water: ['water', 'agua'],
+        electric: ['electric', 'electrico'],
+        grass: ['grass', 'planta'],
+        ice: ['ice', 'hielo'],
+        fighting: ['fighting', 'lucha'],
+        poison: ['poison', 'veneno'],
+        ground: ['ground', 'tierra'],
+        flying: ['flying', 'volador'],
+        psychic: ['psychic', 'psiquico'],
+        bug: ['bug', 'bicho'],
+        rock: ['rock', 'roca'],
+        ghost: ['ghost', 'fantasma'],
+        dragon: ['dragon', 'dragon'],
+        dark: ['dark', 'siniestro'],
+        steel: ['steel', 'acero'],
+        fairy: ['fairy', 'hada'],
+    };
+
     getTypeIconSrc(type: string): string {
         const key = this.normalizeTypeKey(type);
         const filename = this.TYPE_ICON_MAP[key] ?? key;
         return `/assets/icons/types/${filename}.svg`;
+    }
+
+    private getMovementSearchTokens(movement: Movement): string[] {
+        const normalizedType = this.normalizeTypeKey(movement.type);
+        const typeAliases = this.TYPE_SEARCH_ALIASES[normalizedType] ?? [normalizedType];
+
+        return [
+            this.normalizeSearchText(movement.name),
+            this.normalizeSearchText(movement.type),
+            this.normalizeSearchText(this.getTypeLabel(movement.type)),
+            ...typeAliases.map((alias) => this.normalizeSearchText(alias)),
+        ];
     }
 
     private normalizeSearchText(value: string): string {
