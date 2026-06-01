@@ -9,9 +9,9 @@
 				<h1>{{ nickname() }}</h1>
 				<p class="profile-label">Mi Perfil</p>
 				@if (biography()) {
-				  <p class="profile-bio">{{ biography() }}</p>
+					<p class="profile-bio">{{ biography() }}</p>
 				} @else {
-				  <p class="profile-bio profile-bio-empty">Aún no has añadido una biografía.</p>
+					<p class="profile-bio profile-bio-empty">Aún no has añadido una biografía.</p>
 				}
 			</div>
 			<button (click)="logout()" class="btn-logout">Cerrar sesión</button>
