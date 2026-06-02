@@ -7,24 +7,25 @@
 		<div class="profile-header">
 			<div class="profile-info">
 			@if (avatarSrc()) {
-				<div class="profile-avatar-container profile-avatar-button" (click)="promptAvatarChange()">
+				<div class="profile-avatar-button" (click)="promptAvatarChange()">
 					<img src="{{ avatarSrc() }}" alt="Foto de perfil" class="profile-avatar" />
 				</div>
 			} @else {
-				<div class="profile-avatar-container profile-avatar-button" (click)="promptAvatarChange()">
+				<div class="profile-avatar-button" (click)="promptAvatarChange()">
 					<div class="profile-avatar profile-avatar-empty"></div>
 				</div>
 			}
 
 			<div class="profile-meta">
-					<h1>{{ nickname() }}</h1>
-					<p class="profile-label">Mi Perfil</p>
+				<h1>{{ nickname() }}</h1>
+				<div class="profile-bio-container">
 					@if (biography()) {
 						<p class="profile-bio">{{ biography() }}</p>
 					} @else {
 						<p class="profile-bio profile-bio-empty">Aún no has añadido una biografía.</p>
 					}
 				</div>
+			</div>
 			</div>
 			<div class="profile-actions">
 				<button (click)="openEditProfile()" class="btn-secondary btn-edit-profile">Editar biografía</button>
@@ -81,7 +82,9 @@
 						rows="6"
 						[value]="biographyDraft()"
 						(input)="onBiographyInput($event)"
-					></textarea>
+					maxlength="200"
+				></textarea>
+				<div class="char-counter">{{ biographyDraft().length }} / 200</div>
 					<div class="dialog-actions">
 						<button class="btn-primary" (click)="saveBiography()" [disabled]="biographyEditLoading()">Guardar</button>
 						<button class="btn-secondary" (click)="closeEditProfile()">Cancelar</button>

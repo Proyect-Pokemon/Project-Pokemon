@@ -6,9 +6,6 @@ import { Router } from '@angular/router';
 import { TeamService } from '../../services/team-service';
 import { PokemonTeamService } from '../../services/pokemon-team-service';
 import { PokemonService } from '../../services/pokemon-service';
-import { Team } from '../../models/team';
-import { Pokemon } from '../../models/pokemon';
-import { GetAllPokemonTeamDto } from '../../models/pokemon-team';
 
 interface UserProfileDto {
   email: string;
@@ -47,7 +44,6 @@ export class Profile implements OnInit {
   private readonly pokemonTeamService = inject(PokemonTeamService);
   private readonly pokemonService = inject(PokemonService);
 
-  // User info
   protected readonly nickname = this.auth.nickname;
   protected readonly avatar = this.auth.avatarPath;
   protected readonly avatarPath = this.auth.avatarPath;
@@ -56,7 +52,6 @@ export class Profile implements OnInit {
       ? `/assets/Images/${this.selectedAvatarName()}`
       : this.auth.avatarPath()
   );
-  // Some templates or bindings might use PascalCase 'AvatarPath'
   protected readonly AvatarPath = this.auth.avatarPath;
   protected readonly isOwnProfile = signal(true);
   protected readonly loading = signal(true);
@@ -100,7 +95,6 @@ export class Profile implements OnInit {
   protected readonly passwordChangeError = signal('');
   protected readonly passwordChangeSuccess = signal('');
 
-  // Favorite team state
   protected readonly favoriteTeamId = signal<number | null>(null);
   protected readonly biography = signal<string | null>(null);
   protected readonly favoriteTeam = computed(() =>
@@ -110,7 +104,6 @@ export class Profile implements OnInit {
   protected readonly favoriteActionLoading = signal(false);
   protected readonly favoriteActionError = signal('');
 
-  // Teams
   protected readonly userTeams = signal<TeamDisplay[]>([]);
   protected readonly teamsLoading = signal(true);
   protected readonly teamsError = signal('');
@@ -329,7 +322,9 @@ export class Profile implements OnInit {
   protected onBiographyInput(event: Event): void {
     const target = event.target as HTMLTextAreaElement | null;
     if (target) {
-      this.biographyDraft.set(target.value);
+      const value = target.value.substring(0, 200);
+      this.biographyDraft.set(value);
+      target.value = value;
     }
   }
 
