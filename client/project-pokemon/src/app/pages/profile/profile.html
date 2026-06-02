@@ -6,17 +6,17 @@
 	} @else {
 		<div class="profile-header">
 			<div class="profile-info">
-				@if (AvatarPath()) {
-					<div class="profile-avatar-container">
-						<img src="{{ AvatarPath() }}" alt="Foto de perfil" class="profile-avatar" />
-					</div>
-				} @else {
-					<div class="profile-avatar-container">
-						<div class="profile-avatar profile-avatar-empty"></div>
-					</div>
-				}
+			@if (avatarSrc()) {
+				<div class="profile-avatar-container profile-avatar-button" (click)="promptAvatarChange()">
+					<img src="{{ avatarSrc() }}" alt="Foto de perfil" class="profile-avatar" />
+				</div>
+			} @else {
+				<div class="profile-avatar-container profile-avatar-button" (click)="promptAvatarChange()">
+					<div class="profile-avatar profile-avatar-empty"></div>
+				</div>
+			}
 
-				<div class="profile-meta">
+			<div class="profile-meta">
 					<h1>{{ nickname() }}</h1>
 					<p class="profile-label">Mi Perfil</p>
 					@if (biography()) {
@@ -26,8 +26,119 @@
 					}
 				</div>
 			</div>
-			<button (click)="logout()" class="btn-logout">Cerrar sesión</button>
+			<div class="profile-actions">
+				<button (click)="openEditProfile()" class="btn-secondary btn-edit-profile">Editar biografía</button>
+				<button (click)="openPasswordChange()" class="btn-secondary btn-edit-profile">Cambiar contraseña</button>
+				<button (click)="logout()" class="btn-logout">Cerrar sesión</button>
+			</div>
 		</div>
+
+		@if (avatarDialogOpen()) {
+			<div class="avatar-dialog-overlay">
+				<div class="avatar-dialog-card">
+					<h3>¿Deseas cambiar tu foto de perfil?</h3>
+					<div class="dialog-actions">
+						<button class="btn-primary" (click)="confirmAvatarDialog(true)">Sí</button>
+						<button class="btn-secondary" (click)="confirmAvatarDialog(false)">No</button>
+					</div>
+				</div>
+			</div>
+		}
+
+		@if (avatarSelectionOpen()) {
+			<div class="avatar-selection-panel">
+				<h3>Selecciona tu avatar</h3>
+				@if (avatarActionError()) {
+					<div class="error-message">{{ avatarActionError() }}</div>
+				}
+				<div class="avatar-grid">
+					@for (avatar of avatarOptions; track avatar) {
+						<button
+							class="avatar-option"
+							(click)="setAvatar(avatar)"
+							[disabled]="avatarActionLoading()"
+						>
+							<img src="/assets/Images/{{ avatar }}" alt="Avatar" />
+						</button>
+					}
+				</div>
+				<button class="btn-secondary btn-edit" (click)="cancelAvatarChange()">Cancelar</button>
+			</div>
+		}
+
+		@if (editProfileOpen()) {
+			<div class="overlay-panel">
+				<div class="dialog-card">
+					<h3>Editar biografía</h3>
+					@if (biographyEditError()) {
+						<div class="error-message">{{ biographyEditError() }}</div>
+					}
+					@if (biographyEditSuccess()) {
+						<div class="success-message">{{ biographyEditSuccess() }}</div>
+					}
+					<textarea
+						class="textarea-field"
+						rows="6"
+						[value]="biographyDraft()"
+						(input)="onBiographyInput($event)"
+					></textarea>
+					<div class="dialog-actions">
+						<button class="btn-primary" (click)="saveBiography()" [disabled]="biographyEditLoading()">Guardar</button>
+						<button class="btn-secondary" (click)="closeEditProfile()">Cancelar</button>
+					</div>
+				</div>
+			</div>
+		}
+
+		@if (editPasswordOpen()) {
+			<div class="overlay-panel">
+				<div class="dialog-card">
+					<h3>Cambiar contraseña</h3>
+					@if (passwordChangeError()) {
+						<div class="error-message">{{ passwordChangeError() }}</div>
+					}
+					@if (passwordChangeSuccess()) {
+						<div class="success-message">{{ passwordChangeSuccess() }}</div>
+					}
+					<div class="password-step">
+						@if (passwordStep() === 1) {
+							<label>Contraseña actual</label>
+							<input
+								type="password"
+								class="text-input"
+								[value]="currentPassword()"
+								(input)="onCurrentPasswordInput($event)"
+							/>
+							<div class="dialog-actions">
+								<button class="btn-primary" (click)="proceedPasswordStep()">Continuar</button>
+								<button class="btn-secondary" (click)="closePasswordChange()">Cancelar</button>
+							</div>
+						}
+						@if (passwordStep() === 2) {
+							<label>Nueva contraseña</label>
+							<input
+								type="password"
+								class="text-input"
+								[value]="newPassword()"
+								(input)="onNewPasswordInput($event)"
+							/>
+							<label>Confirmar nueva contraseña</label>
+							<input
+								type="password"
+								class="text-input"
+								[value]="confirmPassword()"
+								(input)="onConfirmPasswordInput($event)"
+							/>
+							<div class="dialog-actions">
+								<button class="btn-primary" (click)="savePassword()" [disabled]="passwordChangeLoading()">Guardar</button>
+								<button class="btn-secondary" (click)="passwordStep.set(1)">Volver</button>
+								<button class="btn-secondary" (click)="closePasswordChange()">Cancelar</button>
+							</div>
+						}
+					</div>
+				</div>
+			</div>
+		}
 
 		<div class="favorite-section">
 			<div class="section-header">

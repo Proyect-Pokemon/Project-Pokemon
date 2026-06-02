@@ -49,7 +49,7 @@ public class UsersController : ControllerBase {
 
     // PUT
     [Authorize]
-    [HttpPut]
+    [HttpPut("FavoriteTeam")]
     public async Task<IActionResult> UpdateFavoriteTeam(int id, [FromBody] PutFavoriteTeamDto dto) {
 
         User? user = await _unitOfWork.UserRepository.GetByIdAsync(id);
@@ -58,6 +58,60 @@ public class UsersController : ControllerBase {
         }
 
         user.FavoriteTeamId = dto.FavoriteTeamId;
+        await _unitOfWork.UserRepository.UpdateAsync(user);
+        bool success = await _unitOfWork.SaveAsync();
+        if (!success) {
+            return BadRequest();
+        }
+        return Ok(dto);
+    }
+
+    [Authorize]
+    [HttpPut("Avatar")]
+    public async Task<IActionResult> UpdateUserAvatar(int id, [FromBody] PutAvatarPathDto dto) {
+
+        User? user = await _unitOfWork.UserRepository.GetByIdAsync(id);
+        if (user == null) {
+            return NotFound();
+        }
+
+        user.AvatarPath = dto.AvatarPath;
+        await _unitOfWork.UserRepository.UpdateAsync(user);
+        bool success = await _unitOfWork.SaveAsync();
+        if (!success) {
+            return BadRequest();
+        }
+        return Ok(dto);
+    }
+
+    [Authorize]
+    [HttpPut("Biography")]
+    public async Task<IActionResult> UpdateUserBiography(int id, [FromBody] PutBiographyDto dto) {
+
+        User? user = await _unitOfWork.UserRepository.GetByIdAsync(id);
+        if (user == null) {
+            return NotFound();
+        }
+
+        user.Biography = dto.Biography;
+        await _unitOfWork.UserRepository.UpdateAsync(user);
+        bool success = await _unitOfWork.SaveAsync();
+        if (!success) {
+            return BadRequest();
+        }
+        return Ok(dto);
+    }
+
+    [Authorize]
+    [HttpPut("Password")]
+    public async Task<IActionResult> UpdateUserPassword(int id, [FromBody] PutPasswordDto dto) {
+
+        User? user = await _unitOfWork.UserRepository.GetByIdAsync(id);
+        if (user == null) {
+            return NotFound();
+        }
+
+        user.Password = dto.Password;
         await _unitOfWork.UserRepository.UpdateAsync(user);
         bool success = await _unitOfWork.SaveAsync();
         if (!success) {

@@ -8,7 +8,7 @@ public class User {
     public int Id { get; set; }
     public required string Email { get; set; }
     public required string Nickname { get; set; }
-    public string? Password { get; set; }
+    public required string Password { get; set; }
     public string Role { get; set; } = "user";
     public string? AvatarPath { get; set; } = null;
     public string? Biography { get; set; }
@@ -16,8 +16,6 @@ public class User {
     public string? GoogleId { get; set; }
     public int? FavoriteTeamId { get; set; }
     //public int VictoryCount { get; set; } = 0;
-    //TO DO: Shiny token
-
     public Team? FavoriteTeam { get; set; }
     public ICollection<Team> Teams { get; set; } = [];
 }

@@ -78,7 +78,16 @@ export class AuthService {
     const decoded = this.decodedPayload();
     const raw = decoded?.AvatarPath ?? decoded?.AvatarPaht ?? decoded?.avatarPath ?? null;
     const path = typeof raw === 'string' ? raw.trim() : null;
-    return path && path.length ? path : '/assets/Images/avatar-default.jpg';
+
+    if (!path || !path.length) {
+      return '/assets/Images/avatar-default.jpg';
+    }
+
+    if (path.startsWith('/') || path.startsWith('http')) {
+      return path;
+    }
+
+    return `/assets/Images/${path}`;
   });
 
   get jwt(): string | null {
