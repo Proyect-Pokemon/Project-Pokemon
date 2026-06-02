@@ -193,7 +193,6 @@ public class Network {
             await client.SendAsync(new BattleStateUpdate {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle),
-                Messages = new List<string> { "No se pudo identificar al jugador." },
                 RequiresSwitch = false,
                 WinnerUserId = battle.WinnerUserId
             });
@@ -213,19 +212,15 @@ public class Network {
 
         if (!result.Accepted) {
             _logger.LogWarning(
-                "Accion rechazada en batalla {BattleId} para userId={UserId}. Motivo: {Messages}",
+                "Accion rechazada en batalla {BattleId} para userId={UserId}.",
                 actionRequest.BattleId,
-                userId.Value,
-                string.Join(" | ", result.Messages)
+                userId.Value
             );
 
             await client.SendAsync(new BattleStateUpdate {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle, userId.Value),
                 ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, userId.Value),
-                Messages = result.Messages,
-                StructuredMessages = result.StructuredMessages,
-                Timeline = result.Timeline,
                 RequiresSwitch = result.RequiresSwitchSelection,
                 WinnerUserId = battle.WinnerUserId
             });
@@ -244,9 +239,6 @@ public class Network {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle, userId.Value),
                 ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, userId.Value),
-                Messages = result.Messages,
-                StructuredMessages = result.StructuredMessages,
-                Timeline = result.Timeline,
                 RequiresSwitch = result.RequiresSwitchSelection,
                 WinnerUserId = battle.WinnerUserId
             });
@@ -255,13 +247,11 @@ public class Network {
 
         // Turno resuelto: enviar actualización personalizada a todos.
         _logger.LogInformation(
-            "Batalla {BattleId}: turno resuelto. winner={Winner}. Logs={MessagesCount}",
+            "Batalla {BattleId}: turno resuelto. winner={Winner}. Steps={StepsCount}",
             actionRequest.BattleId,
             result.WinnerUserId,
-            result.Messages.Count
+            result.ReplaySteps.Count
         );
-
-        battle.BattleLog.AddRange(result.Messages);
 
         // Enviar actualización personalizada a cada jugador de la batalla
         if (_battleClients.TryGetValue(actionRequest.BattleId, out var clientIds)) {
@@ -273,9 +263,6 @@ public class Network {
                         Action = actionRequest.Action,
                         Battle = CreateBattleSnapshot(battle, perspectiveUserId),
                         ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, perspectiveUserId),
-                        Messages = result.Messages,
-                        StructuredMessages = result.StructuredMessages,
-                        Timeline = result.Timeline,
                         RequiresSwitch = result.RequiresSwitchSelection && perspectiveUserId == userId.Value,
                         WinnerUserId = battle.WinnerUserId
                     };
@@ -411,7 +398,12 @@ public class Network {
             var stateForPlayer1 = new BattleStateUpdate {
                 Action = BattleAction.StartBattle,
                 Battle = CreateBattleSnapshot(session, player1.UserId ?? 1),
-                Messages = new List<string> { "¡La batalla comienza!" },
+                ReplaySteps = new List<ReplayStep> {
+                    new ReplayStep {
+                        StepIndex = 0,
+                        Message = "¡La batalla comienza!"
+                    }
+                },
                 RequiresSwitch = false,
                 WinnerUserId = null
             };
@@ -419,7 +411,12 @@ public class Network {
             var stateForPlayer2 = new BattleStateUpdate {
                 Action = BattleAction.StartBattle,
                 Battle = CreateBattleSnapshot(session, player2.UserId ?? 2),
-                Messages = new List<string> { "¡La batalla comienza!" },
+                ReplaySteps = new List<ReplayStep> {
+                    new ReplayStep {
+                        StepIndex = 0,
+                        Message = "¡La batalla comienza!"
+                    }
+                },
                 RequiresSwitch = false,
                 WinnerUserId = null
             };
@@ -453,10 +450,9 @@ public class Network {
         };
     }
 
-    /// <summary>
-    /// Remapea las perspectivas (player/opponent) en los ReplaySteps según el userId del receptor.
-    /// Crea una copia profunda de los steps para evitar mutación compartida entre clientes.
-    /// </summary>
+    // Remapea las perspectivas (player/opponent) en los ReplaySteps según el userId del receptor.
+    // Crea una copia profunda de los steps para evitar mutación compartida entre clientes.
+
     private List<ReplayStep> RemapReplayStepPerspectives(
         List<ReplayStep> originalSteps,
         Models.Battle.BattleSession battle,
@@ -485,9 +481,7 @@ public class Network {
         return remappedSteps;
     }
 
-    /// <summary>
-    /// Remapea la perspectiva de un solo evento de batalla.
-    /// </summary>
+    // Remapea la perspectiva de un solo evento de batalla.
     private BattleEvent RemapEventPerspective(
         BattleEvent originalEvent,
         Models.Battle.BattleSession battle,
@@ -573,9 +567,7 @@ public class Network {
         };
     }
 
-    /// <summary>
-    /// Remapea un string "player"/"opponent" según la perspectiva del receptor.
-    /// </summary>
+    // Remapea un string "player"/"opponent" según la perspectiva del receptor.
     private string RemapSide(string originalSide, Models.Battle.BattleSession battle, int perspectiveUserId) {
         bool isPlayerSide = originalSide == "player";
         bool perspectiveIsPlayer1 = perspectiveUserId == battle.PlayerUserId;

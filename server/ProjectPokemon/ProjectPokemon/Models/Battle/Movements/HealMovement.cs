@@ -2,11 +2,10 @@ using ProjectPokemon.Models.Database.Entities;
 
 namespace ProjectPokemon.Models.Battle.Movements;
 
-/// <summary>
-/// Movimiento que cura al usuario un porcentaje de su vida máxima.
-/// Típicamente cura el 50% de HP máximo.
-/// El target siempre es el usuario (self).
-/// </summary>
+// Movimiento que cura al usuario un porcentaje de su vida máxima.
+// Típicamente cura el 50% de HP máximo.
+// El target siempre es el usuario (self).
+
 public class HealMovement : BattleMovement {
     public HealMovement(Movement movement) : base(movement) { }
 

@@ -3,15 +3,12 @@ using System.Text;
 
 namespace ProjectPokemon.Utils;
 
-/// <summary>
-/// Utilidad para normalizar texto eliminando tildes y caracteres especiales
-/// Usado para generar identificadores y mensajes para el frontend
-/// </summary>
+// Utilidad para normalizar texto eliminando tildes y caracteres especiales
+// Usado para generar identificadores y mensajes para el frontend
+
 public static class TextNormalizer {
-    /// <summary>
-    /// Elimina tildes y caracteres diacriticos de un texto
-    /// Ejemplo: "Pokémon" -> "Pokemon", "Niño" -> "Nino"
-    /// </summary>
+    // Elimina tildes y caracteres diacriticos de un texto
+    // Ejemplo: "Pokémon" -> "Pokemon", "Niño" -> "Nino"
     public static string RemoveDiacritics(string text) {
         if (string.IsNullOrWhiteSpace(text)) {
             return text;
@@ -32,10 +29,9 @@ public static class TextNormalizer {
         return result.ToString().Normalize(NormalizationForm.FormC);
     }
 
-    /// <summary>
-    /// Convierte un nombre a formato snake_case sin tildes
-    /// Ejemplo: "Light Screen" -> "light_screen", "Pokémon" -> "pokemon"
-    /// </summary>
+    // Convierte un nombre a formato snake_case sin tildes
+    // Ejemplo: "Light Screen" -> "light_screen", "Pokémon" -> "pokemon"
+
     public static string ToSnakeCase(string text) {
         if (string.IsNullOrWhiteSpace(text)) {
             return text;
@@ -45,10 +41,8 @@ public static class TextNormalizer {
         return normalized.ToLowerInvariant().Replace(" ", "_").Replace("-", "_");
     }
 
-    /// <summary>
-    /// Normaliza un nombre de Pokemon para el frontend (minusculas, sin tildes)
-    /// Ejemplo: "Pikachu" -> "pikachu", "Farfetch'd" -> "farfetchd"
-    /// </summary>
+    // Normaliza un nombre de Pokemon para el frontend (minusculas, sin tildes)
+    // Ejemplo: "Pikachu" -> "pikachu", "Farfetch'd" -> "farfetchd"
     public static string NormalizePokemonName(string name) {
         if (string.IsNullOrWhiteSpace(name)) {
             return name;

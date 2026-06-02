@@ -3,11 +3,10 @@ using ProjectPokemon.Models.Database.Entities;
 
 namespace ProjectPokemon.Models.Battle.Movements;
 
-/// <summary>
-/// Movimiento que causa daño y cura al usuario un porcentaje del daño infligido.
-/// Usa la propiedad Drain para determinar el porcentaje de curación (1-100).
-/// Ejemplo: Absorb, Mega Drain, Giga Drain, Leech Life, Dream Eater.
-/// </summary>
+// Movimiento que causa daño y cura al usuario un porcentaje del daño infligido.
+// Usa la propiedad Drain para determinar el porcentaje de curación (1-100).
+// Ejemplo: Absorb, Mega Drain, Giga Drain, Leech Life, Dream Eater.
+
 public class DamageHealMovement : DamageMovement {
     private const int DREAM_EATER_ID = 138;
 

@@ -26,28 +26,9 @@ public class BattleService {
         public bool Accepted { get; set; }
         public bool TurnResolved { get; set; }
 
-        /// <summary>
-        /// [NUEVO RECOMENDADO] Lista ordenada de pasos de replay para reproducción determinista
-        /// </summary>
+
+        // Lista ordenada de pasos de replay para reproducción determinista
         public List<ReplayStep> ReplaySteps { get; set; } = new();
-
-        /// <summary>
-        /// [LEGACY - DEPRECATED] Usar ReplaySteps en su lugar
-        /// </summary>
-        [Obsolete("Use ReplaySteps instead")]
-        public List<string> Messages { get; set; } = new();
-
-        /// <summary>
-        /// [LEGACY - DEPRECATED] Usar ReplaySteps en su lugar
-        /// </summary>
-        [Obsolete("Use ReplaySteps instead")]
-        public List<StructuredBattleMessage> StructuredMessages { get; set; } = new();
-
-        /// <summary>
-        /// [LEGACY - DEPRECATED] Usar ReplaySteps en su lugar
-        /// </summary>
-        [Obsolete("Use ReplaySteps instead")]
-        public List<Networking.Messages.Battle.BattleEvent> Timeline { get; set; } = new();
 
         public int? WinnerUserId { get; set; }
 
@@ -60,24 +41,9 @@ public class BattleService {
 
     // Clase interna para resolver turnos
     private class TurnResolutionResult {
-        /// <summary>
-        /// Builder para construir steps ordenados durante la resolución del turno
-        /// </summary>
+        // Builder para construir steps ordenados durante la resolución del turno
         public ReplayStepBuilder StepBuilder { get; set; } = new();
-
-        /// <summary>
-        /// [LEGACY] Mantener para compatibilidad durante transición
-        /// </summary>
-        public List<string> Messages { get; set; } = new();
-
-        /// <summary>
-        /// [LEGACY] Mantener para compatibilidad durante transición
-        /// </summary>
-        public List<StructuredBattleMessage> StructuredMessages { get; set; } = new();
-
-        /// <summary>
-        /// [LEGACY] Mantener para compatibilidad durante transición
-        /// </summary>
+    }
         public List<Networking.Messages.Battle.BattleEvent> Events { get; set; } = new();
     }
 

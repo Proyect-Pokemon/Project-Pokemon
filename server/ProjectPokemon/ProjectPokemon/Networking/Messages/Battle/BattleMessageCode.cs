@@ -1,8 +1,6 @@
 namespace ProjectPokemon.Networking.Messages.Battle;
 
-/// <summary>
-/// Codigos estructurados para mensajes de combate (sin tildes, snake_case)
-/// </summary>
+// Codigos estructurados para mensajes de combate (sin tildes, snake_case)
 public static class BattleMessageCode {
     // Acciones de ataque
     public const string AttackUsed = "attack_used";

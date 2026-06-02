@@ -2,12 +2,10 @@ using ProjectPokemon.Models.Database.Entities;
 
 namespace ProjectPokemon.Models.Battle.Movements;
 
-/// <summary>
-/// Movimientos que fuerzan al oponente a cambiar de Pokémon.
-/// El Pokémon objetivo es reemplazado por otro Pokémon aleatorio de su equipo.
-/// Si no hay más Pokémon disponibles en el equipo enemigo, el movimiento falla.
-/// Ejemplos: Whirlwind (Torbellino), Roar (Rugido), Dragon Tail (Cola Dragón), Circle Throw (Llave Giro).
-/// </summary>
+// Movimientos que fuerzan al oponente a cambiar de Pokémon.
+// El Pokémon objetivo es reemplazado por otro Pokémon aleatorio de su equipo.
+// Si no hay más Pokémon disponibles en el equipo enemigo, el movimiento falla.
+// Ejemplos: Whirlwind (Torbellino), Roar (Rugido), Dragon Tail (Cola Dragón), Circle Throw (Llave Giro).
 public class ForceSwitchMovement : BattleMovement {
     public ForceSwitchMovement(Movement movement) : base(movement) { }
 

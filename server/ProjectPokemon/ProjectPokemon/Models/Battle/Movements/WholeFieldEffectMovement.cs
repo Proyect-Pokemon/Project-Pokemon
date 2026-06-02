@@ -2,11 +2,9 @@ using ProjectPokemon.Models.Database.Entities;
 
 namespace ProjectPokemon.Models.Battle.Movements;
 
-/// <summary>
-/// Movimientos que afectan a todo el campo de batalla (ambos lados).
-/// Actualmente solo hay un movimiento en esta categoría:
-/// - Haze/Niebla (ID 114): Resetea todos los cambios de estadísticas (stages) de todos los Pokémon en combate.
-/// </summary>
+// Movimientos que afectan a todo el campo de batalla (ambos lados).
+// Actualmente solo hay un movimiento en esta categoría:
+// - Haze/Niebla (ID 114): Resetea todos los cambios de estadísticas (stages) de todos los Pokémon en combate.
 public class WholeFieldEffectMovement : BattleMovement {
     private const int HAZE_ID = 114;
 

@@ -3,12 +3,10 @@ using ProjectPokemon.Models.Database.Entities;
 
 namespace ProjectPokemon.Models.Battle.Movements;
 
-/// <summary>
-/// Movimiento que causa daño y tiene probabilidad de reducir estadísticas del objetivo.
-/// Usa StatChance para determinar la probabilidad (1-100) de que se apliquen los cambios de estadísticas.
-/// Los cambios de estadísticas se definen en StatChanges (típicamente cambios negativos al objetivo).
-/// Ejemplo: Psychic, Shadow Ball, Crunch, Iron Tail.
-/// </summary>
+// Movimiento que causa daño y tiene probabilidad de reducir estadísticas del objetivo.
+// Usa StatChance para determinar la probabilidad (1-100) de que se apliquen los cambios de estadísticas.
+// Los cambios de estadísticas se definen en StatChanges (típicamente cambios negativos al objetivo).
+
 public class DamageLowerMovement : DamageMovement {
     public DamageLowerMovement(Movement movement) : base(movement) { }
 

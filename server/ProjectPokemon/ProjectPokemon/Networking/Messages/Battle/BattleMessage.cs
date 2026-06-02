@@ -32,35 +32,11 @@ public class BattleStateUpdate : BattleMessage {
     public required BattleSnapshot Battle { get; set; }
 
     /// <summary>
-    /// [NUEVO RECOMENDADO] Lista ordenada de pasos de replay para reproducción determinista del turno.
+    /// Lista ordenada de pasos de replay para reproducción determinista del turno.
     /// Cada step contiene mensaje(s) + evento(s) + metadata en orden de ejecución.
     /// Frontend debe consumir esta lista para reproducir el turno paso a paso.
     /// </summary>
     public List<ReplayStep> ReplaySteps { get; set; } = new();
-
-    /// <summary>
-    /// [LEGACY - DEPRECATED] Mensajes de texto simples para compatibilidad con clientes antiguos.
-    /// Los nuevos clientes deben usar ReplaySteps en su lugar.
-    /// Este campo será eliminado en una versión futura.
-    /// </summary>
-    [Obsolete("Use ReplaySteps instead for deterministic step-by-step replay")]
-    public List<string> Messages { get; set; } = new();
-
-    /// <summary>
-    /// [LEGACY - DEPRECATED] Mensajes estructurados para compatibilidad con clientes antiguos.
-    /// Los nuevos clientes deben usar ReplaySteps.StructuredMessage en su lugar.
-    /// Este campo será eliminado en una versión futura.
-    /// </summary>
-    [Obsolete("Use ReplaySteps instead for deterministic step-by-step replay")]
-    public List<StructuredBattleMessage> StructuredMessages { get; set; } = new();
-
-    /// <summary>
-    /// [LEGACY - DEPRECATED] Timeline de eventos para compatibilidad con clientes antiguos.
-    /// Los nuevos clientes deben usar ReplaySteps.Events en su lugar.
-    /// Este campo será eliminado en una versión futura.
-    /// </summary>
-    [Obsolete("Use ReplaySteps instead for deterministic step-by-step replay")]
-    public List<BattleEvent> Timeline { get; set; } = new();
 
     public bool RequiresSwitch { get; set; } = false;
     public int? WinnerUserId { get; set; }

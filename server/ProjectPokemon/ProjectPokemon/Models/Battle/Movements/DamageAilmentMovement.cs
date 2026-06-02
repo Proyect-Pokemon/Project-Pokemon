@@ -3,14 +3,13 @@ using ProjectPokemon.Models.Database.Entities;
 
 namespace ProjectPokemon.Models.Battle.Movements;
 
-/// <summary>
-/// Movimiento que causa daño y tiene probabilidad de aplicar un estado alterado.
-/// Usa AilmentChance para determinar la probabilidad (1-100) de aplicar el estado.
-/// El estado se define en Ailment.
-/// Casos especiales:
-/// - Trap moves (Bind, Wrap, Fire Spin, Clamp): usan MinTurns/MaxTurns para duración del atrapamiento
-/// - Tri-Attack (ID 161): puede aplicar burn, freeze o paralysis aleatoriamente
-/// </summary>
+// Movimiento que causa daño y tiene probabilidad de aplicar un estado alterado.
+// Usa AilmentChance para determinar la probabilidad (1-100) de aplicar el estado.
+// El estado se define en Ailment.
+// Casos especiales:
+// - Trap moves (Bind, Wrap, Fire Spin, Clamp): usan MinTurns/MaxTurns para duración del atrapamiento
+// - Tri-Attack (ID 161): puede aplicar burn, freeze o paralysis aleatoriamente
+
 public class DamageAilmentMovement : DamageMovement {
     private const int TRI_ATTACK_ID = 161;
 

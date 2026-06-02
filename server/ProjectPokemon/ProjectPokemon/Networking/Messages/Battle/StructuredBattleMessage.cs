@@ -2,10 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace ProjectPokemon.Networking.Messages.Battle;
 
-/// <summary>
-/// Mensaje estructurado de combate para el frontend
-/// Reemplaza las narrativas largas con codigos + args
-/// </summary>
+// Mensaje estructurado de combate para el frontend
+// Reemplaza las narrativas largas con codigos + args
 public class StructuredBattleMessage {
     [JsonPropertyName("code")]
     public required string Code { get; set; }
@@ -14,9 +12,7 @@ public class StructuredBattleMessage {
     public Dictionary<string, object> Args { get; set; } = new();
 }
 
-/// <summary>
-/// Helper para construir mensajes estructurados
-/// </summary>
+// Helper para construir mensajes estructurados
 public static class BattleMessageBuilder {
     public static StructuredBattleMessage Create(string code, Dictionary<string, object>? args = null) {
         return new StructuredBattleMessage {
