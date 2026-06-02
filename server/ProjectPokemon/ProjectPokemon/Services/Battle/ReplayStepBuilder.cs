@@ -5,6 +5,9 @@ namespace ProjectPokemon.Services.Battle;
 // Helper para construir ReplaySteps de forma ordenada durante la resolución de turnos.
 // Mantiene el orden de ejecución y agrupa mensajes con sus eventos asociados.
 public class ReplayStepBuilder {
+    // Delay por defecto entre steps (en milisegundos)
+    private const int DefaultStepDelayMs = 1100;
+
     private readonly List<ReplayStep> _steps = new();
     private int _nextStepIndex = 0;
 
@@ -13,7 +16,7 @@ public class ReplayStepBuilder {
         var step = new ReplayStep {
             StepIndex = _nextStepIndex++,
             Message = message,
-            DelayMs = delayMs
+            DelayMs = delayMs ?? DefaultStepDelayMs
         };
         _steps.Add(step);
         return this;
@@ -29,7 +32,7 @@ public class ReplayStepBuilder {
             StepIndex = _nextStepIndex++,
             Message = textMessage,
             StructuredMessage = structuredMessage,
-            DelayMs = delayMs
+            DelayMs = delayMs ?? DefaultStepDelayMs
         };
         _steps.Add(step);
         return this;
@@ -48,7 +51,7 @@ public class ReplayStepBuilder {
             StepIndex = _nextStepIndex++,
             Message = textMessage,
             StructuredMessage = structuredMessage,
-            DelayMs = delayMs,
+            DelayMs = delayMs ?? DefaultStepDelayMs,
             Metadata = metadata
         };
 

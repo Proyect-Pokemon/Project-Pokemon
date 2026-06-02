@@ -17,7 +17,6 @@ public class ReplayStep {
     public List<BattleEvent> Events { get; set; } = new();
 
     // Delay recomendado en milisegundos antes de procesar el siguiente step (para ritmo de animaciones)
-    // Null = usar delay por defecto del cliente
     public int? DelayMs { get; set; }
 
     // Metadata adicional para el frontend (ej: "animation_type": "critical_hit")

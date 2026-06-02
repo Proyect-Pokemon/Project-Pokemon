@@ -23,8 +23,6 @@ interface BattleStateEventPayload {
     events: any[];
     delayMs?: number | null;
   }>;
-  messages: string[];
-  timeline: any[];
   requiresSwitchSelection: boolean;
   availableSlotsForSwitch: number[];
   winnerUserId: number | null;
@@ -39,11 +37,10 @@ interface BattleStateEventPayload {
 })
 export class Battle {
   private readonly FALLBACK_SPRITE = '/assets/error/missing-no.png';
-  private readonly WAITING_MESSAGE_SNIPPET = 'esperando al rival';
   private readonly ONLINE_BATTLE_BOOTSTRAP_TIMEOUT_MS = 8000;
-  private readonly TURN_MESSAGE_DURATION_MS = 1500;
-  private readonly TURN_EFFECT_DELAY_MS = 500;
+  private readonly DEFAULT_REPLAY_STEP_DELAY_MS = 1100;
   private readonly ATTACK_DASH_DURATION_MS = 220;
+  private readonly WAITING_OPPONENT_MESSAGE = 'esperando al rival';
   private onlineBattleBootstrapTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private playbackChain: Promise<void> = Promise.resolve();
   private readonly playbackTimeouts = new Set<ReturnType<typeof setTimeout>>();
@@ -69,6 +66,8 @@ export class Battle {
   showLeaveConfirmation = signal(false);
   playerAttackAnimating = signal(false);
   opponentAttackAnimating = signal(false);
+  playerStatStageIndicator = signal<string | null>(null);
+  opponentStatStageIndicator = signal<string | null>(null);
 
   private leaveDecisionResolver: ((decision: boolean) => void) | null = null;
   private leaveDecisionPromise: Promise<boolean> | null = null;
@@ -127,14 +126,9 @@ export class Battle {
       this.clearOnlineBattleBootstrapTimeout();
       this.isSubmittingForcedSwitch.set(false);
 
-      const waitingForOpponent = this.hasWaitingMessage(battleEvent.messages);
       const replaySteps = (battleEvent.replaySteps ?? []).filter((step) => !!step);
-      const backendMessages = (battleEvent.messages ?? []).filter((message) => !!message?.trim());
-      const filteredTimeline = battleEvent.timeline ?? [];
-      const hasPlaybackContent = replaySteps.length > 0 || backendMessages.length > 0 || filteredTimeline.length > 0;
-      const hasVisualPlaybackContent = filteredTimeline.length > 0
-        || replaySteps.some((step) => Array.isArray(step?.events) && step.events.length > 0);
-      const shouldPlayTurn = hasPlaybackContent && (!waitingForOpponent || hasVisualPlaybackContent);
+      const hasPlaybackContent = replaySteps.length > 0;
+      const shouldPlayTurn = hasPlaybackContent;
 
       if (!untracked(() => this.battleInfo())) {
         this.applySnapshotToView(battleEvent.battle);
@@ -144,9 +138,7 @@ export class Battle {
         this.enqueueBattlePlayback({
           battle: battleEvent.battle,
           replaySteps,
-          messages: backendMessages,
-          timeline: filteredTimeline,
-          requiresSwitchSelection: battleEvent.requiresSwitchSelection ?? battleEvent.requiresSwitch ?? false,
+          requiresSwitchSelection: battleEvent.requiresSwitchSelection ?? false,
           availableSlotsForSwitch: (battleEvent.availableSlotsForSwitch ?? []).filter((slot: unknown) => Number.isInteger(slot)) as number[],
           winnerUserId: battleEvent.winnerUserId ?? null,
         });
@@ -155,7 +147,7 @@ export class Battle {
 
       this.applySnapshotToView(battleEvent.battle);
       this.syncActivePokemonAfterFaint(battleEvent.battle);
-      this.applyBattleEventState(battleEvent, waitingForOpponent);
+      this.applyBattleEventState(battleEvent, false);
     });
   }
 
@@ -280,7 +272,7 @@ export class Battle {
   }
 
   async attack(move: BattleMove): Promise<void> {
-    if (this.mode() === 'cpu' || this.requiresSwitchSelection()) {
+    if (this.mode() === 'cpu' || this.requiresSwitchSelection() || this.attacksDisabled() || this.isWaitingForOpponent()) {
       return;
     }
 
@@ -305,7 +297,7 @@ export class Battle {
     }
 
     const battleId = this.battleId();
-    if (!battleId) {
+    if (!battleId || this.attacksDisabled() || this.isWaitingForOpponent()) {
       return;
     }
 
@@ -315,7 +307,7 @@ export class Battle {
   }
 
   selectForcedSwitch(targetSlot: number): void {
-    if (!this.requiresSwitchSelection()) {
+    if (!this.requiresSwitchSelection() || this.isSubmittingForcedSwitch()) {
       return;
     }
 
@@ -340,12 +332,6 @@ export class Battle {
     }
 
     return this.availableSlotsForSwitch().includes(slot);
-  }
-
-  private hasWaitingMessage(messages: string[]): boolean {
-    return messages.some(message =>
-      message?.toLowerCase().includes(this.WAITING_MESSAGE_SNIPPET)
-    );
   }
 
   private resolveBattleResult(winnerUserId: number | null): BattleResult {
@@ -410,15 +396,9 @@ export class Battle {
         return;
       }
 
-      const backendChatMessages = event.messages
-        .map((message) => message.trim())
-        .filter((message): message is string => !!message);
-      const playbackChatMessages = backendChatMessages;
-      const playbackTimelineQueue = [...(event.timeline ?? [])];
       const playbackSteps = [...(event.replaySteps ?? [])].sort((a, b) => (a.stepIndex ?? 0) - (b.stepIndex ?? 0));
-      const canUseReplaySteps = this.shouldUseReplaySteps(playbackSteps, playbackChatMessages, playbackTimelineQueue);
 
-      if (!playbackSteps.length && !playbackTimelineQueue.length && !playbackChatMessages.length) {
+      if (!playbackSteps.length) {
         this.applySnapshotToView(event.battle);
         this.applyBattleEventState(event, false);
         return;
@@ -430,100 +410,42 @@ export class Battle {
       this.isWaitingForOpponent.set(false);
       this.syncActivePokemonAfterFaint(event.battle);
 
+      let replayIsWaitingForOpponent = false;
+
       try {
-        if (canUseReplaySteps) {
-          for (const step of playbackSteps) {
-            if (this.isDestroyed) {
-              return;
-            }
-
-            const stepMessage = step.message?.trim();
-            if (stepMessage) {
-              this.combatChatMessages.update((current) => [...current, stepMessage]);
-            }
-
-            await this.wait(this.TURN_EFFECT_DELAY_MS);
-
-            const stepEvents = Array.isArray(step.events) ? step.events : [];
-            for (const stepEvent of stepEvents) {
-              this.applyTimelineEvent(stepEvent, event.battle);
-            }
-
-            const stepDelay = Number(step.delayMs);
-            const normalizedStepDelay = Number.isFinite(stepDelay) && stepDelay > 0
-              ? stepDelay
-              : this.TURN_MESSAGE_DURATION_MS;
-            await this.wait(Math.max(0, normalizedStepDelay - this.TURN_EFFECT_DELAY_MS));
-          }
-
-          return;
-        }
-
-        for (const combatMessage of playbackChatMessages) {
+        for (const step of playbackSteps) {
           if (this.isDestroyed) {
             return;
           }
 
-          this.combatChatMessages.update((current) => [...current, combatMessage]);
-          await this.wait(this.TURN_EFFECT_DELAY_MS);
-
-          // Prefer timeline-linked effects to avoid duplicated animations/effects.
-          const appliedFromTimeline = this.applyTimelineEffectForMessage(combatMessage, playbackTimelineQueue, event.battle);
-          if (!appliedFromTimeline) {
-            this.applyPlaybackEffect(combatMessage, event.battle);
+          const stepMessage = step.message?.trim();
+          if (stepMessage && this.isWaitingOpponentMessage(stepMessage)) {
+            replayIsWaitingForOpponent = true;
+            this.isWaitingForOpponent.set(true);
+            this.attacksDisabled.set(true);
+            this.actionPanel.set('root');
+          } else if (stepMessage) {
+            this.combatChatMessages.update((current) => [...current, stepMessage]);
           }
 
-          await this.wait(Math.max(0, this.TURN_MESSAGE_DURATION_MS - this.TURN_EFFECT_DELAY_MS));
-        }
-
-        while (playbackTimelineQueue.length > 0) {
-          if (this.isDestroyed) {
-            return;
+          const stepEvents = Array.isArray(step.events) ? step.events : [];
+          for (const stepEvent of stepEvents) {
+            await this.processReplayEvent(stepEvent, event.battle);
           }
 
-          const timelineEvent = playbackTimelineQueue.shift();
-          if (!timelineEvent) {
-            continue;
-          }
-
-          await this.wait(this.TURN_EFFECT_DELAY_MS);
-          this.applyTimelineEvent(timelineEvent, event.battle);
-          await this.wait(Math.max(0, this.TURN_MESSAGE_DURATION_MS - this.TURN_EFFECT_DELAY_MS));
+          const stepDelay = Number(step.delayMs);
+          const normalizedStepDelay = Number.isFinite(stepDelay) && stepDelay > 0
+            ? stepDelay
+            : this.DEFAULT_REPLAY_STEP_DELAY_MS;
+          await this.wait(normalizedStepDelay);
         }
       } finally {
         if (!this.isDestroyed) {
           this.applySnapshotToView(event.battle);
-          this.applyBattleEventState(event, false);
+          this.applyBattleEventState(event, replayIsWaitingForOpponent);
         }
       }
     });
-  }
-
-  private shouldUseReplaySteps(
-    replaySteps: Array<{ stepIndex: number; message?: string | null; events: any[]; delayMs?: number | null }>,
-    legacyMessages: string[],
-    legacyTimeline: any[],
-  ): boolean {
-    if (replaySteps.length === 0) {
-      return false;
-    }
-
-    if (legacyMessages.length === 0 && legacyTimeline.length === 0) {
-      return true;
-    }
-
-    const replayMessageCount = replaySteps.filter((step) => !!step.message?.trim()).length;
-    const replayEventCount = replaySteps.reduce((total, step) => total + (Array.isArray(step.events) ? step.events.length : 0), 0);
-
-    const messageCoverage = legacyMessages.length === 0
-      ? 1
-      : replayMessageCount / legacyMessages.length;
-    const eventCoverage = legacyTimeline.length === 0
-      ? 1
-      : replayEventCount / legacyTimeline.length;
-
-    // If replay steps are significantly incomplete, prefer legacy payload for now.
-    return messageCoverage >= 0.8 && eventCoverage >= 0.8;
   }
 
   private applyBattleEventState(event: BattleStateEventPayload, waitingForOpponent: boolean): void {
@@ -631,76 +553,77 @@ export class Battle {
     this.hpB.set(mapped.pokemonB.currentHp ?? mapped.pokemonB.hp ?? 0);
   }
 
-  private applyPlaybackEffect(playbackItem: any, finalSnapshot: any): void {
-    const eventType = playbackItem?.eventType;
-    if (eventType) {
-      this.applyTimelineEvent(playbackItem, finalSnapshot);
+  private async processReplayEvent(event: any, finalSnapshot: any): Promise<void> {
+    const eventType = event?.eventType ?? event?.EventType;
+    if (eventType === 'hp_change') {
+      await this.animateHpChange(event);
       return;
     }
 
-    const message = playbackItem?.message ?? playbackItem;
-    const attackMatch = message.match(/^(.+?) usa (.+?)\.(?: Daño: (\d+)\.)?$/);
-    if (attackMatch) {
-      const side = this.resolveSideByVisibleName(attackMatch[1]);
-      if (side) {
-        this.triggerAttackAnimation(side);
-      }
+    this.applyTimelineEvent(event, finalSnapshot);
 
-      const damageValue = Number(attackMatch[3]);
-      if (side && Number.isFinite(damageValue) && damageValue > 0) {
-        this.applyDamageToSide(this.getOppositeSide(side), damageValue);
-      }
+    if (eventType === 'attack' && !this.attackEventDidMiss(event)) {
+      await this.wait(this.ATTACK_DASH_DURATION_MS);
+    }
+  }
+
+  private async animateHpChange(event: any): Promise<void> {
+    const target = event?.target ?? event?.Target;
+    const side = this.resolveEventSide(target);
+    if (!side) {
       return;
     }
 
-    const statusDamageMatch = message.match(/^(.+?) sufre daño por .+? \((\d+) PS\)\.$/);
-    if (statusDamageMatch) {
-      const side = this.resolveSideByVisibleName(statusDamageMatch[1]);
-      if (side) {
-        this.applyDamageToSide(side, Number(statusDamageMatch[2]));
-      }
+    const beforeHp = Number(event?.beforeHp ?? event?.BeforeHp);
+    const afterHp = Number(event?.afterHp ?? event?.AfterHp);
+
+    const startHp = Number.isFinite(beforeHp)
+      ? beforeHp
+      : (side === 'player' ? (this.hpA() ?? 0) : (this.hpB() ?? 0));
+    const endHp = Number.isFinite(afterHp) ? afterHp : startHp;
+
+    if (startHp === endHp) {
+      this.setSideHp(side, endHp);
       return;
     }
 
-    const drainMatch = message.match(/^(.+?) pierde (\d+) PS por Drenadoras(?:\. (.+?) recupera (\d+) PS\.)?$/);
-    if (drainMatch) {
-      const damagedSide = this.resolveSideByVisibleName(drainMatch[1]);
-      if (damagedSide) {
-        this.applyDamageToSide(damagedSide, Number(drainMatch[2]));
-      }
+    await new Promise<void>((resolve) => {
+      const durationMs = 800;
+      const startTime = Date.now();
 
-      const healedName = drainMatch[3];
-      const healedAmount = drainMatch[4];
-      if (healedName && healedAmount) {
-        const healedSide = this.resolveSideByVisibleName(healedName);
-        if (healedSide) {
-          this.applyHealToSide(healedSide, Number(healedAmount));
+      const animate = () => {
+        if (this.isDestroyed) {
+          resolve();
+          return;
         }
-      }
-      return;
-    }
 
-    const faintMatch = message.match(/^(.+?) se debilitó\.$/);
-    if (faintMatch) {
-      const side = this.resolveSideByVisibleName(faintMatch[1]);
-      if (side) {
-        this.setSideHp(side, 0);
-      }
-      return;
-    }
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / durationMs, 1);
+        const currentHp = Math.round(startHp + (endHp - startHp) * progress);
+        this.setSideHp(side, currentHp);
 
-    const switchMatch = message.match(/^(?:Cambio realizado: entra|Entra) (.+?)(?: automáticamente)?\.$/);
-    if (switchMatch) {
-      this.applySwitchFromSnapshot(switchMatch[1], finalSnapshot);
-    }
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+          return;
+        }
+
+        resolve();
+      };
+
+      animate();
+    });
   }
 
   private applyTimelineEvent(event: any, finalSnapshot: any): void {
     const eventType = event?.eventType ?? event?.EventType;
     switch (eventType) {
       case 'attack': {
+        if (this.attackEventDidMiss(event)) {
+          return;
+        }
+
         const attacker = event?.attacker ?? event?.Attacker;
-        const attackerSide = this.resolveIdentifierSide(attacker);
+        const attackerSide = this.resolveEventSide(attacker);
         if (attackerSide === 'player' || attackerSide === 'opponent') {
           this.triggerAttackAnimation(attackerSide);
         }
@@ -713,9 +636,8 @@ export class Battle {
       case 'hp_change':
         {
           const target = event?.target ?? event?.Target;
-          const beforeHp = event?.beforeHp ?? event?.BeforeHp;
           const afterHp = event?.afterHp ?? event?.AfterHp;
-          const resolvedSide = this.resolveIdentifierSide(target, beforeHp);
+          const resolvedSide = this.resolveEventSide(target);
           if ((resolvedSide === 'player' || resolvedSide === 'opponent') && Number.isFinite(Number(afterHp))) {
             this.setSideHp(resolvedSide, Number(afterHp));
           }
@@ -725,27 +647,47 @@ export class Battle {
       case 'status_change':
         {
           const target = event?.target ?? event?.Target;
-          const beforeHp = event?.beforeHp ?? event?.BeforeHp;
-          const resolvedSide = this.resolveIdentifierSide(target, beforeHp);
+          const resolvedSide = this.resolveEventSide(target);
           if (resolvedSide === 'player' || resolvedSide === 'opponent') {
             this.setSideStatus(resolvedSide, event?.afterStatus ?? event?.AfterStatus ?? 'None');
           }
         }
         return;
 
+      case 'secondary_status_change':
+        return;
+
       case 'faint':
         {
           const target = event?.target ?? event?.Target;
-          const beforeHp = event?.beforeHp ?? event?.BeforeHp;
-          const resolvedSide = this.resolveIdentifierSide(target, beforeHp);
+          const resolvedSide = this.resolveEventSide(target);
           if (resolvedSide === 'player' || resolvedSide === 'opponent') {
             this.setSideHp(resolvedSide, 0);
           }
         }
         return;
 
+      case 'stat_stage_change':
+        {
+          const target = event?.target ?? event?.Target;
+          const resolvedSide = this.resolveEventSide(target);
+          if (resolvedSide === 'player' || resolvedSide === 'opponent') {
+            this.showStatStageIndicator(resolvedSide, event);
+          }
+        }
+        return;
+
+      case 'battle_end': {
+        const winnerUserId = event?.winnerUserId ?? event?.WinnerUserId ?? null;
+        if (winnerUserId !== null && winnerUserId !== undefined) {
+          this.battleResult.set(this.resolveBattleResult(Number(winnerUserId)));
+          this.showFinishDialog.set(true);
+        }
+        return;
+      }
+
       case 'switch':
-        if (event.side === 'player' || event.side === 'opponent') {
+        if (this.resolveEventSide(event) === 'player' || this.resolveEventSide(event) === 'opponent') {
           this.applySwitchFromTimeline(event, finalSnapshot);
         }
         return;
@@ -755,118 +697,22 @@ export class Battle {
     }
   }
 
-  private resolveIdentifierSide(identifier: any, referenceHp?: number): BattleSideKey | null {
-    const rawSide = identifier?.side ?? identifier?.Side;
-    const rawResolvedSide: BattleSideKey | null = rawSide === 'player' || rawSide === 'opponent'
-      ? rawSide
-      : null;
-
-    const current = this.battleInfo();
-    if (!current) {
-      return rawResolvedSide;
-    }
-
-    const targetName = this.normalizeName(identifier?.displayName ?? identifier?.DisplayName ?? '');
-    const playerName = this.normalizeName(current.pokemonA.name || '');
-    const opponentName = this.normalizeName(current.pokemonB.name || '');
-
-    const nameMatchSides: BattleSideKey[] = [];
-    if (targetName && targetName === playerName) {
-      nameMatchSides.push('player');
-    }
-    if (targetName && targetName === opponentName) {
-      nameMatchSides.push('opponent');
-    }
-
-    if (nameMatchSides.length === 1) {
-      return nameMatchSides[0];
-    }
-
-    if (nameMatchSides.length > 1 && Number.isFinite(Number(referenceHp))) {
-      const hpRef = Number(referenceHp);
-      const playerDiff = Math.abs((this.hpA() ?? 0) - hpRef);
-      const opponentDiff = Math.abs((this.hpB() ?? 0) - hpRef);
-      return playerDiff <= opponentDiff ? 'player' : 'opponent';
-    }
-
-    if (rawResolvedSide) {
-      return rawResolvedSide;
-    }
-
-    if (Number.isFinite(Number(referenceHp))) {
-      const hpRef = Number(referenceHp);
-      const playerDiff = Math.abs((this.hpA() ?? 0) - hpRef);
-      const opponentDiff = Math.abs((this.hpB() ?? 0) - hpRef);
-      return playerDiff <= opponentDiff ? 'player' : 'opponent';
+  private resolveEventSide(entity: any): BattleSideKey | null {
+    const rawSide = entity?.side ?? entity?.Side;
+    if (rawSide === 'player' || rawSide === 'opponent') {
+      return rawSide;
     }
 
     return null;
   }
 
-  private applyTimelineEffectForMessage(message: string, timelineQueue: any[], finalSnapshot: any): boolean {
-    if (!timelineQueue.length) {
-      return false;
-    }
-
-    const expectedEventType = this.getExpectedTimelineEventTypeForMessage(message);
-    if (!expectedEventType) {
-      return false;
-    }
-
-    const matchingIndex = timelineQueue.findIndex((event) => event?.eventType === expectedEventType);
-    if (matchingIndex < 0) {
-      return false;
-    }
-
-    const [event] = timelineQueue.splice(matchingIndex, 1);
-    if (!event) {
-      return false;
-    }
-
-    this.applyTimelineEvent(event, finalSnapshot);
-    return true;
+  private attackEventDidMiss(event: any): boolean {
+    return event?.hit === false;
   }
 
-  private getExpectedTimelineEventTypeForMessage(message: string): 'attack' | 'switch' | 'hp_change' | 'status_change' | 'faint' | null {
-    const normalized = this.normalizeName(message);
-
-    if (normalized.includes(' usa ')) {
-      return 'attack';
-    }
-
-    if (normalized.match(/^(cambio realizado: entra|entra) /)) {
-      return 'switch';
-    }
-
-    if (normalized.includes(' se debilito.')) {
-      return 'faint';
-    }
-
-    if (
-      normalized.includes('ha recibido dano') ||
-      normalized.includes('sufre dano') ||
-      normalized.includes('pierde ') ||
-      normalized.includes('dano:')
-    ) {
-      return 'hp_change';
-    }
-
-    if (
-      normalized.includes('esta quemado') ||
-      normalized.includes('esta envenenado') ||
-      normalized.includes('esta paralizado') ||
-      normalized.includes('se ha dormido') ||
-      normalized.includes('esta congelado')
-    ) {
-      return 'status_change';
-    }
-
-    return null;
-  }
-
-  private applyDamageToSide(side: BattleSideKey, damage: number): void {
-    const currentHp = side === 'player' ? (this.hpA() ?? 0) : (this.hpB() ?? 0);
-    this.setSideHp(side, Math.max(0, currentHp - Math.max(0, damage)));
+  private isWaitingOpponentMessage(message: string): boolean {
+    const normalized = this.normalizeName(message).replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    return normalized.includes(this.WAITING_OPPONENT_MESSAGE);
   }
 
   private triggerAttackAnimation(side: BattleSideKey): void {
@@ -896,15 +742,41 @@ export class Battle {
     this.playbackTimeouts.add(restartTimeout);
   }
 
-  private applyHealToSide(side: BattleSideKey, healing: number): void {
-    const current = this.battleInfo();
-    if (!current) {
-      return;
-    }
+  private showStatStageIndicator(side: BattleSideKey, event: any): void {
+    const stat = this.formatStatLabel(event?.stat ?? event?.Stat ?? 'stat');
+    const change = Number(event?.change ?? event?.Change ?? event?.stages ?? event?.Stages ?? event?.delta ?? event?.Delta ?? 0);
+    const direction = change >= 0 ? '↑' : '↓';
+    const amount = Math.max(1, Math.abs(Math.trunc(change || 1)));
+    const newStage = Number(event?.newStage ?? event?.NewStage ?? NaN);
+    const stageSuffix = Number.isFinite(newStage) ? ` (${newStage > 0 ? '+' : ''}${Math.trunc(newStage)})` : '';
+    const label = `${direction}${amount} ${stat}${stageSuffix}`;
 
-    const currentHp = side === 'player' ? (this.hpA() ?? 0) : (this.hpB() ?? 0);
-    const maxHp = side === 'player' ? current.pokemonA.maxHp : current.pokemonB.maxHp;
-    this.setSideHp(side, Math.min(maxHp, currentHp + Math.max(0, healing)));
+    const signalRef = side === 'player' ? this.playerStatStageIndicator : this.opponentStatStageIndicator;
+    signalRef.set(label);
+
+    const clearTimeoutId = setTimeout(() => {
+      signalRef.set(null);
+      this.playbackTimeouts.delete(clearTimeoutId);
+    }, 900);
+
+    this.playbackTimeouts.add(clearTimeoutId);
+  }
+
+  private formatStatLabel(rawStat: string): string {
+    const key = this.normalizeName(String(rawStat));
+    const labels: Record<string, string> = {
+      attack: 'Ataque',
+      defense: 'Defensa',
+      specialattack: 'Ataque Esp.',
+      specialdefense: 'Defensa Esp.',
+      speed: 'Velocidad',
+      accuracy: 'Precisión',
+      evasion: 'Evasión',
+      crit: 'Crítico',
+      critical: 'Crítico',
+    };
+
+    return labels[key] ?? this.capitalize(String(rawStat));
   }
 
   private setSideHp(side: BattleSideKey, hp: number): void {
@@ -935,37 +807,10 @@ export class Battle {
     });
   }
 
-  private applySwitchFromSnapshot(nextPokemonName: string, finalSnapshot: any): void {
-    const side = this.resolveSwitchSide(nextPokemonName, finalSnapshot);
-    if (!side) {
-      return;
-    }
-
-    const activePokemon = this.getActiveSnapshotPokemon(finalSnapshot, side);
-    if (!activePokemon) {
-      return;
-    }
-
-    const nextPokemonView = this.mapSnapshotPokemonToView(activePokemon, side === 'player');
-    const current = this.battleInfo();
-    if (!current) {
-      return;
-    }
-
-    if (side === 'player') {
-      this.battleInfo.set({ ...current, pokemonA: nextPokemonView });
-      this.hpA.set(nextPokemonView.currentHp ?? 0);
-      return;
-    }
-
-    this.battleInfo.set({ ...current, pokemonB: nextPokemonView });
-    this.hpB.set(nextPokemonView.currentHp ?? 0);
-  }
-
   private applySwitchFromTimeline(event: any, finalSnapshot: any): void {
     const newPokemonName = event?.newPokemonName ?? event?.NewPokemonName ?? '';
     const newActiveSlot = event?.newActiveSlot ?? event?.NewActiveSlot;
-    const side = this.resolveTimelineSwitchSide(event, finalSnapshot, newPokemonName, newActiveSlot);
+    const side = this.resolveEventSide(event);
     if (!side) {
       return;
     }
@@ -1031,56 +876,6 @@ export class Battle {
     }
   }
 
-  private resolveSwitchSide(nextPokemonName: string, finalSnapshot: any): BattleSideKey | null {
-    const normalizedName = this.normalizeName(nextPokemonName);
-    const current = this.battleInfo();
-    const finalPlayer = this.getActiveSnapshotPokemon(finalSnapshot, 'player');
-    const finalOpponent = this.getActiveSnapshotPokemon(finalSnapshot, 'opponent');
-
-    const playerMatches = this.normalizeName(finalPlayer?.nickname || finalPlayer?.name || '') === normalizedName;
-    const opponentMatches = this.normalizeName(finalOpponent?.nickname || finalOpponent?.name || '') === normalizedName;
-
-    if (playerMatches && this.normalizeName(current?.pokemonA.name || '') !== normalizedName) {
-      return 'player';
-    }
-
-    if (opponentMatches && this.normalizeName(current?.pokemonB.name || '') !== normalizedName) {
-      return 'opponent';
-    }
-
-    if (playerMatches && !opponentMatches) {
-      return 'player';
-    }
-
-    if (opponentMatches && !playerMatches) {
-      return 'opponent';
-    }
-
-    return null;
-  }
-
-  private resolveSideByVisibleName(pokemonName: string): BattleSideKey | null {
-    const current = this.battleInfo();
-    if (!current) {
-      return null;
-    }
-
-    const normalizedName = this.normalizeName(pokemonName);
-    if (this.normalizeName(current.pokemonA.name) === normalizedName) {
-      return 'player';
-    }
-
-    if (this.normalizeName(current.pokemonB.name) === normalizedName) {
-      return 'opponent';
-    }
-
-    return null;
-  }
-
-  private getOppositeSide(side: BattleSideKey): BattleSideKey {
-    return side === 'player' ? 'opponent' : 'player';
-  }
-
   private getActiveSnapshotPokemon(snapshot: any, side: BattleSideKey): any | null {
     const sideKey = side === 'player' ? 'playerSide' : 'opponentSide';
     const team = snapshot?.[sideKey]?.team;
@@ -1123,44 +918,6 @@ export class Battle {
     }
 
     return candidates[0] ?? null;
-  }
-
-  private resolveTimelineSwitchSide(event: any, finalSnapshot: any, newPokemonName: string, newActiveSlot: number): BattleSideKey | null {
-    const rawSide = event?.side ?? event?.Side;
-    const eventSide: BattleSideKey | null = rawSide === 'player' || rawSide === 'opponent' ? rawSide : null;
-
-    if (eventSide) {
-      const pokemonFromEventSide = this.getSnapshotPokemonBySlot(finalSnapshot, eventSide, newActiveSlot, newPokemonName);
-      if (pokemonFromEventSide) {
-        return eventSide;
-      }
-    }
-
-    if (newPokemonName) {
-      const resolvedByName = this.resolveSwitchSide(newPokemonName, finalSnapshot);
-      if (resolvedByName) {
-        return resolvedByName;
-      }
-    }
-
-    const current = this.battleInfo();
-    const finalPlayer = this.getActiveSnapshotPokemon(finalSnapshot, 'player');
-    const finalOpponent = this.getActiveSnapshotPokemon(finalSnapshot, 'opponent');
-
-    const finalPlayerName = this.normalizeName(finalPlayer?.nickname || finalPlayer?.name || '');
-    const finalOpponentName = this.normalizeName(finalOpponent?.nickname || finalOpponent?.name || '');
-    const currentPlayerName = this.normalizeName(current?.pokemonA.name || '');
-    const currentOpponentName = this.normalizeName(current?.pokemonB.name || '');
-
-    if (finalPlayerName && finalPlayerName !== currentPlayerName) {
-      return 'player';
-    }
-
-    if (finalOpponentName && finalOpponentName !== currentOpponentName) {
-      return 'opponent';
-    }
-
-    return eventSide;
   }
 
   private mapSnapshotPokemonToView(pokemon: any, preferBackSprite: boolean) {
@@ -1218,6 +975,14 @@ export class Battle {
       .trim()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  private capitalize(value: string): string {
+    if (!value) {
+      return '';
+    }
+
+    return value.charAt(0).toUpperCase() + value.slice(1);
   }
 
   private setSideStatus(side: BattleSideKey, status: string): void {

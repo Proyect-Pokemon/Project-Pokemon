@@ -26,7 +26,6 @@ public class BattleService {
         public bool Accepted { get; set; }
         public bool TurnResolved { get; set; }
 
-
         // Lista ordenada de pasos de replay para reproducción determinista
         public List<ReplayStep> ReplaySteps { get; set; } = new();
 
@@ -41,10 +40,10 @@ public class BattleService {
 
     // Clase interna para resolver turnos
     private class TurnResolutionResult {
-        // Builder para construir steps ordenados durante la resolución del turno
+        /// <summary>
+        /// Builder para construir steps ordenados durante la resolución del turno
+        /// </summary>
         public ReplayStepBuilder StepBuilder { get; set; } = new();
-    }
-        public List<Networking.Messages.Battle.BattleEvent> Events { get; set; } = new();
     }
 
     // Crea una nueva batalla cargando el equipo del usuario (vs CPU con placeholder)
@@ -177,7 +176,7 @@ public class BattleService {
                 return new SubmitBattleActionResult {
                     Accepted = false,
                     TurnResolved = false,
-                    Messages = new List<string> { "No perteneces a esta batalla." },
+                    ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = "No perteneces a esta batalla." } },
                     WinnerUserId = battle.WinnerUserId
                 };
             }
@@ -186,7 +185,7 @@ public class BattleService {
                 return new SubmitBattleActionResult {
                     Accepted = false,
                     TurnResolved = false,
-                    Messages = new List<string> { "La batalla ya ha terminado." },
+                    ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = "La batalla ya ha terminado." } },
                     WinnerUserId = battle.WinnerUserId
                 };
             }
@@ -197,7 +196,7 @@ public class BattleService {
                     return new SubmitBattleActionResult {
                         Accepted = false,
                         TurnResolved = false,
-                        Messages = new List<string> { "No hay rival asignado." },
+                        ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = "No hay rival asignado." } },
                         WinnerUserId = battle.WinnerUserId
                     };
                 }
@@ -215,7 +214,7 @@ public class BattleService {
                 return new SubmitBattleActionResult {
                     Accepted = true,
                     TurnResolved = true,
-                    Messages = new List<string> { forfeitMessage },
+                    ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = forfeitMessage } },
                     WinnerUserId = battle.WinnerUserId
                 };
             }
@@ -224,7 +223,7 @@ public class BattleService {
                 return new SubmitBattleActionResult {
                     Accepted = false,
                     TurnResolved = false,
-                    Messages = new List<string> { validationError },
+                    ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = validationError } },
                     WinnerUserId = battle.WinnerUserId
                 };
             }
@@ -240,7 +239,7 @@ public class BattleService {
                 return new SubmitBattleActionResult {
                     Accepted = false,
                     TurnResolved = false,
-                    Messages = new List<string> { "No hay rival asignado." },
+                    ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = "No hay rival asignado." } },
                     WinnerUserId = battle.WinnerUserId
                 };
             }
@@ -271,9 +270,6 @@ public class BattleService {
                     Accepted = true,
                     TurnResolved = false,
                     ReplaySteps = switchResult.StepBuilder.Build(),
-                    Messages = switchResult.Messages,
-                    StructuredMessages = switchResult.StructuredMessages,
-                    Timeline = switchResult.Events,
                     WinnerUserId = battle.WinnerUserId,
                     RequiresSwitchSelection = stillRequiresSwitch,
                     AvailableSlotsForSwitch = availableSwitchSlots
@@ -284,7 +280,7 @@ public class BattleService {
                 return new SubmitBattleActionResult {
                     Accepted = true,
                     TurnResolved = false,
-                    Messages = new List<string> { "Acción recibida. Esperando al rival..." },
+                    ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = "Acción recibida. Esperando al rival..." } },
                     WinnerUserId = battle.WinnerUserId
                 };
             }
@@ -295,7 +291,7 @@ public class BattleService {
                 return new SubmitBattleActionResult {
                     Accepted = false,
                     TurnResolved = false,
-                    Messages = new List<string> { "Falta la acción del jugador 1." },
+                    ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = "Falta la acción del jugador 1." } },
                     WinnerUserId = battle.WinnerUserId
                 };
             }
@@ -304,7 +300,7 @@ public class BattleService {
                 return new SubmitBattleActionResult {
                     Accepted = false,
                     TurnResolved = false,
-                    Messages = new List<string> { "Falta la acción del jugador 2." },
+                    ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = "Falta la acción del jugador 2." } },
                     WinnerUserId = battle.WinnerUserId
                 };
             }
@@ -333,9 +329,6 @@ public class BattleService {
                 Accepted = true,
                 TurnResolved = true,
                 ReplaySteps = turnResult.StepBuilder.Build(),
-                Messages = turnResult.Messages,
-                StructuredMessages = turnResult.StructuredMessages,
-                Timeline = turnResult.Events,
                 WinnerUserId = battle.WinnerUserId,
                 RequiresSwitchSelection = requiresSwitch,
                 AvailableSlotsForSwitch = availableSlotsForSwitch
@@ -428,24 +421,6 @@ public class BattleService {
         };
     }
 
-    // Helper para añadir mensaje estructurado
-    private void AddStructuredMessage(
-        SubmitBattleActionResult result,
-        string code,
-        Dictionary<string, object>? args = null) {
-
-        result.StructuredMessages.Add(BattleMessageBuilder.Create(code, args));
-    }
-
-    // Sobrecarga para TurnResolutionResult
-    private void AddStructuredMessage(
-        TurnResolutionResult result,
-        string code,
-        Dictionary<string, object>? args = null) {
-
-        result.StructuredMessages.Add(BattleMessageBuilder.Create(code, args));
-    }
-
     // Helper para añadir mensaje de efectividad según el multiplicador
     private void AddEffectivenessMessage(
         TurnResolutionResult result,
@@ -453,14 +428,14 @@ public class BattleService {
         Dictionary<string, object> args) {
 
         if (effectiveness == 0) {
-            result.Messages.Add("No afecta...");
-            AddStructuredMessage(result, BattleMessageCode.NoEffect, args);
+            result.StepBuilder.AddMessageStep("No afecta...");
+            result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.NoEffect, args));
         } else if (effectiveness < 1.0) {
-            result.Messages.Add("No es muy eficaz...");
-            AddStructuredMessage(result, BattleMessageCode.NotVeryEffective, args);
+            result.StepBuilder.AddMessageStep("No es muy eficaz...");
+            result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.NotVeryEffective, args));
         } else if (effectiveness > 1.0) {
-            result.Messages.Add("¡Es muy eficaz!");
-            AddStructuredMessage(result, BattleMessageCode.SuperEffective, args);
+            result.StepBuilder.AddMessageStep("¡Es muy eficaz!");
+            result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.SuperEffective, args));
         }
     }
 
@@ -650,10 +625,6 @@ public class BattleService {
                 WinnerUserId = player2UserId
             };
 
-            // Legacy
-            result.Messages.Add(forfeitMsg);
-            result.Events.Add(forfeitEvent);
-
             // ReplayStep
             result.StepBuilder.AddStep(
                 textMessage: forfeitMsg,
@@ -671,10 +642,6 @@ public class BattleService {
                 Winner = "player",
                 WinnerUserId = player1UserId
             };
-
-            // Legacy
-            result.Messages.Add(forfeitMsg);
-            result.Events.Add(forfeitEvent);
 
             // ReplayStep
             result.StepBuilder.AddStep(
@@ -722,10 +689,6 @@ public class BattleService {
                 Winner = winner,
                 WinnerUserId = battle.WinnerUserId
             };
-
-            // Legacy
-            result.Messages.Add(winMsg);
-            result.Events.Add(winEvent);
 
             // ReplayStep
             result.StepBuilder.AddStep(
@@ -792,10 +755,9 @@ public class BattleService {
             string errorMsg = "No se pudo realizar el cambio de Pokémon.";
 
             // Legacy
-            result.Messages.Add(errorMsg);
-            result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                Message = errorMsg
-            });
+            result.StepBuilder.AddMessageStep(errorMsg);
+            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = errorMsg
+             });
 
             // ReplayStep
             result.StepBuilder.AddStep(
@@ -825,10 +787,6 @@ public class BattleService {
             IsAutomatic = false
         };
 
-        // Legacy
-        result.Messages.Add(message);
-        result.Events.Add(switchEvent);
-
         // ReplayStep - switch es una acción atómica con su evento
         result.StepBuilder.AddStep(
             textMessage: message,
@@ -851,10 +809,9 @@ public class BattleService {
 
         if (attacker.IsFainted()) {
             string msg = $"{attacker.GetDisplayName()} está debilitado y no puede atacar.";
-            result.Messages.Add(msg);
-            result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                Message = msg
-            });
+            result.StepBuilder.AddMessageStep(msg);
+            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = msg
+             });
             return;
         }
 
@@ -867,13 +824,13 @@ public class BattleService {
 
         // Si hay mensaje de estado, mostrarlo primero
         if (statusMessage != null) {
-            result.Messages.Add(statusMessage);
+            result.StepBuilder.AddMessageStep(statusMessage);
         }
 
         // Si no puede atacar, mostrar mensaje de resultado y terminar
         if (!canAttack) {
             if (resultMessage != null) {
-                result.Messages.Add(resultMessage);
+                result.StepBuilder.AddMessageStep(resultMessage);
             }
 
             var move = attacker.Movements
@@ -890,20 +847,20 @@ public class BattleService {
             var actorArgs = CreateActorArgs(battle, userId, attacker);
 
             if (attacker.Status == Enum.PokeStatus.Freeze) {
-                AddStructuredMessage(result, BattleMessageCode.FrozenSolid, actorArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.FrozenSolid, actorArgs));
             } else if (attacker.Status == Enum.PokeStatus.Sleep) {
-                AddStructuredMessage(result, BattleMessageCode.FastAsleep, actorArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.FastAsleep, actorArgs));
             } else if (attacker.Status == Enum.PokeStatus.Paralysis) {
-                AddStructuredMessage(result, BattleMessageCode.ParalyzedCantMove, actorArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.ParalyzedCantMove, actorArgs));
             } else if (attacker.HasSecondaryStatus(Enum.PokeSecondaryStatus.Confuse)) {
                 // Confusion self-hit: NO emitir attack_used
                 // El daño ya fue aplicado en CanAttack()
                 var confusionArgs = actorArgs;
-                AddStructuredMessage(result, BattleMessageCode.ConfusionSelfHit, confusionArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.ConfusionSelfHit, confusionArgs));
             }
 
             if (defenderId != null) {
-                result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.AttackEvent {
                     Message = resultMessage ?? statusMessage ?? "No puede atacar",
                     Attacker = attackerId,
                     Defender = defenderId,
@@ -917,7 +874,7 @@ public class BattleService {
             // Si se golpeó a sí mismo por confusión, generar evento de HP
             if (attacker.HasSecondaryStatus(Enum.PokeSecondaryStatus.Confuse) && resultMessage != null) {
                 // El daño ya fue aplicado en CanAttack(), solo necesitamos el evento
-                result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.HpChangeEvent {
                     Message = resultMessage,
                     Target = attackerId,
                     BeforeHp = attacker.CurrentHp, // Ya se aplicó el daño
@@ -933,16 +890,16 @@ public class BattleService {
 
         // Puede atacar - mostrar mensaje de resultado si existe (ej: "ya no está confundido", "se descongeló")
         if (resultMessage != null) {
-            result.Messages.Add(resultMessage);
+            result.StepBuilder.AddMessageStep(resultMessage);
 
             var actorArgs = CreateActorArgs(battle, userId, attacker);
 
             if (resultMessage.Contains("despertado") || resultMessage.Contains("despierto")) {
-                AddStructuredMessage(result, BattleMessageCode.WokeUp, actorArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.WokeUp, actorArgs));
             } else if (resultMessage.Contains("descongelado")) {
-                AddStructuredMessage(result, BattleMessageCode.Thawed, actorArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.Thawed, actorArgs));
             } else if (resultMessage.Contains("ya no está confundido")) {
-                AddStructuredMessage(result, BattleMessageCode.ConfusionEnd, actorArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.ConfusionEnd, actorArgs));
             }
         }
 
@@ -951,10 +908,9 @@ public class BattleService {
 
         if (selectedMove == null || !selectedMove.HasPpAvailable()) {
             string msg = $"{attacker.GetDisplayName()} no pudo usar el movimiento.";
-            result.Messages.Add(msg);
-            result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                Message = msg
-            });
+            result.StepBuilder.AddMessageStep(msg);
+            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = msg
+             });
             return;
         }
 
@@ -987,35 +943,34 @@ public class BattleService {
         // Manejar caso de fallo por falta de PP
         if (movementResult.FailedByNoPp) {
             string noPpMsg = $"{attacker.GetDisplayName()} no tiene PP para usar {selectedMove.Name}.";
-            result.Messages.Add(noPpMsg);
+            result.StepBuilder.AddMessageStep(noPpMsg);
 
             var noPpArgs = CreateActorArgs(battle, userId, attacker);
-            AddStructuredMessage(result, BattleMessageCode.OutOfPp, noPpArgs);
+            result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.OutOfPp, noPpArgs));
 
-            result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                Message = noPpMsg
-            });
+            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = noPpMsg
+             });
             return;
         }
 
         // Manejar caso de fallo por precisión
         if (movementResult.FailedByAccuracy) {
             string missMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}, ¡pero falla!";
-            result.Messages.Add(missMsg);
+            result.StepBuilder.AddMessageStep(missMsg);
 
             // Mensajes estructurados
             var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
                 { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
             };
-            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+            result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.AttackUsed, attackArgs));
 
             if (rivalUserId.HasValue) {
                 var missArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
-                AddStructuredMessage(result, BattleMessageCode.AttackMissed, missArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.AttackMissed, missArgs));
             }
 
             if (defenderId != null) {
-                result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.AttackEvent {
                     Message = missMsg,
                     Attacker = attackerId,
                     Defender = defenderId,
@@ -1030,21 +985,21 @@ public class BattleService {
         // Manejar caso de fallo porque el objetivo ya tiene un estado alterado
         if (movementResult.FailedByExistingStatus) {
             string failMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}, ¡pero falla!";
-            result.Messages.Add(failMsg);
+            result.StepBuilder.AddMessageStep(failMsg);
 
             // Mensajes estructurados
             var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
                 { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
             };
-            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+            result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.AttackUsed, attackArgs));
 
             if (rivalUserId.HasValue) {
                 var failArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
-                AddStructuredMessage(result, BattleMessageCode.AttackMissed, failArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.AttackMissed, failArgs));
             }
 
             if (defenderId != null) {
-                result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.AttackEvent {
                     Message = failMsg,
                     Attacker = attackerId,
                     Defender = defenderId,
@@ -1156,17 +1111,16 @@ public class BattleService {
 
                     // Emitir mensaje de bloqueo por Mist
                     string mistBlockMsg = $"¡La niebla protege las estadísticas de {defender.GetDisplayName()}!";
-                    result.Messages.Add(mistBlockMsg);
+                    result.StepBuilder.AddMessageStep(mistBlockMsg);
 
                     // Mensaje estructurado
                     if (rivalUserId.HasValue) {
                         var mistArgs = CreateActorArgs(battle, rivalUserId.Value, defender);
-                        AddStructuredMessage(result, BattleMessageCode.StatProtected, mistArgs);
+                        result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.StatProtected, mistArgs));
                     }
 
-                    result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                        Message = mistBlockMsg
-                    });
+                    result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = mistBlockMsg
+                     });
 
                     // Actualizar la lista para no registrar el cambio
                     // (el cambio fue bloqueado)
@@ -1180,13 +1134,13 @@ public class BattleService {
         // Mensaje para movimientos de daño con curación (damage+heal)
         if (damage > 0 && healing > 0) {
             string attackMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}.";
-            result.Messages.Add(attackMsg);
+            result.StepBuilder.AddMessageStep(attackMsg);
 
             // Mensajes estructurados
             var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
                 { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
             };
-            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+            result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.AttackUsed, attackArgs));
 
             if (rivalUserId.HasValue) {
                 // Añadir mensaje de efectividad si aplica
@@ -1195,33 +1149,33 @@ public class BattleService {
                 // Añadir mensaje de crítico si aplica
                 if (movementResult.IsCritical) {
                     var critArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
-                    AddStructuredMessage(result, BattleMessageCode.CriticalHit, critArgs);
+                    result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.CriticalHit, critArgs));
                 }
 
                 // Mensaje de daño recibido (sin números)
-                result.Messages.Add($"{defender.GetDisplayName()} ha recibido daño.");
+                result.StepBuilder.AddMessageStep($"{defender.GetDisplayName()} ha recibido daño.");
 
                 // Si es un movimiento multi-golpe, indicar el número de golpes
                 if (movementResult.HitCount > 1) {
-                    result.Messages.Add($"¡Golpeó {movementResult.HitCount} veces!");
+                    result.StepBuilder.AddMessageStep($"¡Golpeó {movementResult.HitCount} veces!");
                 }
 
                 var damageArgs = new Dictionary<string, object>(CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender)) {
                     { "damage", damage }
                 };
-                AddStructuredMessage(result, BattleMessageCode.DamageDealt, damageArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.DamageDealt, damageArgs));
 
                 // Mensaje de curación (sin números)
-                result.Messages.Add($"{attacker.GetDisplayName()} absorbe PS.");
+                result.StepBuilder.AddMessageStep($"{attacker.GetDisplayName()} absorbe PS.");
 
                 var drainArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
                     { "amount", healing }
                 };
-                AddStructuredMessage(result, BattleMessageCode.DrainHp, drainArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.DrainHp, drainArgs));
             }
 
             if (defenderId != null) {
-                result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.AttackEvent {
                     Message = attackMsg,
                     Attacker = attackerId,
                     Defender = defenderId,
@@ -1231,7 +1185,7 @@ public class BattleService {
                 });
 
                 // Evento de daño al defensor
-                result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.HpChangeEvent {
                     Message = $"{defender.GetDisplayName()} pierde {damage} PS.",
                     Target = defenderId,
                     BeforeHp = hpBefore,
@@ -1244,7 +1198,7 @@ public class BattleService {
                 });
 
                 // Evento de curación al atacante
-                result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.HpChangeEvent {
                     Message = $"{attacker.GetDisplayName()} recupera {healing} PS.",
                     Target = attackerId,
                     BeforeHp = hpBeforeAttacker,
@@ -1260,13 +1214,13 @@ public class BattleService {
         // Mensaje para movimientos de solo daño
         else if (damage > 0) {
             string attackMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}.";
-            result.Messages.Add(attackMsg);
+            result.StepBuilder.AddMessageStep(attackMsg);
 
             // Mensajes estructurados
             var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
                 { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
             };
-            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+            result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.AttackUsed, attackArgs));
 
             if (rivalUserId.HasValue) {
                 // Añadir mensaje de efectividad si aplica
@@ -1275,25 +1229,25 @@ public class BattleService {
                 // Añadir mensaje de crítico si aplica
                 if (movementResult.IsCritical) {
                     var critArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
-                    AddStructuredMessage(result, BattleMessageCode.CriticalHit, critArgs);
+                    result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.CriticalHit, critArgs));
                 }
 
                 // Mensaje de daño recibido (sin números)
-                result.Messages.Add($"{defender.GetDisplayName()} ha recibido daño.");
+                result.StepBuilder.AddMessageStep($"{defender.GetDisplayName()} ha recibido daño.");
 
                 // Si es un movimiento multi-golpe, indicar el número de golpes
                 if (movementResult.HitCount > 1) {
-                    result.Messages.Add($"¡Golpeó {movementResult.HitCount} veces!");
+                    result.StepBuilder.AddMessageStep($"¡Golpeó {movementResult.HitCount} veces!");
                 }
 
                 var damageArgs = new Dictionary<string, object>(CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender)) {
                     { "damage", damage }
                 };
-                AddStructuredMessage(result, BattleMessageCode.DamageDealt, damageArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.DamageDealt, damageArgs));
             }
 
             if (defenderId != null) {
-                result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.AttackEvent {
                     Message = attackMsg,
                     Attacker = attackerId,
                     Defender = defenderId,
@@ -1302,7 +1256,7 @@ public class BattleService {
                     Blocked = false
                 });
 
-                result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.HpChangeEvent {
                     Message = $"{defender.GetDisplayName()} pierde {damage} PS.",
                     Target = defenderId,
                     BeforeHp = hpBefore,
@@ -1319,7 +1273,7 @@ public class BattleService {
                     string statMsg = change > 0 
                         ? $"{defender.GetDisplayName()} aumenta {stat} en {change}."
                         : $"{defender.GetDisplayName()} reduce {stat} en {Math.Abs(change)}.";
-                    result.Messages.Add(statMsg);
+                    result.StepBuilder.AddMessageStep(statMsg);
 
                     // Mensaje estructurado para cambios de stats
                     var statArgs = new Dictionary<string, object>(CreateActorArgs(battle, rivalUserId.Value, defender)) {
@@ -1327,9 +1281,9 @@ public class BattleService {
                         { "stages", Math.Abs(change) }
                     };
                     string statCode = change > 0 ? BattleMessageCode.StatRose : BattleMessageCode.StatFell;
-                    AddStructuredMessage(result, statCode, statArgs);
+                    result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(statCode, statArgs));
 
-                    result.Events.Add(new Networking.Messages.Battle.StatStageChangeEvent {
+                    result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.StatStageChangeEvent {
                         Message = statMsg,
                         Target = defenderId,
                         Stat = stat,
@@ -1342,21 +1296,21 @@ public class BattleService {
         // Mensaje para movimientos de solo curación
         else if (healing > 0) {
             string healMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}.";
-            result.Messages.Add(healMsg);
-            result.Messages.Add($"{attacker.GetDisplayName()} recupera PS.");
+            result.StepBuilder.AddMessageStep(healMsg);
+            result.StepBuilder.AddMessageStep($"{attacker.GetDisplayName()} recupera PS.");
 
             // Mensajes estructurados
             var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
                 { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
             };
-            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+            result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.AttackUsed, attackArgs));
 
             var healArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
                 { "amount", healing }
             };
-            AddStructuredMessage(result, BattleMessageCode.HpRestored, healArgs);
+            result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.HpRestored, healArgs));
 
-            result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.AttackEvent {
                 Message = healMsg,
                 Attacker = attackerId,
                 Defender = attackerId, // El defensor es el mismo atacante
@@ -1365,7 +1319,7 @@ public class BattleService {
                 Blocked = false
             });
 
-            result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.HpChangeEvent {
                 Message = $"{attacker.GetDisplayName()} recupera PS.",
                 Target = attackerId,
                 BeforeHp = hpBeforeAttacker,
@@ -1380,15 +1334,15 @@ public class BattleService {
         // Movimientos sin efecto visible de HP (stat changes, whole-field-effect, etc.)
         else if (defenderId != null) {
             string moveMsg = $"{attacker.GetDisplayName()} usa {selectedMove.Name}.";
-            result.Messages.Add(moveMsg);
+            result.StepBuilder.AddMessageStep(moveMsg);
 
             // Mensaje estructurado de uso de ataque
             var attackArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
                 { "move", Utils.TextNormalizer.ToSnakeCase(selectedMove.Name) }
             };
-            AddStructuredMessage(result, BattleMessageCode.AttackUsed, attackArgs);
+            result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.AttackUsed, attackArgs));
 
-            result.Events.Add(new Networking.Messages.Battle.AttackEvent {
+            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.AttackEvent {
                 Message = moveMsg,
                 Attacker = attackerId,
                 Defender = defenderId,
@@ -1400,49 +1354,46 @@ public class BattleService {
             // Caso especial: Drenadoras (Leech Seed)
             if (movementResult.AppliedSeeded && rivalUserId.HasValue) {
                 string seededMsg = $"{defender.GetDisplayName()} ha sido infectado.";
-                result.Messages.Add(seededMsg);
+                result.StepBuilder.AddMessageStep(seededMsg);
 
                 var seededArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
-                AddStructuredMessage(result, BattleMessageCode.Seeded, seededArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.Seeded, seededArgs));
 
-                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                    Message = seededMsg
-                });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = seededMsg
+                 });
             }
             // Inmunidad a Drenadoras (tipo Planta)
             else if (movementResult.ImmuneToSeeded && rivalUserId.HasValue) {
                 string immuneMsg = $"No afecta a {defender.GetDisplayName()}.";
-                result.Messages.Add(immuneMsg);
+                result.StepBuilder.AddMessageStep(immuneMsg);
 
                 var immuneArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
-                AddStructuredMessage(result, BattleMessageCode.NoEffect, immuneArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.NoEffect, immuneArgs));
 
-                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                    Message = immuneMsg
-                });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = immuneMsg
+                 });
             }
 
             // Caso especial: Haze (ID 114) resetea todas las características
             // Emitir un mensaje general en lugar de listar cada cambio
             if (selectedMove.Id == 114 && (defenderStatChanges.Count > 0 || attackerStatChanges.Count > 0)) {
                 string hazeMsg = "Las características de los Pokémon han vuelto a sus valores originales.";
-                result.Messages.Add(hazeMsg);
+                result.StepBuilder.AddMessageStep(hazeMsg);
 
                 // Mensaje estructurado para reset de stats
-                AddStructuredMessage(result, BattleMessageCode.StatsReset, new Dictionary<string, object>());
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.StatsReset, new Dictionary<string, object>()));
 
-                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                    Message = hazeMsg
-                });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = hazeMsg
+                 });
             }
             // Para otros movimientos, emitir eventos individuales de cambio de estadísticas
             else {
                 // Emitir eventos de cambio de estadísticas del defensor si ocurrieron
                 foreach (var (stat, change, newStage) in defenderStatChanges) {
                     string statMsg = GetStatChangeMessage(defender.GetDisplayName(), stat, change);
-                    result.Messages.Add(statMsg);
+                    result.StepBuilder.AddMessageStep(statMsg);
 
-                    result.Events.Add(new Networking.Messages.Battle.StatStageChangeEvent {
+                    result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.StatStageChangeEvent {
                         Message = statMsg,
                         Target = defenderId,
                         Stat = TranslateStatName(stat),
@@ -1459,9 +1410,9 @@ public class BattleService {
         if (selectedMove.Id != 114) {
             foreach (var (stat, change, newStage) in attackerStatChanges) {
                 string statMsg = GetStatChangeMessage(attacker.GetDisplayName(), stat, change);
-                result.Messages.Add(statMsg);
+                result.StepBuilder.AddMessageStep(statMsg);
 
-                result.Events.Add(new Networking.Messages.Battle.StatStageChangeEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.StatStageChangeEvent {
                     Message = statMsg,
                     Target = attackerId,
                     Stat = TranslateStatName(stat),
@@ -1492,10 +1443,10 @@ public class BattleService {
                 var newActive = rivalSide.GetActivePokemon();
 
                 string forcedSwitchMsg = $"{defender.GetDisplayName()} es forzado a retirarse. Entra {newActive?.GetDisplayName() ?? "Pokémon"}.";
-                result.Messages.Add(forcedSwitchMsg);
+                result.StepBuilder.AddMessageStep(forcedSwitchMsg);
 
                 string rivalSideStr = battle.PlayerUserId == userId ? "opponent" : "player";
-                result.Events.Add(new Networking.Messages.Battle.SwitchEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.SwitchEvent {
                     Message = forcedSwitchMsg,
                     Side = rivalSideStr,
                     PreviousActiveSlot = prevSlot,
@@ -1514,60 +1465,57 @@ public class BattleService {
             if (selectedMove.Id == 54) {
                 mySide.MistTurnsRemaining = 5;
                 string mistMsg = $"¡{attacker.GetDisplayName()} se ha rodeado de niebla!";
-                result.Messages.Add(mistMsg);
+                result.StepBuilder.AddMessageStep(mistMsg);
 
                 // Mensaje estructurado
                 var mistArgs = new Dictionary<string, object>(CreateActorArgs(battle, userId, attacker)) {
                     { "turns", 5 }
                 };
-                AddStructuredMessage(result, BattleMessageCode.MistStart, mistArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.MistStart, mistArgs));
 
-                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                    Message = mistMsg
-                });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = mistMsg
+                 });
             }
             // Light Screen (ID 113): Reduce el daño de ataques especiales enemigos a la mitad durante 5 turnos
             else if (selectedMove.Id == 113) {
                 mySide.LightScreenTurnsRemaining = 5;
                 string lightScreenMsg = $"¡Pantalla de Luz reduce el daño de ataques especiales!";
-                result.Messages.Add(lightScreenMsg);
+                result.StepBuilder.AddMessageStep(lightScreenMsg);
 
                 // Mensaje estructurado
                 var lightScreenArgs = new Dictionary<string, object> {
                     { "owner", GetOwnerName(battle, userId) },
                     { "turns", 5 }
                 };
-                AddStructuredMessage(result, BattleMessageCode.LightScreenStart, lightScreenArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.LightScreenStart, lightScreenArgs));
 
-                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                    Message = lightScreenMsg
-                });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = lightScreenMsg
+                 });
             }
             // Reflect (ID 115): Reduce el daño de ataques físicos enemigos a la mitad durante 5 turnos
             else if (selectedMove.Id == 115) {
                 mySide.ReflectTurnsRemaining = 5;
                 string reflectMsg = $"¡Reflejo reduce el daño de ataques físicos!";
-                result.Messages.Add(reflectMsg);
+                result.StepBuilder.AddMessageStep(reflectMsg);
 
                 // Mensaje estructurado
                 var reflectArgs = new Dictionary<string, object> {
                     { "owner", GetOwnerName(battle, userId) },
                     { "turns", 5 }
                 };
-                AddStructuredMessage(result, BattleMessageCode.ReflectStart, reflectArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.ReflectStart, reflectArgs));
 
-                result.Events.Add(new Networking.Messages.Battle.MessageEvent {
-                    Message = reflectMsg
-                });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = reflectMsg
+                 });
             }
         }
 
         if (defender.IsFainted()) {
             string faintMsg = $"{defender.GetDisplayName()} se debilitó.";
-            result.Messages.Add(faintMsg);
+            result.StepBuilder.AddMessageStep(faintMsg);
 
             if (defenderId != null) {
-                result.Events.Add(new Networking.Messages.Battle.FaintEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.FaintEvent {
                     Message = faintMsg,
                     Target = defenderId
                 });
@@ -1624,11 +1572,6 @@ public class BattleService {
                     Message = mistEndMsg
                 };
 
-                // Legacy
-                result.Messages.Add(mistEndMsg);
-                AddStructuredMessage(result, BattleMessageCode.MistEnd, mistArgs);
-                result.Events.Add(mistEvent);
-
                 // ReplayStep
                 result.StepBuilder.AddStep(
                     textMessage: mistEndMsg,
@@ -1651,11 +1594,6 @@ public class BattleService {
                     Message = lightScreenEndMsg
                 };
 
-                // Legacy
-                result.Messages.Add(lightScreenEndMsg);
-                AddStructuredMessage(result, BattleMessageCode.LightScreenEnd, lightScreenArgs);
-                result.Events.Add(lightScreenEvent);
-
                 // ReplayStep
                 result.StepBuilder.AddStep(
                     textMessage: lightScreenEndMsg,
@@ -1677,11 +1615,6 @@ public class BattleService {
                 var reflectEvent = new Networking.Messages.Battle.MessageEvent {
                     Message = reflectEndMsg
                 };
-
-                // Legacy
-                result.Messages.Add(reflectEndMsg);
-                AddStructuredMessage(result, BattleMessageCode.ReflectEnd, reflectArgs);
-                result.Events.Add(reflectEvent);
 
                 // ReplayStep
                 result.StepBuilder.AddStep(
@@ -1731,10 +1664,6 @@ public class BattleService {
                     Cause = cause
                 };
 
-                // Legacy
-                result.Messages.Add(effect);
-                result.Events.Add(hpChangeEvent);
-
                 // ReplayStep
                 result.StepBuilder.AddStep(
                     textMessage: effect,
@@ -1742,7 +1671,7 @@ public class BattleService {
                 );
             } else {
                 // Solo mensaje sin cambio de HP (legacy)
-                result.Messages.Add(effect);
+                result.StepBuilder.AddMessageStep(effect);
             }
 
             // Verificar si se debilitó por el efecto de estado
@@ -1752,10 +1681,6 @@ public class BattleService {
                     Message = faintMsg,
                     Target = pokemonId
                 };
-
-                // Legacy
-                result.Messages.Add(faintMsg);
-                result.Events.Add(faintEvent);
 
                 // ReplayStep
                 result.StepBuilder.AddStep(
@@ -1777,7 +1702,7 @@ public class BattleService {
         hpAfter = pokemon.CurrentHp;
 
         if (secondaryEffect != null) {
-            result.Messages.Add(secondaryEffect);
+            result.StepBuilder.AddMessageStep(secondaryEffect);
 
             if (hpBefore != hpAfter && pokemon.HasSecondaryStatus(Enum.PokeSecondaryStatus.Seeded)) {
                 int damage = Math.Max(0, hpBefore - hpAfter);
@@ -1795,10 +1720,10 @@ public class BattleService {
                 if (opponentActivePokemon != null) {
                     drainArgs["source"] = opponentActivePokemon.GetDisplayName();
                 }
-                AddStructuredMessage(result, BattleMessageCode.SeededDrain, drainArgs);
+                result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.SeededDrain, drainArgs));
 
                 // Crear evento de HP para el Pokémon afectado (pierde vida)
-                result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.HpChangeEvent {
                     Message = $"{pokemon.GetDisplayName()} pierde {damage} PS por Drenadoras.",
                     Target = pokemonId,
                     BeforeHp = hpBefore,
@@ -1821,7 +1746,7 @@ public class BattleService {
                     if (actualHealing > 0) {
                         var sourceId = CreatePokemonIdentifier(battle, opponentUserId.Value, opponentActivePokemon);
 
-                        result.Events.Add(new Networking.Messages.Battle.HpChangeEvent {
+                        result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.HpChangeEvent {
                             Message = $"{opponentActivePokemon.GetDisplayName()} recupera {actualHealing} PS.",
                             Target = sourceId,
                             BeforeHp = hpBeforeHeal,
@@ -1838,8 +1763,8 @@ public class BattleService {
             // Verificar si se debilitó por el efecto secundario
             if (pokemon.IsFainted()) {
                 string faintMsg = $"{pokemon.GetDisplayName()} se debilitó.";
-                result.Messages.Add(faintMsg);
-                result.Events.Add(new Networking.Messages.Battle.FaintEvent {
+                result.StepBuilder.AddMessageStep(faintMsg);
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.FaintEvent {
                     Message = faintMsg,
                     Target = pokemonId
                 });

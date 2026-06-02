@@ -149,6 +149,7 @@ app-battle-chat {
     gap: 18px;
     flex: 1;
     min-height: 0;
+    position: relative;
 }
 
 .ally {
@@ -159,6 +160,7 @@ app-battle-chat {
     gap: 18px;
     flex: 1;
     min-height: 0;
+    position: relative;
 }
 
 .enemy app-life-bar,
@@ -191,6 +193,33 @@ app-battle-chat {
 
 .ally-sprite.attack-dash-right {
     animation: attackDashRight 220ms ease-out;
+}
+
+.stat-stage-indicator {
+    position: absolute;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: #eaf9ff;
+    background: rgba(11, 28, 59, 0.92);
+    border: 1px solid rgba(126, 201, 255, 0.45);
+    box-shadow: 0 8px 20px rgba(2, 8, 19, 0.45);
+    letter-spacing: 0.02em;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.opponent-indicator {
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.player-indicator {
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 @keyframes attackDashRight {

@@ -9,9 +9,6 @@ export interface BattleMatchedEvent {
 export interface BattleStateEvent {
   action: number;
   battle: any;
-  messages: string[];
-  structuredMessages: Array<{ code: string; args: Record<string, any> }>;
-  timeline: any[];
   replaySteps: Array<{
     stepIndex: number;
     message?: string | null;
@@ -20,7 +17,6 @@ export interface BattleStateEvent {
     delayMs?: number | null;
     metadata?: Record<string, any> | null;
   }>;
-  requiresSwitch: boolean;
   requiresSwitchSelection: boolean;
   availableSlotsForSwitch: number[];
   winnerUserId: number | null;
@@ -125,24 +121,16 @@ export class SocketService {
     console.info('[WS][Battle] Update', {
       action: message.action,
       battleId: message.battle?.battleId,
-      requiresSwitch: message.requiresSwitch ?? false,
       requiresSwitchSelection: message.requiresSwitchSelection ?? false,
       availableSlotsForSwitch: message.availableSlotsForSwitch ?? [],
       winnerUserId: message.winnerUserId ?? null,
       replaySteps: message.replaySteps ?? [],
-      messages: message.messages ?? [],
-      structuredMessages: message.structuredMessages ?? [],
-      timeline: message.timeline ?? [],
     });
 
     this.onBattleState.set({
       action: message.action ?? 0,
       battle: message.battle,
       replaySteps: message.replaySteps ?? [],
-      messages: message.messages ?? [],
-      structuredMessages: message.structuredMessages ?? [],
-      timeline: message.timeline ?? [],
-      requiresSwitch: message.requiresSwitch ?? false,
       requiresSwitchSelection: message.requiresSwitchSelection ?? message.requiresSwitch ?? false,
       availableSlotsForSwitch: message.availableSlotsForSwitch ?? [],
       winnerUserId: message.winnerUserId ?? null,

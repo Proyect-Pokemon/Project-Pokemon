@@ -22,6 +22,9 @@
                         [class.attack-dash-left]="opponentAttackAnimating()"
                         [src]="battleInfo()!.pokemonB.sprite">
                 }
+                @if (opponentStatStageIndicator()) {
+                    <span class="stat-stage-indicator opponent-indicator">{{ opponentStatStageIndicator() }}</span>
+                }
             </div>
             <div class="ally">
                 @if ((hpA() ?? 0) > 0) {
@@ -37,6 +40,9 @@
                         [status]="battleInfo()!.pokemonA.statusCondition ?? ''"
                         [showHp]="true">
                     </app-life-bar>
+                }
+                @if (playerStatStageIndicator()) {
+                    <span class="stat-stage-indicator player-indicator">{{ playerStatStageIndicator() }}</span>
                 }
             </div>
             <div id="moves">
