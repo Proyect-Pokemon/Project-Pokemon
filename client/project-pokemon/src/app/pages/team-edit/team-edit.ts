@@ -35,6 +35,8 @@ export class TeamEdit {
   allMovements = signal<Movement[]>([]);
   selectedSlot = signal(1);
   isLoading = signal(true);
+  isDeletingPokemon = signal(false);
+  showDeletePokemonModal = signal(false);
   searchQuery = signal('');
   searchResults = signal<Pokemon[]>([]);
   selectedPokemonFromSearch = signal<Pokemon | null>(null);
@@ -518,5 +520,43 @@ export class TeamEdit {
     }
 
     this.router.navigate(['/team-builder', currentTeam.id, 'pokemon', selectedPokemonTeam.id, 'edit']);
+  }
+
+  requestDeleteSelectedPokemon() {
+    if (!this.selectedPokemonTeam() || this.isDeletingPokemon()) {
+      return;
+    }
+
+    this.showDeletePokemonModal.set(true);
+  }
+
+  cancelDeleteSelectedPokemon() {
+    this.showDeletePokemonModal.set(false);
+  }
+
+  async onDeleteSelectedPokemon() {
+    const currentTeam = this.team();
+    const selectedPokemonTeam = this.selectedPokemonTeam();
+
+    if (!currentTeam || !selectedPokemonTeam || this.isDeletingPokemon()) {
+      return;
+    }
+
+    this.isDeletingPokemon.set(true);
+    this.showDeletePokemonModal.set(false);
+
+    const deletedSlot = selectedPokemonTeam.slot;
+    const remainingCount = currentTeam.pokemons.length - 1;
+
+    const deleted = await this.pokemonTeamService.deletePokemonTeam(selectedPokemonTeam.id);
+    if (!deleted) {
+      this.isDeletingPokemon.set(false);
+      return;
+    }
+
+    const nextSlot = Math.min(deletedSlot, remainingCount + 1);
+    await this.loadData(currentTeam.id, nextSlot);
+
+    this.isDeletingPokemon.set(false);
   }
 }

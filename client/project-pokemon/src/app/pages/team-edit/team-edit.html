@@ -89,7 +89,18 @@
                             <div class="empty-slot-placeholder">?</div>
                         }
                     </div>
-                    <button class="edit-pokemon-btn" (click)="goToPokemonEdit()">Editar Pokémon</button>
+                    <div class="pokemon-actions">
+                        <button class="edit-pokemon-btn" (click)="goToPokemonEdit()">Editar Pokémon</button>
+                        <button
+                            class="delete-pokemon-btn"
+                            (click)="requestDeleteSelectedPokemon()"
+                            [disabled]="isDeletingPokemon()"
+                            [attr.aria-label]="'Eliminar ' + (displayName() ?? 'Pokemon')"
+                            title="Eliminar Pokémon"
+                        >
+                            <img src="assets/icons/UI/basura.svg" alt="" class="delete-icon" aria-hidden="true" />
+                        </button>
+                    </div>
                 </ng-container>
 
                 <ng-template #emptySelectedSlot>
@@ -207,6 +218,19 @@
             }
         </div>
 
+    }
+
+    @if (showDeletePokemonModal()) {
+        <div class="confirm-modal-backdrop" (click)="cancelDeleteSelectedPokemon()">
+            <div class="confirm-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="delete-pokemon-title">
+                <h2 id="delete-pokemon-title" class="confirm-title">Confirmar eliminación</h2>
+                <p class="confirm-message">¿Seguro que quieres eliminar a <strong>{{ displayName() ?? 'este Pokemon' }}</strong> del equipo?</p>
+                <div class="confirm-actions">
+                    <button type="button" class="confirm-btn cancel" (click)="cancelDeleteSelectedPokemon()">Cancelar</button>
+                    <button type="button" class="confirm-btn accept" (click)="onDeleteSelectedPokemon()" [disabled]="isDeletingPokemon()">Aceptar</button>
+                </div>
+            </div>
+        </div>
     }
 
 </div>

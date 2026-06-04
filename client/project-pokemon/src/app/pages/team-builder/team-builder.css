@@ -188,6 +188,65 @@
     cursor: not-allowed;
 }
 
+.confirm-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(6, 19, 25, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.confirm-modal {
+    width: min(420px, 100%);
+    border-radius: 16px;
+    padding: 1.25rem 1.15rem;
+    background: linear-gradient(120deg, #ffffff 0%, #f0eafc 100%);
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(15, 83, 104, 0.14);
+}
+
+.confirm-title {
+    margin: 0;
+    color: #0f5368;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.confirm-message {
+    margin: 0.75rem 0 1rem;
+    color: #0f5368;
+    line-height: 1.4;
+}
+
+.confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+.confirm-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 0.5rem 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.confirm-btn.cancel {
+    color: #0f5368;
+    background: #d8e1e7;
+}
+
+.confirm-btn.accept {
+    color: #ffffff;
+    background: #d64541;
+}
+
 /* ─── Skeleton loading ─────────────────────────────────────────────────────── */
 .team-card.skeleton {
     pointer-events: none;

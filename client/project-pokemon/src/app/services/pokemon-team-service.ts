@@ -12,6 +12,10 @@ export class PokemonTeamService extends BaseApiService {
     return this.getList<GetAllPokemonTeamDto>('pokemonteam');
   }
 
+  async deletePokemonTeam(pokemonTeamId: number): Promise<boolean> {
+    return this.delete(`pokemonteam/${pokemonTeamId}`);
+  }
+
   async addPokemonTeam(dto: PostPokemonTeamDto): Promise<boolean> {
     return this.create<PostPokemonTeamDto>('pokemonteam', {
       ...dto,
