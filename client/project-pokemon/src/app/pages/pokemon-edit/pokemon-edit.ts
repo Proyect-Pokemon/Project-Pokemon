@@ -167,7 +167,8 @@ export class PokemonEdit {
     this.isSaving.set(true);
     this.saveMessage.set(null);
 
-    const ok = await this.pokemonTeamService.updatePokemonTeam(current.id, {
+  try {
+    await this.pokemonTeamService.updatePokemonTeam(current.id, {
       nickname: current.nickname,
       shiny: this.isShiny(),
       sex: this.selectedSex(),
@@ -181,11 +182,16 @@ export class PokemonEdit {
       movementId4: ids[3],
     });
 
-    this.isSaving.set(false);
+    this.router.navigate(['/team-builder', current.teamId], {
+      queryParams: { slot: current.slot },
+    });
 
-    if (!ok) {
+    } catch (error) {
       this.saveMessage.set('No se pudieron guardar los cambios.');
-      return;
+      console.error(error);
+
+    } finally {
+      this.isSaving.set(false);
     }
 
     this.router.navigate(['/team-builder', current.teamId], {
