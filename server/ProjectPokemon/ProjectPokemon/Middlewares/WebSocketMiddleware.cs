@@ -5,19 +5,15 @@ using Microsoft.Extensions.Primitives;
 
 namespace ProjectPokemon.Middlewares;
 
-/// <summary>
-/// Claves usadas para almacenar información en HttpContext.Items
-/// durante la conexión WebSocket.
-/// </summary>
+// Claves usadas para almacenar información en HttpContext.Items
+// durante la conexión WebSocket.
 public static class WebSocketContextKeys
 {
     public const string User = "WS_USER";
 }
 
-/// <summary>
-/// Extensión para acceder fácilmente al usuario autenticado
-/// desde cualquier parte del pipeline.
-/// </summary>
+// Extensión para acceder fácilmente al usuario autenticado
+// desde cualquier parte del pipeline.
 public static class WebSocketContextExtensions
 {
     public static ClaimsPrincipal? GetUser(this HttpContext context)
@@ -26,10 +22,9 @@ public static class WebSocketContextExtensions
             : null;
 }
 
-/// <summary>
-/// Middleware encargado de autenticar conexiones WebSocket
-/// mediante JWT antes de permitir acceso.
-/// </summary>
+// Middleware encargado de autenticar conexiones WebSocket
+// mediante JWT antes de permitir acceso.
+
 public class WebSocketMiddleware : IMiddleware
 {
     private const string TOKEN_KEY = "token";
@@ -115,19 +110,19 @@ public class WebSocketMiddleware : IMiddleware
         await next(context);
     }
 
-    /// <summary>
-    /// Extrae el token JWT desde query string o headers.
-    /// Soporta:
-    /// - ?token=xxx
-    /// - Authorization: Bearer xxx
-    /// </summary>
+    
+    // Extrae el token JWT desde query string o headers.
+    // Soporta:
+    // - ?token=xxx
+    // - Authorization: Bearer xxx
+
     private string? ExtractToken(HttpContext context)
     {
-        // 1. Query string
+        // Query string
         if (context.Request.Query.TryGetValue(TOKEN_KEY, out var queryToken))
             return queryToken.ToString();
 
-        // 2. Header Authorization
+        // Header Authorization
         if (context.Request.Headers.TryGetValue("Authorization", out var headerToken))
         {
             var value = headerToken.ToString()?.Trim();

@@ -242,24 +242,25 @@ export class TeamEdit {
 
     const targetSlot = this.selectedSlot();
 
-    const created = await this.pokemonTeamService.addPokemonTeam({
-      nickname: null,
-      shiny: false,
-      slot: targetSlot,
-      teamId: currentTeam.id,
-      pokemonId: pokemon.id,
-      natureId: 1,
-      movementId1: 1,
-      movementId2: null,
-      movementId3: null,
-      movementId4: null,
-    });
+    try {
+      await this.pokemonTeamService.addPokemonTeam({
+        nickname: null,
+        shiny: false,
+        slot: targetSlot,
+        teamId: currentTeam.id,
+        pokemonId: pokemon.id,
+        natureId: 1,
+        movementId1: 1,
+        movementId2: null,
+        movementId3: null,
+        movementId4: null,
+      });
 
-    if (!created) {
-      return;
+      await this.loadData(currentTeam.id, targetSlot);
+
+    } catch (error) {
+      console.error('Error añadiendo Pokémon', error);
     }
-
-    await this.loadData(currentTeam.id, targetSlot);
   }
 
   private tryPrepareSearchPanel() {
@@ -548,10 +549,23 @@ export class TeamEdit {
     const deletedSlot = selectedPokemonTeam.slot;
     const remainingCount = currentTeam.pokemons.length - 1;
 
-    const deleted = await this.pokemonTeamService.deletePokemonTeam(selectedPokemonTeam.id);
-    if (!deleted) {
+    try {
+      this.isDeletingPokemon.set(true);
+      this.showDeletePokemonModal.set(false);
+
+      const deletedSlot = selectedPokemonTeam.slot;
+      const remainingCount = currentTeam.pokemons.length - 1;
+
+      await this.pokemonTeamService.deletePokemonTeam(selectedPokemonTeam.id);
+
+      const nextSlot = Math.min(deletedSlot, remainingCount + 1);
+      await this.loadData(currentTeam.id, nextSlot);
+
+    } catch (error) {
+      console.error('Error eliminando Pokémon', error);
+
+    } finally {
       this.isDeletingPokemon.set(false);
-      return;
     }
 
     const nextSlot = Math.min(deletedSlot, remainingCount + 1);

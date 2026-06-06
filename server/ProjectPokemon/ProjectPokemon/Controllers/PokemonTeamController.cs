@@ -134,13 +134,13 @@ public class PokemonTeamController : ControllerBase {
     [HttpDelete("{id}")]
     [Authorize]
     public async Task<ActionResult<DeletePokemonTeamResponseDto>> DeletePokemonTeam(int id) {
-        // 1. Obtener usuario autenticado
+        // Obtener usuario autenticado
         int? userId = GetAuthenticatedUserId();
         if (userId == null) {
             return Unauthorized(new { error = "No se pudo autenticar al usuario." });
         }
 
-        // 2. Verificar que el PokemonTeam existe
+        // Verificar que el PokemonTeam existe
         PokemonTeam? pokemonTeam = await _unitOfWork.PokemonTeamRepository
             .GetQueryable()
             .FirstOrDefaultAsync(pt => pt.Id == id);
@@ -152,7 +152,7 @@ public class PokemonTeamController : ControllerBase {
             });
         }
 
-        // 3. Validar ownership del equipo
+        // Validar propiedad del equipo
         bool isOwner = await ValidateTeamOwnership(pokemonTeam.TeamId, userId.Value);
         if (!isOwner) {
             return Forbid(); // 403 Forbidden
@@ -162,23 +162,23 @@ public class PokemonTeamController : ControllerBase {
         int teamId = pokemonTeam.TeamId;
 
         try {
-            // 4. PRIMERO obtener los Pokémon afectados ANTES de eliminar
+            // PRIMERO obtener los Pokémon afectados ANTES de eliminar
             var affectedPokemons = await _unitOfWork.PokemonTeamRepository
                 .GetQueryable()
                 .Where(pt => pt.TeamId == teamId && pt.Slot > deletedSlot)
                 .OrderBy(pt => pt.Slot)
                 .ToListAsync();
 
-            // 5. Eliminar el PokemonTeam
+            // Eliminar el PokemonTeam
             await _unitOfWork.PokemonTeamRepository.DeleteAsync(pokemonTeam);
 
-            // 6. Compactar slots: reducir en 1 todos los slots mayores
+            // Compactar slots: reducir en 1 todos los slots mayores
             foreach (var pokemon in affectedPokemons) {
                 pokemon.Slot--;
                 await _unitOfWork.PokemonTeamRepository.UpdateAsync(pokemon);
             }
 
-            // 7. Guardar todos los cambios en una sola transacción
+            // Guardar todos los cambios en una sola transacción
             bool success = await _unitOfWork.SaveAsync();
 
             if (!success) {
@@ -188,7 +188,7 @@ public class PokemonTeamController : ControllerBase {
                 });
             }
 
-            // 8. Obtener estado final del equipo para la respuesta
+            // Obtener estado final del equipo para la respuesta
             var remainingPokemons = await _unitOfWork.PokemonTeamRepository
                 .GetQueryable()
                 .Where(pt => pt.TeamId == teamId)

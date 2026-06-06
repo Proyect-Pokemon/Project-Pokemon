@@ -1,1 +1,69 @@
-<p>admin-panel works!</p>
+<div class="admin-page">
+  <section class="admin-panel">
+    <header class="admin-header">
+      <p class="admin-tag">Panel de administración</p>
+      <h1>Gestión de usuarios</h1>
+      <p class="admin-subtitle">
+        Gestiona roles y elimina usuarios del sistema desde este panel.
+      </p>
+
+      <div class="admin-kpis">
+        <article class="kpi-card">
+          <span class="kpi-number">{{ totalUsers() }}</span>
+          <span class="kpi-label">Usuarios totales</span>
+        </article>
+        <article class="kpi-card kpi-admin">
+          <span class="kpi-number">{{ totalAdmins() }}</span>
+          <span class="kpi-label">Con rol admin</span>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-number">{{ totalStandardUsers() }}</span>
+          <span class="kpi-label">Con rol user</span>
+        </article>
+      </div>
+    </header>
+
+    @if (actionMessage()) {
+      <p class="admin-feedback">{{ actionMessage() }}</p>
+    }
+
+    @if (loadingUsers()) {
+      <div class="admin-empty-state">
+        <h2>Cargando usuarios...</h2>
+        <p>Consultando el listado de usuarios del sistema.</p>
+      </div>
+    } @else if (loadError()) {
+      <div class="admin-empty-state admin-state-error">
+        <h2>No se pudieron cargar los usuarios</h2>
+        <p>{{ loadError() }}</p>
+        <button type="button" class="retry-btn" (click)="reloadUsers()">
+          Reintentar
+        </button>
+      </div>
+    } @else if (users().length === 0) {
+      <div class="admin-empty-state">
+        <h2>No hay usuarios</h2>
+        <p>El servidor ha devuelto una lista vacía.</p>
+      </div>
+    } @else {
+      <app-admin-users-list
+        [users]="users()"
+        [isRoleUpdating]="isRoleUpdatingFn"
+        [isDeletingUser]="isDeletingUserFn"
+        [isLastAdmin]="isLastAdmin"
+        (roleChange)="onRoleChange($event)"
+        (deleteUser)="openDeleteModal($event)"
+      />
+    }
+  </section>
+</div>
+
+<app-admin-delete-user-modal
+  [user]="selectedUserForDeletion()"
+  [deleteNicknameInput]="deleteNicknameInput()"
+  [canConfirmDeletion]="canConfirmDeletion()"
+  [deletingUser]="deletingSelectedUser()"
+  (deleteNicknameInputChange)="onDeleteNicknameInput($event)"
+  (close)="closeDeleteModal()"
+  (confirm)="confirmDeleteUser()"
+/>

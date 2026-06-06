@@ -1,12 +1,14 @@
-import { Injectable } from '@angular/core';
-import { BaseApiService } from './base-api.service';
+import { Injectable, inject } from '@angular/core';
+import { ApiService } from './api';
 import { Pokemon } from '../models/pokemon';
 
 @Injectable({
   providedIn: 'root',
 })
-export class PokemonService extends BaseApiService {
+export class PokemonService {
+  private readonly api = inject(ApiService);
+
   async getAllPokemon(): Promise<Pokemon[]> {
-    return this.getList<Pokemon>('pokemon');
+    return this.api.get<Pokemon[]>('pokemon');
   }
 }
