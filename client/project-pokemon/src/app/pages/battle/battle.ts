@@ -1,9 +1,8 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { BattleResponse } from '../../models/battle/pokemon-api';
 import { BattleMove } from '../../models/move';
 import { MovementButton } from '../../components/movement-button/movement-button';
 import { CommonModule, TitleCasePipe } from '@angular/common';
-import { BattleLogOverlay } from '../../components/battle-log-overlay/battle-log-overlay';
 import { FinishBattleDialog } from '../../components/finish-battle-dialog/finish-battle-dialog';
 import { LifeBar } from '../../components/life-bar/life-bar';
 import { BattleChat } from '../../components/battle-chat/battle-chat';
@@ -14,19 +13,38 @@ import { BattleService } from '../../services/battle-service';
 
 type BattleActionPanel = 'root' | 'attack' | 'switch';
 type BattleResult = 'victory' | 'defeat' | null;
+type BattleSideKey = 'player' | 'opponent';
+
+interface BattleStateEventPayload {
+  battle: any;
+  replaySteps: Array<{
+    stepIndex: number;
+    message?: string | null;
+    events: any[];
+    delayMs?: number | null;
+  }>;
+  requiresSwitchSelection: boolean;
+  availableSlotsForSwitch: number[];
+  winnerUserId: number | null;
+}
 
 @Component({
   selector: 'app-battle',
-  imports: [MovementButton, BattleLogOverlay, FinishBattleDialog, LifeBar, BattleChat, CommonModule],
+  imports: [MovementButton, FinishBattleDialog, LifeBar, BattleChat, CommonModule],
   providers: [TitleCasePipe],
   templateUrl: './battle.html',
   styleUrl: './battle.css',
 })
 export class Battle {
   private readonly FALLBACK_SPRITE = '/assets/error/missing-no.png';
-  private readonly WAITING_MESSAGE_SNIPPET = 'esperando al rival';
   private readonly ONLINE_BATTLE_BOOTSTRAP_TIMEOUT_MS = 8000;
+  private readonly DEFAULT_REPLAY_STEP_DELAY_MS = 1100;
+  private readonly ATTACK_DASH_DURATION_MS = 220;
+  private readonly WAITING_OPPONENT_MESSAGE = 'esperando al rival';
   private onlineBattleBootstrapTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private playbackChain: Promise<void> = Promise.resolve();
+  private readonly playbackTimeouts = new Set<ReturnType<typeof setTimeout>>();
+  private isDestroyed = false;
 
   mode = signal<'cpu' | 'online'>('cpu');
   battleId = signal<string | null>(null);
@@ -37,13 +55,19 @@ export class Battle {
   isLoadingBattle = signal(true);
   attacksDisabled = signal(true);
   isWaitingForOpponent = signal(false);
+  requiresSwitchSelection = signal(false);
+  availableSlotsForSwitch = signal<number[]>([]);
+  isSubmittingForcedSwitch = signal(false);
   actionPanel = signal<BattleActionPanel>('root');
 
-  battleLog = signal<string[]>([]);
-  showLogOverlay = signal(false);
+  combatChatMessages = signal<string[]>([]);
   showFinishDialog = signal(false);
   battleResult = signal<BattleResult>(null);
   showLeaveConfirmation = signal(false);
+  playerAttackAnimating = signal(false);
+  opponentAttackAnimating = signal(false);
+  playerStatStageIndicator = signal<string | null>(null);
+  opponentStatStageIndicator = signal<string | null>(null);
 
   private leaveDecisionResolver: ((decision: boolean) => void) | null = null;
   private leaveDecisionPromise: Promise<boolean> | null = null;
@@ -87,47 +111,43 @@ export class Battle {
       }
 
       const battleEvent = this.socketService.onBattleState();
-      const currentBattleId = this.battleId();
+      const currentBattleId = this.battleId() ?? this.route.snapshot.queryParamMap.get('battleId');
 
       if (!battleEvent || !currentBattleId || battleEvent.battle?.battleId !== currentBattleId) {
         return;
       }
 
-      const mapped = this.mapBattleSnapshotToView(battleEvent.battle);
+      if (!this.battleId()) {
+        this.battleId.set(currentBattleId);
+      }
+
       this.latestBattleSnapshot.set(battleEvent.battle);
-      this.battleInfo.set(mapped);
-      this.hpA.set(mapped.pokemonA.currentHp ?? mapped.pokemonA.hp ?? 0);
-      this.hpB.set(mapped.pokemonB.currentHp ?? mapped.pokemonB.hp ?? 0);
       this.isLoadingBattle.set(false);
       this.clearOnlineBattleBootstrapTimeout();
+      this.isSubmittingForcedSwitch.set(false);
 
-      const waitingForOpponent = this.hasWaitingMessage(battleEvent.messages);
+      const replaySteps = (battleEvent.replaySteps ?? []).filter((step) => !!step);
+      const hasPlaybackContent = replaySteps.length > 0;
+      const shouldPlayTurn = hasPlaybackContent;
 
-      const hasWinner = battleEvent.winnerUserId !== null && battleEvent.winnerUserId !== undefined;
-      const isFinished = hasWinner;
-
-      if (isFinished) {
-        this.battleResult.set(this.resolveBattleResult(battleEvent.winnerUserId));
-        this.showFinishDialog.set(true);
-        this.isWaitingForOpponent.set(false);
-        this.attacksDisabled.set(true);
-        this.actionPanel.set('root');
-      } else {
-        this.showFinishDialog.set(false);
-        this.battleResult.set(null);
-        this.isWaitingForOpponent.set(waitingForOpponent);
-        this.attacksDisabled.set(waitingForOpponent);
+      if (!untracked(() => this.battleInfo())) {
+        this.applySnapshotToView(battleEvent.battle);
       }
 
-      if (!isFinished && battleEvent.requiresSwitch) {
-        this.actionPanel.set('switch');
-      } else if (!isFinished && !waitingForOpponent) {
-        this.actionPanel.set('root');
+      if (shouldPlayTurn) {
+        this.enqueueBattlePlayback({
+          battle: battleEvent.battle,
+          replaySteps,
+          requiresSwitchSelection: battleEvent.requiresSwitchSelection ?? false,
+          availableSlotsForSwitch: (battleEvent.availableSlotsForSwitch ?? []).filter((slot: unknown) => Number.isInteger(slot)) as number[],
+          winnerUserId: battleEvent.winnerUserId ?? null,
+        });
+        return;
       }
 
-      if (battleEvent.messages.length > 0) {
-        this.battleLog.update((current) => [...current, ...battleEvent.messages]);
-      }
+      this.applySnapshotToView(battleEvent.battle);
+      this.syncActivePokemonAfterFaint(battleEvent.battle);
+      this.applyBattleEventState(battleEvent, false);
     });
   }
 
@@ -170,6 +190,8 @@ export class Battle {
       return;
     }
 
+    this.battleId.set(battleId);
+
     const matchedBattleId = this.socketService.onBattleMatched()?.battleId;
     if (!matchedBattleId || matchedBattleId !== battleId) {
       this.isLoadingBattle.set(false);
@@ -179,7 +201,6 @@ export class Battle {
       return;
     }
 
-    this.battleId.set(battleId);
     this.socketService.setActiveBattle(battleId);
     this.attacksDisabled.set(true);
     this.isWaitingForOpponent.set(false);
@@ -188,6 +209,8 @@ export class Battle {
   }
 
   ngOnDestroy(): void {
+    this.isDestroyed = true;
+    this.clearPlaybackTimeouts();
     this.clearOnlineBattleBootstrapTimeout();
     this.socketService.resetBattleContext();
   }
@@ -223,14 +246,14 @@ export class Battle {
   }
 
   openAttackPanel(): void {
-    if (this.attacksDisabled() || this.showLogOverlay()) {
+    if (this.attacksDisabled() || this.requiresSwitchSelection()) {
       return;
     }
     this.actionPanel.set('attack');
   }
 
   openSwitchPanel(): void {
-    if (this.attacksDisabled() || this.showLogOverlay()) {
+    if (this.attacksDisabled() || this.requiresSwitchSelection()) {
       return;
     }
     this.actionPanel.set('switch');
@@ -241,7 +264,7 @@ export class Battle {
       return;
     }
 
-    if (this.socketService.onBattleState()?.requiresSwitch) {
+    if (this.requiresSwitchSelection()) {
       return;
     }
 
@@ -249,7 +272,7 @@ export class Battle {
   }
 
   async attack(move: BattleMove): Promise<void> {
-    if (this.mode() === 'cpu') {
+    if (this.mode() === 'cpu' || this.requiresSwitchSelection() || this.attacksDisabled() || this.isWaitingForOpponent()) {
       return;
     }
 
@@ -268,8 +291,13 @@ export class Battle {
       return;
     }
 
+    if (this.requiresSwitchSelection()) {
+      this.selectForcedSwitch(targetSlot);
+      return;
+    }
+
     const battleId = this.battleId();
-    if (!battleId) {
+    if (!battleId || this.attacksDisabled() || this.isWaitingForOpponent()) {
       return;
     }
 
@@ -278,10 +306,32 @@ export class Battle {
     this.socketService.switchPokemon(battleId, targetSlot);
   }
 
-  private hasWaitingMessage(messages: string[]): boolean {
-    return messages.some(message =>
-      message?.toLowerCase().includes(this.WAITING_MESSAGE_SNIPPET)
-    );
+  selectForcedSwitch(targetSlot: number): void {
+    if (!this.requiresSwitchSelection() || this.isSubmittingForcedSwitch()) {
+      return;
+    }
+
+    if (!this.isAvailableForcedSwitchSlot(targetSlot)) {
+      return;
+    }
+
+    const battleId = this.battleId();
+    if (!battleId) {
+      return;
+    }
+
+    this.isSubmittingForcedSwitch.set(true);
+    this.attacksDisabled.set(true);
+    this.isWaitingForOpponent.set(false);
+    this.socketService.switchPokemon(battleId, targetSlot);
+  }
+
+  isAvailableForcedSwitchSlot(slot: number): boolean {
+    if (!this.requiresSwitchSelection()) {
+      return false;
+    }
+
+    return this.availableSlotsForSwitch().includes(slot);
   }
 
   private resolveBattleResult(winnerUserId: number | null): BattleResult {
@@ -309,10 +359,6 @@ export class Battle {
 
     this.leaveDecisionResolver = null;
     this.leaveDecisionPromise = null;
-  }
-
-  onLineChanged(lineIndex: number): void {
-    // Implementar lógica del log de combate
   }
 
   private startOnlineBattleBootstrapTimeout(): void {
@@ -344,6 +390,628 @@ export class Battle {
     this.onlineBattleBootstrapTimeoutId = null;
   }
 
+  private enqueueBattlePlayback(event: BattleStateEventPayload): void {
+    this.playbackChain = this.playbackChain.then(async () => {
+      if (this.isDestroyed) {
+        return;
+      }
+
+      const playbackSteps = [...(event.replaySteps ?? [])].sort((a, b) => (a.stepIndex ?? 0) - (b.stepIndex ?? 0));
+
+      if (!playbackSteps.length) {
+        this.applySnapshotToView(event.battle);
+        this.applyBattleEventState(event, false);
+        return;
+      }
+
+      this.showFinishDialog.set(false);
+      this.battleResult.set(null);
+      this.attacksDisabled.set(true);
+      this.isWaitingForOpponent.set(false);
+      this.syncActivePokemonAfterFaint(event.battle);
+
+      let replayIsWaitingForOpponent = false;
+
+      try {
+        for (const step of playbackSteps) {
+          if (this.isDestroyed) {
+            return;
+          }
+
+          const stepMessage = step.message?.trim();
+          if (stepMessage && this.isWaitingOpponentMessage(stepMessage)) {
+            replayIsWaitingForOpponent = true;
+            this.isWaitingForOpponent.set(true);
+            this.attacksDisabled.set(true);
+            this.actionPanel.set('root');
+          } else if (stepMessage) {
+            this.combatChatMessages.update((current) => [...current, stepMessage]);
+          }
+
+          const stepEvents = Array.isArray(step.events) ? step.events : [];
+          for (const stepEvent of stepEvents) {
+            await this.processReplayEvent(stepEvent, event.battle);
+          }
+
+          const stepDelay = Number(step.delayMs);
+          const normalizedStepDelay = Number.isFinite(stepDelay) && stepDelay > 0
+            ? stepDelay
+            : this.DEFAULT_REPLAY_STEP_DELAY_MS;
+          await this.wait(normalizedStepDelay);
+        }
+      } finally {
+        if (!this.isDestroyed) {
+          this.applySnapshotToView(event.battle);
+          this.applyBattleEventState(event, replayIsWaitingForOpponent);
+        }
+      }
+    });
+  }
+
+  private applyBattleEventState(event: BattleStateEventPayload, waitingForOpponent: boolean): void {
+    const isFinished = event.winnerUserId !== null && event.winnerUserId !== undefined;
+
+    if (isFinished) {
+      this.battleResult.set(this.resolveBattleResult(event.winnerUserId));
+      this.showFinishDialog.set(true);
+      this.isWaitingForOpponent.set(false);
+      this.attacksDisabled.set(true);
+      this.requiresSwitchSelection.set(false);
+      this.availableSlotsForSwitch.set([]);
+      this.isSubmittingForcedSwitch.set(false);
+      this.actionPanel.set('root');
+      return;
+    }
+
+    this.showFinishDialog.set(false);
+    this.battleResult.set(null);
+    const resolvedForcedSwitch = this.resolveForcedSwitchState(event);
+    this.requiresSwitchSelection.set(resolvedForcedSwitch.requiresSwitchSelection);
+    this.availableSlotsForSwitch.set(resolvedForcedSwitch.availableSlotsForSwitch);
+
+    if (resolvedForcedSwitch.requiresSwitchSelection) {
+      this.isWaitingForOpponent.set(false);
+      this.attacksDisabled.set(true);
+      this.actionPanel.set('root');
+      return;
+    }
+
+    this.isWaitingForOpponent.set(waitingForOpponent);
+    this.attacksDisabled.set(waitingForOpponent);
+
+    this.actionPanel.set('root');
+  }
+
+  private resolveForcedSwitchState(event: BattleStateEventPayload): {
+    requiresSwitchSelection: boolean;
+    availableSlotsForSwitch: number[];
+  } {
+    const explicitSlots = (event.availableSlotsForSwitch ?? []).filter((slot) => Number.isInteger(slot));
+    if (event.requiresSwitchSelection) {
+      return {
+        requiresSwitchSelection: true,
+        availableSlotsForSwitch: explicitSlots.length > 0
+          ? explicitSlots
+          : this.deriveAvailableSwitchSlotsFromSnapshot(event.battle),
+      };
+    }
+
+    const activeIsFainted = this.isPlayerActivePokemonFainted(event.battle);
+    if (!activeIsFainted) {
+      return {
+        requiresSwitchSelection: false,
+        availableSlotsForSwitch: [],
+      };
+    }
+
+    return {
+      requiresSwitchSelection: true,
+      availableSlotsForSwitch: this.deriveAvailableSwitchSlotsFromSnapshot(event.battle),
+    };
+  }
+
+  private isPlayerActivePokemonFainted(snapshot: any): boolean {
+    const team = snapshot?.playerSide?.team;
+    const activeSlot = snapshot?.playerSide?.activeSlot ?? 0;
+    if (!Array.isArray(team) || team.length === 0) {
+      return false;
+    }
+
+    const activePokemon = team[activeSlot] ?? team[0];
+    if (!activePokemon) {
+      return false;
+    }
+
+    const currentHp = Number(activePokemon?.currentHp ?? 0);
+    return !!activePokemon?.isFainted || currentHp <= 0;
+  }
+
+  private deriveAvailableSwitchSlotsFromSnapshot(snapshot: any): number[] {
+    const team = snapshot?.playerSide?.team;
+    const activeSlot = snapshot?.playerSide?.activeSlot ?? 0;
+    if (!Array.isArray(team)) {
+      return [];
+    }
+
+    return team
+      .map((pokemon: any, index: number) => ({ pokemon, index }))
+      .filter(({ pokemon, index }) => {
+        if (index === activeSlot) {
+          return false;
+        }
+
+        const currentHp = Number(pokemon?.currentHp ?? 0);
+        return !pokemon?.isFainted && currentHp > 0;
+      })
+      .map(({ index }) => index);
+  }
+
+  private applySnapshotToView(snapshot: any): void {
+    const mapped = this.mapBattleSnapshotToView(snapshot);
+    this.battleInfo.set(mapped);
+    this.hpA.set(mapped.pokemonA.currentHp ?? mapped.pokemonA.hp ?? 0);
+    this.hpB.set(mapped.pokemonB.currentHp ?? mapped.pokemonB.hp ?? 0);
+  }
+
+  private async processReplayEvent(event: any, finalSnapshot: any): Promise<void> {
+    const eventType = event?.eventType ?? event?.EventType;
+    if (eventType === 'hp_change') {
+      await this.animateHpChange(event);
+      return;
+    }
+
+    this.applyTimelineEvent(event, finalSnapshot);
+
+    if (eventType === 'attack' && !this.attackEventDidMiss(event)) {
+      await this.wait(this.ATTACK_DASH_DURATION_MS);
+    }
+  }
+
+  private async animateHpChange(event: any): Promise<void> {
+    const target = event?.target ?? event?.Target;
+    const side = this.resolveEventSide(target);
+    if (!side) {
+      return;
+    }
+
+    const beforeHp = Number(event?.beforeHp ?? event?.BeforeHp);
+    const afterHp = Number(event?.afterHp ?? event?.AfterHp);
+
+    const startHp = Number.isFinite(beforeHp)
+      ? beforeHp
+      : (side === 'player' ? (this.hpA() ?? 0) : (this.hpB() ?? 0));
+    const endHp = Number.isFinite(afterHp) ? afterHp : startHp;
+
+    if (startHp === endHp) {
+      this.setSideHp(side, endHp);
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      const durationMs = 800;
+      const startTime = Date.now();
+
+      const animate = () => {
+        if (this.isDestroyed) {
+          resolve();
+          return;
+        }
+
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / durationMs, 1);
+        const currentHp = Math.round(startHp + (endHp - startHp) * progress);
+        this.setSideHp(side, currentHp);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+          return;
+        }
+
+        resolve();
+      };
+
+      animate();
+    });
+  }
+
+  private applyTimelineEvent(event: any, finalSnapshot: any): void {
+    const eventType = event?.eventType ?? event?.EventType;
+    switch (eventType) {
+      case 'attack': {
+        if (this.attackEventDidMiss(event)) {
+          return;
+        }
+
+        const attacker = event?.attacker ?? event?.Attacker;
+        const attackerSide = this.resolveEventSide(attacker);
+        if (attackerSide === 'player' || attackerSide === 'opponent') {
+          this.triggerAttackAnimation(attackerSide);
+        }
+        return;
+      }
+
+      case 'message':
+        return;
+
+      case 'hp_change':
+        {
+          const target = event?.target ?? event?.Target;
+          const afterHp = event?.afterHp ?? event?.AfterHp;
+          const resolvedSide = this.resolveEventSide(target);
+          if ((resolvedSide === 'player' || resolvedSide === 'opponent') && Number.isFinite(Number(afterHp))) {
+            this.setSideHp(resolvedSide, Number(afterHp));
+          }
+        }
+        return;
+
+      case 'status_change':
+        {
+          const target = event?.target ?? event?.Target;
+          const resolvedSide = this.resolveEventSide(target);
+          if (resolvedSide === 'player' || resolvedSide === 'opponent') {
+            this.setSideStatus(resolvedSide, event?.afterStatus ?? event?.AfterStatus ?? 'None');
+          }
+        }
+        return;
+
+      case 'secondary_status_change':
+        return;
+
+      case 'faint':
+        {
+          const target = event?.target ?? event?.Target;
+          const resolvedSide = this.resolveEventSide(target);
+          if (resolvedSide === 'player' || resolvedSide === 'opponent') {
+            this.setSideHp(resolvedSide, 0);
+          }
+        }
+        return;
+
+      case 'stat_stage_change':
+        {
+          const target = event?.target ?? event?.Target;
+          const resolvedSide = this.resolveEventSide(target);
+          if (resolvedSide === 'player' || resolvedSide === 'opponent') {
+            this.showStatStageIndicator(resolvedSide, event);
+          }
+        }
+        return;
+
+      case 'battle_end': {
+        const winnerUserId = event?.winnerUserId ?? event?.WinnerUserId ?? null;
+        if (winnerUserId !== null && winnerUserId !== undefined) {
+          this.battleResult.set(this.resolveBattleResult(Number(winnerUserId)));
+          this.showFinishDialog.set(true);
+        }
+        return;
+      }
+
+      case 'switch':
+        if (this.resolveEventSide(event) === 'player' || this.resolveEventSide(event) === 'opponent') {
+          this.applySwitchFromTimeline(event, finalSnapshot);
+        }
+        return;
+
+      default:
+        return;
+    }
+  }
+
+  private resolveEventSide(entity: any): BattleSideKey | null {
+    const rawSide = entity?.side ?? entity?.Side;
+    if (rawSide === 'player' || rawSide === 'opponent') {
+      return rawSide;
+    }
+
+    return null;
+  }
+
+  private attackEventDidMiss(event: any): boolean {
+    return event?.hit === false;
+  }
+
+  private isWaitingOpponentMessage(message: string): boolean {
+    const normalized = this.normalizeName(message).replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    return normalized.includes(this.WAITING_OPPONENT_MESSAGE);
+  }
+
+  private triggerAttackAnimation(side: BattleSideKey): void {
+    const animationSignal = side === 'player'
+      ? this.playerAttackAnimating
+      : this.opponentAttackAnimating;
+
+    animationSignal.set(false);
+
+    const restartTimeout = setTimeout(() => {
+      if (this.isDestroyed) {
+        this.playbackTimeouts.delete(restartTimeout);
+        return;
+      }
+
+      animationSignal.set(true);
+
+      const stopTimeout = setTimeout(() => {
+        animationSignal.set(false);
+        this.playbackTimeouts.delete(stopTimeout);
+      }, this.ATTACK_DASH_DURATION_MS);
+
+      this.playbackTimeouts.add(stopTimeout);
+      this.playbackTimeouts.delete(restartTimeout);
+    }, 0);
+
+    this.playbackTimeouts.add(restartTimeout);
+  }
+
+  private showStatStageIndicator(side: BattleSideKey, event: any): void {
+    const stat = this.formatStatLabel(event?.stat ?? event?.Stat ?? 'stat');
+    const change = Number(event?.change ?? event?.Change ?? event?.stages ?? event?.Stages ?? event?.delta ?? event?.Delta ?? 0);
+    const direction = change >= 0 ? '↑' : '↓';
+    const amount = Math.max(1, Math.abs(Math.trunc(change || 1)));
+    const newStage = Number(event?.newStage ?? event?.NewStage ?? NaN);
+    const stageSuffix = Number.isFinite(newStage) ? ` (${newStage > 0 ? '+' : ''}${Math.trunc(newStage)})` : '';
+    const label = `${direction}${amount} ${stat}${stageSuffix}`;
+
+    const signalRef = side === 'player' ? this.playerStatStageIndicator : this.opponentStatStageIndicator;
+    signalRef.set(label);
+
+    const clearTimeoutId = setTimeout(() => {
+      signalRef.set(null);
+      this.playbackTimeouts.delete(clearTimeoutId);
+    }, 900);
+
+    this.playbackTimeouts.add(clearTimeoutId);
+  }
+
+  private formatStatLabel(rawStat: string): string {
+    const key = this.normalizeName(String(rawStat));
+    const labels: Record<string, string> = {
+      attack: 'Ataque',
+      defense: 'Defensa',
+      specialattack: 'Ataque Esp.',
+      specialdefense: 'Defensa Esp.',
+      speed: 'Velocidad',
+      accuracy: 'Precisión',
+      evasion: 'Evasión',
+      crit: 'Crítico',
+      critical: 'Crítico',
+    };
+
+    return labels[key] ?? this.capitalize(String(rawStat));
+  }
+
+  private setSideHp(side: BattleSideKey, hp: number): void {
+    const current = this.battleInfo();
+    if (!current) {
+      return;
+    }
+
+    if (side === 'player') {
+      this.hpA.set(hp);
+      this.battleInfo.set({
+        ...current,
+        pokemonA: {
+          ...current.pokemonA,
+          currentHp: hp,
+        },
+      });
+      return;
+    }
+
+    this.hpB.set(hp);
+    this.battleInfo.set({
+      ...current,
+      pokemonB: {
+        ...current.pokemonB,
+        currentHp: hp,
+      },
+    });
+  }
+
+  private applySwitchFromTimeline(event: any, finalSnapshot: any): void {
+    const newPokemonName = event?.newPokemonName ?? event?.NewPokemonName ?? '';
+    const newActiveSlot = event?.newActiveSlot ?? event?.NewActiveSlot;
+    const side = this.resolveEventSide(event);
+    if (!side) {
+      return;
+    }
+
+    const switchedPokemon = this.getSnapshotPokemonBySlot(finalSnapshot, side, newActiveSlot, newPokemonName);
+    if (!switchedPokemon) {
+      return;
+    }
+
+    const nextPokemonView = this.mapSnapshotPokemonToView(switchedPokemon, side === 'player');
+    const current = this.battleInfo();
+    if (!current) {
+      return;
+    }
+
+    if (side === 'player') {
+      this.battleInfo.set({ ...current, pokemonA: nextPokemonView });
+      this.hpA.set(nextPokemonView.currentHp ?? 0);
+      return;
+    }
+
+    this.battleInfo.set({ ...current, pokemonB: nextPokemonView });
+    this.hpB.set(nextPokemonView.currentHp ?? 0);
+  }
+
+  private syncActivePokemonAfterFaint(snapshot: any): void {
+    const current = this.battleInfo();
+    if (!current) {
+      return;
+    }
+
+    const shouldReplacePlayer = (this.hpA() ?? 0) <= 0;
+    const shouldReplaceOpponent = (this.hpB() ?? 0) <= 0;
+
+    if (!shouldReplacePlayer && !shouldReplaceOpponent) {
+      return;
+    }
+
+    if (shouldReplacePlayer) {
+      const playerActive = this.getActiveSnapshotPokemon(snapshot, 'player');
+      const playerActiveHp = Number(playerActive?.currentHp ?? 0);
+      if (playerActive && playerActiveHp > 0) {
+        const nextPlayer = this.mapSnapshotPokemonToView(playerActive, true);
+        this.battleInfo.set({
+          ...this.battleInfo()!,
+          pokemonA: nextPlayer,
+        });
+        this.hpA.set(nextPlayer.currentHp ?? 0);
+      }
+    }
+
+    if (shouldReplaceOpponent) {
+      const opponentActive = this.getActiveSnapshotPokemon(snapshot, 'opponent');
+      const opponentActiveHp = Number(opponentActive?.currentHp ?? 0);
+      if (opponentActive && opponentActiveHp > 0) {
+        const nextOpponent = this.mapSnapshotPokemonToView(opponentActive, false);
+        this.battleInfo.set({
+          ...this.battleInfo()!,
+          pokemonB: nextOpponent,
+        });
+        this.hpB.set(nextOpponent.currentHp ?? 0);
+      }
+    }
+  }
+
+  private getActiveSnapshotPokemon(snapshot: any, side: BattleSideKey): any | null {
+    const sideKey = side === 'player' ? 'playerSide' : 'opponentSide';
+    const team = snapshot?.[sideKey]?.team;
+    const activeSlot = snapshot?.[sideKey]?.activeSlot ?? 0;
+    if (!Array.isArray(team)) {
+      return null;
+    }
+
+    return team[activeSlot] ?? team[0] ?? null;
+  }
+
+  private getSnapshotPokemonBySlot(snapshot: any, side: BattleSideKey, slot: number, expectedName?: string): any | null {
+    const sideKey = side === 'player' ? 'playerSide' : 'opponentSide';
+    const team = snapshot?.[sideKey]?.team;
+    if (!Array.isArray(team)) {
+      return null;
+    }
+
+    const normalizedExpectedName = this.normalizeName(expectedName ?? '');
+    const normalizedSlot = Number(slot);
+    const isValidIndex = Number.isInteger(normalizedSlot) && normalizedSlot >= 0 && normalizedSlot < team.length;
+
+    const byIndex = isValidIndex ? (team[normalizedSlot] ?? null) : null;
+    const byOneBasedSlot = Number.isInteger(normalizedSlot)
+      ? (team.find((pokemon: any) => Number(pokemon?.slot) === normalizedSlot + 1) ?? null)
+      : null;
+    const byExactSlot = Number.isInteger(normalizedSlot)
+      ? (team.find((pokemon: any) => Number(pokemon?.slot) === normalizedSlot) ?? null)
+      : null;
+
+    const candidates = [byIndex, byOneBasedSlot, byExactSlot].filter(Boolean);
+    if (normalizedExpectedName) {
+      const byName = candidates.find((pokemon: any) => {
+        const pokemonName = pokemon?.nickname || pokemon?.name || '';
+        return this.normalizeName(pokemonName) === normalizedExpectedName;
+      });
+      if (byName) {
+        return byName;
+      }
+    }
+
+    return candidates[0] ?? null;
+  }
+
+  private mapSnapshotPokemonToView(pokemon: any, preferBackSprite: boolean) {
+    return {
+      name: pokemon?.nickname || pokemon?.name || 'Pokemon',
+      sex: pokemon?.sex ?? null,
+      sprite: this.resolveSnapshotSprite(pokemon, preferBackSprite),
+      statusCondition: pokemon?.status ?? null,
+      currentHp: pokemon?.currentHp ?? 0,
+      maxHp: pokemon?.maxHp ?? 0,
+      atk: pokemon?.attack ?? 0,
+      def: pokemon?.defense ?? 0,
+      spa: pokemon?.specialAttack ?? 0,
+      spd: pokemon?.specialDefense ?? 0,
+      spe: pokemon?.speed ?? 0,
+      type1: 'unknown',
+      type2: null,
+      moves: preferBackSprite
+        ? (pokemon?.movements ?? []).map((move: any) => ({
+            name: move.name,
+            description: '',
+            power: null,
+            accuracy: null,
+            moveClass: '',
+            pp: move.maxPp,
+            currentPp: move.currentPp,
+            type: move.type,
+          }))
+        : [],
+    };
+  }
+
+  private wait(milliseconds: number): Promise<void> {
+    return new Promise((resolve) => {
+      const timeoutId = setTimeout(() => {
+        this.playbackTimeouts.delete(timeoutId);
+        resolve();
+      }, milliseconds);
+
+      this.playbackTimeouts.add(timeoutId);
+    });
+  }
+
+  private clearPlaybackTimeouts(): void {
+    for (const timeoutId of this.playbackTimeouts) {
+      clearTimeout(timeoutId);
+    }
+
+    this.playbackTimeouts.clear();
+  }
+
+  private normalizeName(value: string): string {
+    return value
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  private capitalize(value: string): string {
+    if (!value) {
+      return '';
+    }
+
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  private setSideStatus(side: BattleSideKey, status: string): void {
+    const current = this.battleInfo();
+    if (!current) {
+      return;
+    }
+
+    const normalizedStatus = status === 'None' ? '' : status;
+    if (side === 'player') {
+      this.battleInfo.set({
+        ...current,
+        pokemonA: {
+          ...current.pokemonA,
+          statusCondition: normalizedStatus,
+        },
+      });
+      return;
+    }
+
+    this.battleInfo.set({
+      ...current,
+      pokemonB: {
+        ...current.pokemonB,
+        statusCondition: normalizedStatus,
+      },
+    });
+  }
+
   private mapBattleSnapshotToView(snapshot: any): BattleResponse {
     const playerSlot = snapshot.playerSide?.activeSlot ?? 0;
     const opponentSlot = snapshot.opponentSide?.activeSlot ?? 0;
@@ -352,47 +1020,8 @@ export class Battle {
     const opponentPokemon = snapshot.opponentSide?.team?.[opponentSlot] ?? snapshot.opponentSide?.team?.[0];
 
     return {
-      pokemonA: {
-        name: playerPokemon?.nickname || playerPokemon?.name || 'Pokemon',
-        sex: playerPokemon?.sex ?? null,
-        sprite: this.resolveSnapshotSprite(playerPokemon, true),
-        statusCondition: playerPokemon?.statusCondition ?? null,
-        currentHp: playerPokemon?.currentHp ?? 0,
-        maxHp: playerPokemon?.maxHp ?? 0,
-        atk: playerPokemon?.attack ?? 0,
-        def: playerPokemon?.defense ?? 0,
-        spa: playerPokemon?.specialAttack ?? 0,
-        spd: playerPokemon?.specialDefense ?? 0,
-        spe: playerPokemon?.speed ?? 0,
-        type1: 'unknown',
-        type2: null,
-        moves: (playerPokemon?.movements ?? []).map((move: any) => ({
-          name: move.name,
-          description: '',
-          power: null,
-          accuracy: null,
-          moveClass: '',
-          pp: move.maxPp,
-          currentPp: move.currentPp,
-          type: move.type,
-        })),
-      },
-      pokemonB: {
-        name: opponentPokemon?.nickname || opponentPokemon?.name || 'Pokemon',
-        sex: opponentPokemon?.sex ?? null,
-        sprite: this.resolveSnapshotSprite(opponentPokemon, false),
-        statusCondition: opponentPokemon?.statusCondition ?? null,
-        currentHp: opponentPokemon?.currentHp ?? 0,
-        maxHp: opponentPokemon?.maxHp ?? 0,
-        atk: opponentPokemon?.attack ?? 0,
-        def: opponentPokemon?.defense ?? 0,
-        spa: opponentPokemon?.specialAttack ?? 0,
-        spd: opponentPokemon?.specialDefense ?? 0,
-        spe: opponentPokemon?.speed ?? 0,
-        type1: 'unknown',
-        type2: null,
-        moves: [],
-      },
+      pokemonA: this.mapSnapshotPokemonToView(playerPokemon, true),
+      pokemonB: this.mapSnapshotPokemonToView(opponentPokemon, false),
     };
   }
 

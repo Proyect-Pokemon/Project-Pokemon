@@ -8,10 +8,10 @@
                         <img [src]="genderIconSrc" [alt]="genderAlt" class="gender-icon" />
                     </span>
                 }
+                @if (hasStatusBadge) {
+                    <span class="status-tag" [class]="'status-tag ' + statusClass">{{ statusDisplay }}</span>
+                }
             </div>
-            @if (status) {
-                <span class="status-tag" [class]="statusClass">{{ statusDisplay }}</span>
-            }
         </div>
         <div class="life-bar">
             <div class="health" [style.width.%]="hpPercent" [class]="healthColor"></div>

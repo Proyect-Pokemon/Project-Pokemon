@@ -19,7 +19,7 @@
 
 .name-row {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     gap: 12px;
 }
@@ -64,6 +64,10 @@
 }
 
 .status-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     padding: 4px 10px;
     border-radius: 999px;
     background: linear-gradient(135deg, var(--fire-color), #ff4500);
@@ -86,7 +90,7 @@
     background: linear-gradient(135deg, var(--poison-color), #7b2d7f);
 }
 
-.status-flying {
+.status-sleep {
     background: linear-gradient(135deg, var(--flying-color), #8b7bc7);
 }
 

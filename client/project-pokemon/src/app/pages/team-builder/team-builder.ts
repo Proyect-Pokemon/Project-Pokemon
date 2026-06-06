@@ -28,6 +28,7 @@ export class TeamBuilder {
   isLoadingTeams = signal(false);
   isCreatingTeam = false;
   editingTeamId: number | null = null;
+  pendingDeleteTeam = signal<Team | null>(null);
 
   constructor() {
     effect(() => {
@@ -59,11 +60,28 @@ export class TeamBuilder {
     this.isCreatingTeam = false;
   }
 
-  async deleteTeam(teamId: number) {
+  promptDeleteTeam(teamId: number) {
+    const team = this.teams().find(t => t.id === teamId) ?? null;
+    this.pendingDeleteTeam.set(team);
+  }
+
+  cancelDeleteTeam() {
+    this.pendingDeleteTeam.set(null);
+  }
+
+  async confirmDeleteTeam() {
+    const team = this.pendingDeleteTeam();
+    if (!team) {
+      return;
+    }
+
+    const teamId = team.id;
     const deleted = await this.teamService.deleteTeam(teamId);
     if (deleted) {
       this.teams.update(teams => teams.filter(t => t.id !== teamId));
     }
+
+    this.pendingDeleteTeam.set(null);
   }
 
   editTeam(teamId: number) {

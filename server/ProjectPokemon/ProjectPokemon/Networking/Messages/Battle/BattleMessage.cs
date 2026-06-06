@@ -30,7 +30,14 @@ public class BattleActionRequest : BattleMessage {
 // Actualización del estado de la batalla enviada por el servidor
 public class BattleStateUpdate : BattleMessage {
     public required BattleSnapshot Battle { get; set; }
-    public List<string> Messages { get; set; } = new();
+
+    /// <summary>
+    /// Lista ordenada de pasos de replay para reproducción determinista del turno.
+    /// Cada step contiene mensaje(s) + evento(s) + metadata en orden de ejecución.
+    /// Frontend debe consumir esta lista para reproducir el turno paso a paso.
+    /// </summary>
+    public List<ReplayStep> ReplaySteps { get; set; } = new();
+
     public bool RequiresSwitch { get; set; } = false;
     public int? WinnerUserId { get; set; }
 }
@@ -60,6 +67,7 @@ public class PokemonSnapshot {
     public int MaxHp { get; set; }
     public bool IsFainted { get; set; }
     public required string Status { get; set; }
+    public List<string> SecondaryStatuses { get; set; } = new(); // Estados secundarios activos
     public string? SpriteFront { get; set; }
     public string? SpriteBack { get; set; }
     public string? SpriteFrontShiny { get; set; }

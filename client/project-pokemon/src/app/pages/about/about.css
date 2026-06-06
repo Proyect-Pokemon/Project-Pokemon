@@ -116,7 +116,10 @@
 
 .content-grid {
     display: grid;
-    grid-template-columns: 1.35fr 1fr;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+        "team center"
+        "build build";
     gap: 24px;
 }
 
@@ -124,8 +127,16 @@
     padding: 32px;
 }
 
-.panel-wide {
-    grid-row: span 2;
+.panel-team {
+    grid-area: team;
+}
+
+.panel-center {
+    grid-area: center;
+}
+
+.panel-build {
+    grid-area: build;
 }
 
 .container-header {
@@ -168,8 +179,11 @@
         grid-template-columns: 1fr;
     }
 
-    .panel-wide {
-        grid-row: span 1;
+    .content-grid {
+        grid-template-areas:
+            "team"
+            "center"
+            "build";
     }
 }
 
