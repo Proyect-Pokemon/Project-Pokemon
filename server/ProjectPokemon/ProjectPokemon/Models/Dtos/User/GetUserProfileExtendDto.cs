@@ -1,4 +1,4 @@
-﻿namespace SocialNetwork.Models.Dtos.Users {
+﻿namespace ProjectPokemon.Models.Dtos.User {
     public class GetUserProfileExtendDto {
         public required string Email { get; set; }
         public required string Nickname { get; set; }
