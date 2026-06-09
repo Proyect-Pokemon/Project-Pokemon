@@ -15,6 +15,24 @@ public class PokemonTeamController : ControllerBase {
         _unitOfWork = unitOfWork;
     }
 
+    // Obtiene el ID del usuario autenticado desde el token JWT
+    private int? GetAuthenticatedUserId() {
+        var userIdClaim = User.FindFirst("id")?.Value;
+        if (int.TryParse(userIdClaim, out int userId)) {
+            return userId;
+        }
+        return null;
+    }
+
+    // Valida que el equipo pertenezca al usuario autenticado
+    private async Task<bool> ValidateTeamOwnership(int teamId, int userId) {
+        var team = await _unitOfWork.TeamRepository
+            .GetQueryable()
+            .FirstOrDefaultAsync(t => t.Id == teamId);
+
+        return team != null && team.UserId == userId;
+    }
+
     //GET: api/pokemonteam
     [HttpGet]
     [Authorize]
@@ -112,20 +130,89 @@ public class PokemonTeamController : ControllerBase {
         return Ok(dto);
     }
 
-    // DELETE
+    // DELETE con compactación automática de slots
     [HttpDelete("{id}")]
     [Authorize]
-    public async Task<IActionResult> DeletePokemonTeam(int id) {
-        PokemonTeam? pokemonteam = await _unitOfWork.PokemonTeamRepository.GetByIdAsync(id);
-        if (pokemonteam == null) {
-            return NotFound();
+    public async Task<ActionResult<DeletePokemonTeamResponseDto>> DeletePokemonTeam(int id) {
+        // Obtener usuario autenticado
+        int? userId = GetAuthenticatedUserId();
+        if (userId == null) {
+            return Unauthorized(new { error = "No se pudo autenticar al usuario." });
         }
-        await _unitOfWork.PokemonTeamRepository.DeleteAsync(pokemonteam);
-        bool success = await _unitOfWork.SaveAsync();
-        if (!success) {
-            return BadRequest();
+
+        // Verificar que el PokemonTeam existe
+        PokemonTeam? pokemonTeam = await _unitOfWork.PokemonTeamRepository
+            .GetQueryable()
+            .FirstOrDefaultAsync(pt => pt.Id == id);
+
+        if (pokemonTeam == null) {
+            return NotFound(new DeletePokemonTeamResponseDto {
+                Success = false,
+                Message = "El Pokémon no existe."
+            });
         }
-        return Ok();
+
+        // Validar propiedad del equipo
+        bool isOwner = await ValidateTeamOwnership(pokemonTeam.TeamId, userId.Value);
+        if (!isOwner) {
+            return Forbid(); // 403 Forbidden
+        }
+
+        int deletedSlot = pokemonTeam.Slot;
+        int teamId = pokemonTeam.TeamId;
+
+        try {
+            // PRIMERO obtener los Pokémon afectados ANTES de eliminar
+            var affectedPokemons = await _unitOfWork.PokemonTeamRepository
+                .GetQueryable()
+                .Where(pt => pt.TeamId == teamId && pt.Slot > deletedSlot)
+                .OrderBy(pt => pt.Slot)
+                .ToListAsync();
+
+            // Eliminar el PokemonTeam
+            await _unitOfWork.PokemonTeamRepository.DeleteAsync(pokemonTeam);
+
+            // Compactar slots: reducir en 1 todos los slots mayores
+            foreach (var pokemon in affectedPokemons) {
+                pokemon.Slot--;
+                await _unitOfWork.PokemonTeamRepository.UpdateAsync(pokemon);
+            }
+
+            // Guardar todos los cambios en una sola transacción
+            bool success = await _unitOfWork.SaveAsync();
+
+            if (!success) {
+                return BadRequest(new DeletePokemonTeamResponseDto {
+                    Success = false,
+                    Message = "Error al guardar los cambios."
+                });
+            }
+
+            // Obtener estado final del equipo para la respuesta
+            var remainingPokemons = await _unitOfWork.PokemonTeamRepository
+                .GetQueryable()
+                .Where(pt => pt.TeamId == teamId)
+                .OrderBy(pt => pt.Slot)
+                .Select(pt => new TeamPokemonSlotDto {
+                    Id = pt.Id,
+                    Slot = pt.Slot,
+                    PokemonId = pt.PokemonId,
+                    Nickname = pt.Nickname
+                })
+                .ToListAsync();
+
+            return Ok(new DeletePokemonTeamResponseDto {
+                Success = true,
+                Message = $"Pokémon eliminado correctamente. Slots compactados.",
+                RemainingPokemons = remainingPokemons
+            });
+        }
+        catch (Exception ex) {
+            return StatusCode(500, new DeletePokemonTeamResponseDto {
+                Success = false,
+                Message = $"Error interno: {ex.Message}"
+            });
+        }
     }
 
     // PUT

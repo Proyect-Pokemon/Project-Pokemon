@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { PokemonStatsButton } from '../pokemon-stats-button/pokemon-stats-button';
 import { PokemonTeamService } from '../../../services/pokemon-team-service';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'app-pokemon-preview',
@@ -125,12 +125,19 @@ export class PokemonPreview {
 
         this.isSavingNickname = true;
 
-        const success = await this.pokemonTeamService.updateNickname(pokemonTeamId, { nickname: nextNickname });
+        try {
+        await this.pokemonTeamService.updateNickname(
+            pokemonTeamId,
+            { nickname: nextNickname }
+        );
 
-        this.isSavingNickname = false;
+        this.nicknameUpdated.emit({
+            pokemonTeamId,
+            nickname: nextNickname
+        });
 
-        if (success) {
-            this.nicknameUpdated.emit({ pokemonTeamId, nickname: nextNickname });
+        } catch (error) {
+        console.error('Error updating nickname', error);
         }
     }
 

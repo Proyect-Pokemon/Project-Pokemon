@@ -21,9 +21,8 @@
     cursor: pointer;
     justify-content: space-between;
     align-items: center;
-    padding: 8px;
-    padding-right: 15px;
-    gap: 5px;
+    padding: 8px 12px;
+    gap: 10px;
     height: max-content;
     margin: 2px;
     border: none;
@@ -38,10 +37,10 @@
     position: absolute;
     top: 0;
     right: 0;
-    width: 38%;
+    width: 30%;
     height: 100%;
     background: var(--secondary-color);
-    clip-path: polygon(20% 0, 100% 0, 100% 100%, 0% 100%);
+    clip-path: polygon(26% 0, 100% 0, 100% 100%, 0% 100%);
     z-index: 1;
 }
 
@@ -55,19 +54,33 @@
 }
 
 .move img {
-    width: 12%;
-    height: fit-content;
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+}
+
+.move-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    z-index: 2;
 }
 
 .move-name {
     color: var(--secondary-color);
-    font-size: 1.2vw;
+    font-size: clamp(1rem, 0.9rem + 0.25vw, 1.4rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .move-pp {
-    align-content: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     color: var(--primary-color);
-    font-size: 1.2vw;
-    margin-left: 15px;
+    font-size: clamp(1rem, 0.9rem + 0.2vw, 1.3rem);
     z-index: 2;
+    min-width: 64px;
 }

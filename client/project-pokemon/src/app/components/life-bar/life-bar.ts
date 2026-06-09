@@ -8,6 +8,15 @@ import { Component, Input } from '@angular/core';
   styleUrl: './life-bar.css',
 })
 export class LifeBar {
+  private static readonly STATUS_BADGES: Record<string, { label: string; className: string }> = {
+    burn: { label: 'QUE', className: 'status-fire' },
+    freeze: { label: 'CON', className: 'status-ice' },
+    sleep: { label: 'DOR', className: 'status-sleep' },
+    paralysis: { label: 'PAR', className: 'status-electric' },
+    poison: { label: 'ENV', className: 'status-poison' },
+    badlypoisoned: { label: 'ENV', className: 'status-poison' },
+  };
+
   @Input() pokemonName: string = '';
   @Input() pokemonSex: string | null = null;
   @Input() currentHp: number | null = null;
@@ -68,22 +77,33 @@ export class LifeBar {
   }
 
   get statusDisplay(): string {
-    const statusLower = this.status.toLowerCase();
-    if (statusLower === 'burned') return 'QUE';
-    if (statusLower === 'frozen') return 'CON';
-    if (statusLower === 'poison') return 'ENV';
-    if (statusLower === 'sleep') return 'DOR';
-    if (statusLower === 'paralyzed') return 'PAR';
-    return '';
+    return this.statusBadge?.label ?? '';
   }
 
   get statusClass(): string {
-    const statusLower = this.status.toLowerCase();
-    if (statusLower === 'burned') return 'status-fire';
-    if (statusLower === 'frozen') return 'status-ice';
-    if (statusLower === 'poison') return 'status-poison';
-    if (statusLower === 'sleep') return 'status-flying';
-    if (statusLower === 'paralyzed') return 'status-electric';
-    return '';
+    return this.statusBadge?.className ?? '';
+  }
+
+  get hasStatusBadge(): boolean {
+    return !!this.statusBadge;
+  }
+
+  private get statusBadge(): { label: string; className: string } | null {
+    const statusKey = this.normalizedStatusKey;
+    if (!statusKey) {
+      return null;
+    }
+
+    return LifeBar.STATUS_BADGES[statusKey] ?? null;
+  }
+
+  private get normalizedStatusKey(): string {
+    return (this.status ?? '')
+      .toString()
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\s_-]/g, '');
   }
 }

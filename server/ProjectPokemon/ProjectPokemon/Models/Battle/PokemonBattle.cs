@@ -50,6 +50,34 @@ public class PokemonBattle {
     // Estados secundarios (puede tener varios a la vez usando flags)
     public PokeSecondaryStatus SecondaryStatuses { get; set; }
 
+    // Contador de turnos de sueño (Sleep)
+    // Cuando Status == Sleep, indica cuántos turnos quedan dormido
+    public int SleepTurnsRemaining { get; set; } = 0;
+
+    // Contador de daño incremental de BadlyPoisoned
+    // Comienza en 1 y se incrementa cada turno (1/16, 2/16, 3/16...)
+    // Se resetea a 1 cuando el Pokémon es cambiado
+    public int BadlyPoisonedCounter { get; set; } = 1;
+
+    // Contador de turnos de confusión
+    // Cuando SecondaryStatuses tiene Confuse, indica cuántos turnos quedan confundido (1-4)
+    public int ConfusionTurnsRemaining { get; set; } = 0;
+
+    // Indica si este Pokémon está afectado por Leech Seed (Drenadoras)
+    // La curación se aplica al Pokémon activo del lado contrario, no a un Pokémon específico
+    // Este campo ya no se usa, la información se mantiene en SecondaryStatuses.Seeded
+    [Obsolete("Use HasSecondaryStatus(PokeSecondaryStatus.Seeded) instead")]
+    public PokemonBattle? LeechSeedSource { get; set; } = null;
+
+    // Contador de turnos de atrapamiento (Bound)
+    // Cuando SecondaryStatuses tiene Bound, indica cuántos turnos quedan atrapado
+    // Movimientos como Bind, Wrap, Fire Spin, Clamp
+    public int BoundTurnsRemaining { get; set; } = 0;
+
+    // Referencia al Pokémon que aplicó Bound
+    // Null si no está afectado por Bound
+    public PokemonBattle? BoundSource { get; set; } = null;
+
     // Movimientos disponibles en el combate
     public List<BattleMovement> Movements { get; private set; }
 
@@ -148,11 +176,9 @@ public class PokemonBattle {
     private double GetNatureModifier(StatType boosted, StatType dropped, StatType currentStat) {
         if (boosted == dropped) {
             return 1.0; // Naturaleza neutra (sube y baja la misma stat)
-        }
-        else if (boosted == currentStat) {
+        } else if (boosted == currentStat) {
             return 1.1; // +10%
-        }
-        else if (dropped == currentStat) {
+        } else if (dropped == currentStat) {
             return 0.9; // -10%
         }
         return 1.0; // Debe tener un return por si ninguno de los anteriores funciona
@@ -223,6 +249,98 @@ public class PokemonBattle {
 
     public void ClearSecondaryStatuses() {
         SecondaryStatuses = PokeSecondaryStatus.None;
+    }
+
+    // Intenta descongelar al Pokémon (20% de probabilidad)
+    // Devuelve true si se descongela, false si sigue congelado
+    public bool TryThawOut() {
+        if (Status != PokeStatus.Freeze) {
+            return false; // No está congelado
+        }
+
+        Random random = new Random();
+        if (random.Next(0, 100) < 20) { // 20% de probabilidad
+            Status = PokeStatus.None;
+            return true; // Se descongeló
+        }
+
+        return false; // Sigue congelado
+    }
+
+    // Verifica si el Pokémon puede atacar considerando su estado
+    // Devuelve (canAttack, statusMessage, resultMessage)
+    // statusMessage: mensaje que anuncia el estado actual (ej: "Pikachu está confundido")
+    // resultMessage: mensaje del resultado de la comprobación (ej: "Se hirió a sí mismo" o "Ya no está confundido")
+    public (bool canAttack, string? statusMessage, string? resultMessage) CanAttack() {
+        // PRIORIDAD 1: Procesar estados primarios incapacitantes (Sleep, Freeze)
+        // Estos estados tienen prioridad absoluta sobre cualquier otro
+        switch (Status) {
+            case PokeStatus.Freeze:
+                // Intentar descongelarse antes de atacar
+                if (TryThawOut()) {
+                    // Se descongeló y puede atacar este turno
+                    return (true, null, $"{GetDisplayName()} se ha descongelado!");
+                }
+                return (false, $"{GetDisplayName()} está congelado.", $"{GetDisplayName()} no puede moverse.");
+
+            case PokeStatus.Sleep:
+                // Decrementar turnos de sueño
+                SleepTurnsRemaining--;
+
+                if (SleepTurnsRemaining <= 0) {
+                    // Se despierta y puede atacar este turno
+                    Status = PokeStatus.None;
+                    SleepTurnsRemaining = 0;
+                    // Devolver mensaje de despertar y continuar con las demás comprobaciones
+                    return (true, null, $"{GetDisplayName()} se ha despertado!");
+                }
+
+                // Sigue dormido - no puede hacer nada más
+                return (false, $"{GetDisplayName()} está dormido.", $"{GetDisplayName()} no puede moverse.");
+        }
+
+        // PRIORIDAD 2: Procesar confusión (estado secundario)
+        // Solo se ejecuta si no está dormido o congelado
+        if (HasSecondaryStatus(PokeSecondaryStatus.Confuse)) {
+            ConfusionTurnsRemaining--;
+
+            if (ConfusionTurnsRemaining <= 0) {
+                // Se cura la confusión
+                RemoveSecondaryStatus(PokeSecondaryStatus.Confuse);
+                ConfusionTurnsRemaining = 0;
+                return (true, $"{GetDisplayName()} está confundido.", $"{GetDisplayName()} ya no está confundido.");
+            }
+
+            // 50% de probabilidad de golpearse a sí mismo
+            Random random = new Random();
+            if (random.Next(0, 100) < 50) {
+                // Se golpea a sí mismo: daño = movimiento de 40 de potencia
+                // Fórmula simplificada: ((2 * 50 / 5 + 2) * 40 * Atk / Def) / 50
+                int attack = GetModifiedStat(StatType.Attack);
+                int defense = GetModifiedStat(StatType.Defense);
+                int damage = Math.Max(1, ((2 * 50 / 5 + 2) * 40 * attack / defense) / 50);
+                TakeDamage(damage);
+                return (false, $"{GetDisplayName()} está confundido.", $"Está tan confuso que se hirió a sí mismo.");
+            }
+
+            // Está confundido pero puede atacar
+            return (true, $"{GetDisplayName()} está confundido.", null);
+        }
+
+        // PRIORIDAD 3: Procesar parálisis
+        // Solo se ejecuta si no está dormido, congelado, y no se golpeó por confusión
+        if (Status == PokeStatus.Paralysis) {
+            // 25% de probabilidad de no poder atacar debido a la parálisis
+            Random random = new Random();
+            if (random.Next(0, 100) < 25) {
+                return (false, $"{GetDisplayName()} está paralizado.", $"No puede moverse por la parálisis.");
+            }
+            // Está paralizado pero puede atacar
+            return (true, $"{GetDisplayName()} está paralizado.", null);
+        }
+
+        // Puede atacar normalmente
+        return (true, null, null);
     }
 
     // Modifica un stage específico (limitado entre -6 y +6)
@@ -317,6 +435,94 @@ public class PokemonBattle {
             _ => 0
         };
 
-        return (int)Math.Floor(baseStat * GetStatStageMultiplier(stage));
+        double finalStat = baseStat * GetStatStageMultiplier(stage);
+
+        // Aplicar efectos de estados alterados
+        // Burn reduce el ataque físico a la mitad
+        if (stat == StatType.Attack && Status == PokeStatus.Burn) {
+            finalStat *= 0.5;
+        }
+
+        // Paralysis reduce la velocidad en un 75% (deja la velocidad al 25%)
+        if (stat == StatType.Speed && Status == PokeStatus.Paralysis) {
+            finalStat *= 0.25;
+        }
+
+        return (int)Math.Floor(finalStat);
+    }
+
+    // Aplica los efectos de estado al final del turno (solo si el Pokémon está activo en el campo)
+    // Devuelve un mensaje describiendo el efecto, o null si no hay efecto
+    public string? ApplyEndOfTurnStatusEffect() {
+        // Solo aplica efectos si el Pokémon está activo (no debilitado)
+        if (IsFainted()) {
+            return null;
+        }
+
+        switch (Status) {
+            case PokeStatus.Burn:
+                // Burn: pierde 1/16 de sus PS máximos
+                int burnDamage = Math.Max(1, MaxHp / 16);
+                TakeDamage(burnDamage);
+                return $"{GetDisplayName()} sufre daño por quemadura.";
+
+            case PokeStatus.Poison:
+                // Poison: pierde 1/8 de sus PS máximos
+                int poisonDamage = Math.Max(1, MaxHp / 8);
+                TakeDamage(poisonDamage);
+                return $"{GetDisplayName()} sufre daño por envenenamiento.";
+
+            case PokeStatus.BadlyPoisoned:
+                // BadlyPoisoned: pierde N/16 de sus PS máximos (N = BadlyPoisonedCounter)
+                // El daño incrementa cada turno: 1/16, 2/16, 3/16, etc.
+                int toxicDamage = Math.Max(1, (MaxHp * BadlyPoisonedCounter) / 16);
+                TakeDamage(toxicDamage);
+                string message = $"{GetDisplayName()} sufre daño por envenenamiento grave.";
+
+                // Incrementar el contador para el siguiente turno
+                BadlyPoisonedCounter++;
+
+                return message;
+
+            default:
+                return null;
+        }
+    }
+
+    // Aplica los efectos de estados secundarios al final del turno
+    // Devuelve un mensaje describiendo el efecto, o null si no hay efecto
+    public string? ApplyEndOfTurnSecondaryStatusEffect() {
+        // Solo aplica efectos si el Pokémon está activo (no debilitado)
+        if (IsFainted()) {
+            return null;
+        }
+
+        // Bound (Trap): pierde 1/16 de sus PS máximos mientras esté atrapado
+        if (HasSecondaryStatus(PokeSecondaryStatus.Bound) && BoundSource != null) {
+            int trapDamage = Math.Max(1, MaxHp / 16);
+            TakeDamage(trapDamage);
+
+            // Decrementar turnos restantes
+            BoundTurnsRemaining--;
+
+            // Si se acabaron los turnos, quitar el estado
+            if (BoundTurnsRemaining <= 0) {
+                RemoveSecondaryStatus(PokeSecondaryStatus.Bound);
+                BoundSource = null;
+                return $"{GetDisplayName()} sufre daño por atrapamiento y queda libre.";
+            }
+
+            return $"{GetDisplayName()} sufre daño por atrapamiento.";
+        }
+
+        // Leech Seed: pierde 1/8 de sus PS máximos
+        // La curación del Pokémon activo del lado contrario se maneja en BattleService
+        if (HasSecondaryStatus(PokeSecondaryStatus.Seeded)) {
+            int drainedHp = Math.Max(1, MaxHp / 8);
+            TakeDamage(drainedHp);
+            return $"Drenadoras restó salud a {GetDisplayName()}.";
+        }
+
+        return null;
     }
 }

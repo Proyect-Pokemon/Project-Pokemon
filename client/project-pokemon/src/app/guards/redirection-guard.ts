@@ -2,7 +2,7 @@ import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth';
 
-export const redirectionGuard: CanActivateFn = (route, state) => {
+export const redirectionGuard: CanActivateFn = (_route, state) => {
   const router = inject(Router);
   const authService = inject(AuthService);
   const isOnlineBattleRoute = state.url.startsWith('/battle/fight');

@@ -1,24 +1,26 @@
-import { Injectable } from '@angular/core';
-import { BaseApiService } from './base-api.service';
+import { Injectable, inject } from '@angular/core';
+import { ApiService } from './api';
 import { GetTeamDto, PostTeamDto } from '../models/team';
 
 @Injectable({
   providedIn: 'root',
 })
-export class TeamService extends BaseApiService {
+export class TeamService {
+  private readonly api = inject(ApiService);
+
   async getAllTeams(): Promise<GetTeamDto[]> {
-    return this.getList<GetTeamDto>('team');
+    return this.api.get<GetTeamDto[]>('team');
   }
 
-  async addTeam(dto: PostTeamDto): Promise<boolean> {
-    return this.create<PostTeamDto>('team', dto);
+  async addTeam(dto: PostTeamDto): Promise<PostTeamDto> {
+    return this.api.post<PostTeamDto>('team', dto);
   }
 
-  async deleteTeam(teamId: number): Promise<boolean> {
-    return this.delete(`team/${teamId}`);
+  async deleteTeam(teamId: number): Promise<void> {
+    await this.api.delete<void>(`team/${teamId}`);
   }
 
-  async renameTeam(teamId: number, name: string): Promise<boolean> {
-    return this.update(`team/${teamId}`, { name });
+  async renameTeam(teamId: number, name: string): Promise<void> {
+    await this.api.put<void>(`team/${teamId}`, { name });
   }
 }

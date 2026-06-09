@@ -28,6 +28,7 @@ export class TeamBuilder {
   isLoadingTeams = signal(false);
   isCreatingTeam = false;
   editingTeamId: number | null = null;
+  pendingDeleteTeam = signal<Team | null>(null);
 
   constructor() {
     effect(() => {
@@ -46,24 +47,56 @@ export class TeamBuilder {
 
     this.isCreatingTeam = true;
 
-    const created = await this.teamService.addTeam({
+  try {
+    await this.teamService.addTeam({
       name: `Equipo ${this.teams().length + 1}`,
       description: null,
       userId: currentUserId,
     });
 
-    if (created) {
-      await this.loadUserTeams();
-    }
+    await this.loadUserTeams();
+
+  } catch (error) {
+    console.error('Error creando equipo', error);
+
+  } finally {
+    this.isCreatingTeam = false;
+  }
 
     this.isCreatingTeam = false;
   }
 
-  async deleteTeam(teamId: number) {
-    const deleted = await this.teamService.deleteTeam(teamId);
-    if (deleted) {
-      this.teams.update(teams => teams.filter(t => t.id !== teamId));
+  promptDeleteTeam(teamId: number) {
+    const team = this.teams().find(t => t.id === teamId) ?? null;
+    this.pendingDeleteTeam.set(team);
+  }
+
+  cancelDeleteTeam() {
+    this.pendingDeleteTeam.set(null);
+  }
+
+  async confirmDeleteTeam() {
+    const team = this.pendingDeleteTeam();
+    if (!team) {
+      return;
     }
+
+    const teamId = team.id;
+    try {
+      await this.teamService.deleteTeam(teamId);
+
+      this.teams.update(teams =>
+        teams.filter(t => t.id !== teamId)
+      );
+
+    } catch (error) {
+      console.error('Error eliminando equipo', error);
+
+    } finally {
+      this.pendingDeleteTeam.set(null);
+    }
+
+    this.pendingDeleteTeam.set(null);
   }
 
   editTeam(teamId: number) {
@@ -78,10 +111,21 @@ export class TeamBuilder {
     const input = event.target as HTMLInputElement;
     const newName = input.value.trim();
     if (newName) {
-      await this.teamService.renameTeam(teamId, newName);
-      this.teams.update(teams =>
-        teams.map(t => t.id === teamId ? { ...t, name: newName } : t)
-      );
+      try {
+        await this.teamService.renameTeam(teamId, newName);
+
+        this.teams.update(teams =>
+          teams.map(t =>
+            t.id === teamId ? { ...t, name: newName } : t
+          )
+        );
+
+      } catch (error) {
+        console.error('Error renombrando equipo', error);
+
+      } finally {
+        this.editingTeamId = null;
+      }
     }
     this.editingTeamId = null;
   }

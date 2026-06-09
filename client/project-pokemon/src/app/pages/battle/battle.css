@@ -149,6 +149,7 @@ app-battle-chat {
     gap: 18px;
     flex: 1;
     min-height: 0;
+    position: relative;
 }
 
 .ally {
@@ -159,6 +160,7 @@ app-battle-chat {
     gap: 18px;
     flex: 1;
     min-height: 0;
+    position: relative;
 }
 
 .enemy app-life-bar,
@@ -181,17 +183,83 @@ app-battle-chat {
     filter: drop-shadow(0 14px 18px rgba(27, 18, 39, 0.28));
 }
 
+.battle-sprite {
+    will-change: transform;
+}
+
+.enemy-sprite.attack-dash-left {
+    animation: attackDashLeft 220ms ease-out;
+}
+
+.ally-sprite.attack-dash-right {
+    animation: attackDashRight 220ms ease-out;
+}
+
+.stat-stage-indicator {
+    position: absolute;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: #eaf9ff;
+    background: rgba(11, 28, 59, 0.92);
+    border: 1px solid rgba(126, 201, 255, 0.45);
+    box-shadow: 0 8px 20px rgba(2, 8, 19, 0.45);
+    letter-spacing: 0.02em;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.opponent-indicator {
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.player-indicator {
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+@keyframes attackDashRight {
+    0% { transform: translateX(0); }
+    35% { transform: translateX(32px); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes attackDashLeft {
+    0% { transform: translateX(0); }
+    35% { transform: translateX(-32px); }
+    100% { transform: translateX(0); }
+}
+
 #moves {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     margin: 0 8px 8px;
     position: relative;
+    min-height: clamp(220px, 28vh, 280px);
+    align-content: center;
+}
+
+.action-panel-prompt {
+    grid-column: 1 / -1;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: 700;
+    color: #d7f5ff;
+    letter-spacing: 0.02em;
 }
 
 .action-button {
     border: 0;
     border-radius: 16px;
+    min-height: 78px;
     padding: 14px 18px;
     font-size: 1.05rem;
     font-weight: 800;
@@ -220,6 +288,7 @@ app-battle-chat {
 
 .submenu-header {
     grid-column: 1 / -1;
+    min-height: 32px;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -248,6 +317,7 @@ app-battle-chat {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
+    align-content: center;
 }
 
 .switch-grid {
@@ -255,6 +325,7 @@ app-battle-chat {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
+    align-content: center;
 }
 
 .switch-option {
@@ -323,6 +394,27 @@ app-battle-chat {
     color: #e7f8ff;
     font-weight: 700;
     letter-spacing: 0.2px;
+}
+
+.forced-switch-prompt {
+    margin-bottom: 2px;
+}
+
+.forced-switch-grid {
+    gap: 10px;
+}
+
+.forced-switch-option {
+    border: 1px solid transparent;
+}
+
+.forced-switch-option.forced-available {
+    border-color: rgba(128, 240, 180, 0.6);
+    box-shadow: 0 0 0 1px rgba(128, 240, 180, 0.2) inset;
+}
+
+.forced-switch-option.forced-disabled {
+    opacity: 0.35;
 }
 
 .leave-confirm-dialog {

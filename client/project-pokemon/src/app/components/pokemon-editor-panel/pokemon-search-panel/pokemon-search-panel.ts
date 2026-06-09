@@ -123,6 +123,13 @@ export class PokemonSearchPanel {
         }
     }
 
+    showAllPokemonList(): void {
+        this.selectedPokemon.set(null);
+        this.searchError.set(null);
+        this.searchQuery.set('');
+        this.searchResults.set([...this.allPokemonCache()].sort((a, b) => a.id - b.id));
+    }
+
     reset() {
         this.searchQuery.set('');
         this.searchResults.set([]);

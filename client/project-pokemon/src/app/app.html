@@ -1,7 +1,9 @@
 <header>
     <nav>
         <ul>
-            <li><a routerLink="/battle">Combate</a></li>
+            @if (isAuthenticated()) {
+                <li><a routerLink="/battle">Combate</a></li>
+            }
             <li><a routerLink="/about">Sobre nosotros</a></li>
             @if (isAuthenticated()) {
                 <li><a routerLink="/team-builder">Equipos</a></li>
