@@ -1,0 +1,40 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title">
+    <header class="modal-header">
+      <h3 id="avatar-modal-title">Elige tu avatar</h3>
+      <button
+        type="button"
+        class="modal-close-btn"
+        aria-label="Cerrar"
+        [disabled]="loading()"
+        (click)="close.emit()"
+      >✕</button>
+    </header>
+
+    @if (error()) {
+      <p class="modal-error">{{ error() }}</p>
+    }
+
+    <div class="avatar-grid">
+      @for (avatar of avatarOptions(); track avatar) {
+        <button
+          type="button"
+          class="avatar-option"
+          [disabled]="loading()"
+          (click)="select.emit(avatar)"
+        >
+          <img src="/assets/Images/{{ avatar }}" [alt]="avatar" />
+          @if (loading()) {
+            <span class="avatar-loading-overlay"></span>
+          }
+        </button>
+      }
+    </div>
+
+    <footer class="modal-footer">
+      <button type="button" class="btn-secondary" [disabled]="loading()" (click)="close.emit()">
+        Cancelar
+      </button>
+    </footer>
+  </div>
+</div>

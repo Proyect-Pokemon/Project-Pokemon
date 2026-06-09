@@ -6,6 +6,11 @@ import { Router } from '@angular/router';
 import { TeamService } from '../../services/team-service';
 import { PokemonTeamService } from '../../services/pokemon-team-service';
 import { PokemonService } from '../../services/pokemon-service';
+import { ProfileAvatarModal } from '../../components/profile-avatar-modal/profile-avatar-modal';
+import { ProfileBiographyModal } from '../../components/profile-biography-modal/profile-biography-modal';
+import { ProfilePasswordModal } from '../../components/profile-password-modal/profile-password-modal';
+import { ProfileFavoriteModal, TeamOption } from '../../components/profile-favorite-modal/profile-favorite-modal';
+
 
 interface UserProfileDto {
   email: string;
@@ -33,7 +38,13 @@ interface TeamDisplay {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    ProfileAvatarModal,
+    ProfileBiographyModal,
+    ProfilePasswordModal,
+    ProfileFavoriteModal,
+  ],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
@@ -51,58 +62,41 @@ export class Profile implements OnInit {
   protected readonly selectedAvatarName = signal<string | null>(null);
   protected readonly avatarSrc = computed(() => {
     const name = this.selectedAvatarName();
-    if (name) return `/assets/Images/${name}`;
-    return '/assets/Images/avatar-default.jpg';
+    return name ? `/assets/Images/${name}` : '/assets/Images/avatar-default.jpg';
   });
 
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal('');
 
-  // Avatar: sin modal intermedio, click en foto abre/cierra el selector directamente
-  protected readonly avatarSelectionOpen = signal(false);
+  // Avatar
+  protected readonly avatarModalOpen = signal(false);
   protected readonly avatarActionLoading = signal(false);
   protected readonly avatarActionError = signal('');
-
   protected readonly avatarOptions = [
-    'aura.png',
-    'avatar-default.jpg',
-    'bruno.png',
-    'Cyntia.png',
-    'down.png',
-    'espada.png',
-    'gold.png',
-    'Kalos.png',
-    'Lizza.png',
-    'Lucho.png',
-    'N2.png',
-    'Red.jpg',
-    'Rizzo.png',
-    'Sol.png',
-    'verde.png',
-    'verdeRoket.png',
+    'aura.png', 'avatar-default.jpg', 'bruno.png', 'Cyntia.png',
+    'down.png', 'espada.png', 'gold.png', 'Kalos.png',
+    'Lizza.png', 'Lucho.png', 'N2.png', 'Red.jpg',
+    'Rizzo.png', 'Sol.png', 'verde.png', 'verdeRoket.png',
   ];
 
-  protected readonly editProfileOpen = signal(false);
+  // Biografia
+  protected readonly biographyModalOpen = signal(false);
   protected readonly biography = signal<string | null>(null);
   protected readonly biographyDraft = signal('');
   protected readonly biographyEditLoading = signal(false);
   protected readonly biographyEditError = signal('');
-  protected readonly biographyEditSuccess = signal('');
 
-  // Contrasena: un unico modal con los tres campos juntos
-  protected readonly editPasswordOpen = signal(false);
+  // Contrasena
+  protected readonly passwordModalOpen = signal(false);
   protected readonly currentPassword = signal('');
   protected readonly newPassword = signal('');
   protected readonly confirmPassword = signal('');
   protected readonly passwordChangeLoading = signal(false);
   protected readonly passwordChangeError = signal('');
-  protected readonly passwordChangeSuccess = signal('');
 
+  // Equipo favorito
   protected readonly favoriteTeamId = signal<number | null>(null);
-  protected readonly favoriteTeam = computed(() =>
-    this.userTeams().find((team) => team.id === this.favoriteTeamId()) ?? null
-  );
-  protected readonly favoriteSelectionOpen = signal(false);
+  protected readonly favoriteModalOpen = signal(false);
   protected readonly favoriteActionLoading = signal(false);
   protected readonly favoriteActionError = signal('');
 
@@ -110,23 +104,26 @@ export class Profile implements OnInit {
   protected readonly teamsLoading = signal(true);
   protected readonly teamsError = signal('');
 
+  protected readonly favoriteTeam = computed(() =>
+    this.userTeams().find((t) => t.id === this.favoriteTeamId()) ?? null
+  );
+
+  protected readonly teamOptions = computed<TeamOption[]>(() =>
+    this.userTeams().map((t) => ({ id: t.id, name: t.name, pokemonCount: t.pokemonCount }))
+  );
+
   ngOnInit(): void {
     void this.loadProfileData();
   }
 
   private async loadProfileData(): Promise<void> {
-    const currentUserId = this.auth.currentUserId();
-    if (!currentUserId) {
+    const userId = this.auth.currentUserId();
+    if (!userId) {
       this.errorMessage.set('No se pudo identificar el usuario autenticado.');
       this.loading.set(false);
       return;
     }
-
-    await Promise.all([
-      this.loadUserProfile(currentUserId),
-      this.loadUserTeams(currentUserId),
-    ]);
-
+    await Promise.all([this.loadUserProfile(userId), this.loadUserTeams(userId)]);
     this.loading.set(false);
   }
 
@@ -136,14 +133,10 @@ export class Profile implements OnInit {
       this.favoriteTeamId.set(profile.favoriteTeamId ?? null);
       this.biography.set(profile.biography?.trim() ?? null);
       this.biographyDraft.set(profile.biography?.trim() ?? '');
-      // Inicializar imagen desde la BD para que sea correcta independientemente del JWT
       this.selectedAvatarName.set(profile.avatarPath?.trim() ?? null);
-    } catch (error) {
-      console.error('Error cargando perfil de usuario:', error);
-      this.favoriteTeamId.set(null);
+    } catch {
       this.biography.set(null);
       this.biographyDraft.set('');
-      // Fallback al JWT si la BD falla
       const pathFromJwt = this.auth.avatarPath();
       this.selectedAvatarName.set(pathFromJwt.split('/').pop() ?? null);
     }
@@ -152,54 +145,36 @@ export class Profile implements OnInit {
   private async loadUserTeams(userId: number): Promise<void> {
     this.teamsLoading.set(true);
     this.teamsError.set('');
-
     try {
       const [allTeams, allPokemonTeams, allPokemons] = await Promise.all([
         this.teamService.getAllTeams(),
         this.pokemonTeamService.getAllPokemonTeams(),
         this.pokemonService.getAllPokemon(),
       ]);
-
       const pokemonMap = new Map(allPokemons.map((p) => [p.id, p]));
-
-      const userTeams = allTeams
-        .filter((team) => team.userId === userId)
-        .map((team): TeamDisplay => {
-          const teamPokemon = allPokemonTeams
-            .filter((pt) => pt.teamId === team.id)
-            .sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0))
-            .map((pt) => {
-              const pokemon = pokemonMap.get(pt.pokemonId);
-              const types = pokemon
-                ? [pokemon.type1, pokemon.type2].filter((t): t is string => !!t)
-                : [];
-
-              return {
-                slot: pt.slot,
-                nickname: pt.nickname,
-                pokemonName: pokemon?.name ?? 'Pokemon Desconocido',
-                pokemonId: pt.pokemonId,
-                sprite:
-                  pokemon?.miniSprite ??
-                  pokemon?.spriteFront ??
-                  '/assets/placeholder.png',
-                types,
-              };
-            });
-
-          return {
-            id: team.id,
-            name: team.name,
-            description: team.description,
-            pokemonCount: teamPokemon.length,
-            pokemons: teamPokemon,
-          };
-        });
-
-      this.userTeams.set(userTeams);
-    } catch (error) {
+      this.userTeams.set(
+        allTeams
+          .filter((t) => t.userId === userId)
+          .map((team): TeamDisplay => {
+            const pokemons = allPokemonTeams
+              .filter((pt) => pt.teamId === team.id)
+              .sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0))
+              .map((pt) => {
+                const p = pokemonMap.get(pt.pokemonId);
+                return {
+                  slot: pt.slot,
+                  nickname: pt.nickname,
+                  pokemonName: p?.name ?? 'Pokemon Desconocido',
+                  pokemonId: pt.pokemonId,
+                  sprite: p?.miniSprite ?? p?.spriteFront ?? '/assets/placeholder.png',
+                  types: p ? [p.type1, p.type2].filter((t): t is string => !!t) : [],
+                };
+              });
+            return { id: team.id, name: team.name, description: team.description, pokemonCount: pokemons.length, pokemons };
+          })
+      );
+    } catch {
       this.teamsError.set('No se pudieron cargar los equipos del usuario.');
-      console.error('Error loading teams:', error);
     } finally {
       this.teamsLoading.set(false);
     }
@@ -207,32 +182,29 @@ export class Profile implements OnInit {
 
   // Avatar
 
-  protected toggleAvatarSelection(): void {
-    this.avatarSelectionOpen.update((open) => !open);
+  protected openAvatarModal(): void {
+    this.avatarModalOpen.set(true);
     this.avatarActionError.set('');
   }
 
-  protected cancelAvatarChange(): void {
-    this.avatarSelectionOpen.set(false);
-    this.avatarActionError.set('');
-  }
-
-  protected async setAvatar(filename: string): Promise<void> {
-    const currentUserId = this.auth.currentUserId();
-    if (!currentUserId) {
-      this.avatarActionError.set('No se pudo identificar el usuario.');
-      return;
+  protected closeAvatarModal(): void {
+    if (!this.avatarActionLoading()) {
+      this.avatarModalOpen.set(false);
+      this.avatarActionError.set('');
     }
+  }
+
+  protected async onAvatarSelect(filename: string): Promise<void> {
+    const userId = this.auth.currentUserId();
+    if (!userId) { this.avatarActionError.set('No se pudo identificar el usuario.'); return; }
 
     this.avatarActionLoading.set(true);
     this.avatarActionError.set('');
-
     try {
-      await this.api.put(`users/Avatar?id=${currentUserId}`, { avatarPath: filename });
+      await this.api.put(`users/Avatar?id=${userId}`, { avatarPath: filename });
       this.selectedAvatarName.set(filename);
-      this.avatarSelectionOpen.set(false);
-    } catch (error) {
-      console.error('Error actualizando avatar:', error);
+      this.avatarModalOpen.set(false);
+    } catch {
       this.avatarActionError.set('No se pudo actualizar la foto de perfil. Intenta de nuevo.');
     } finally {
       this.avatarActionLoading.set(false);
@@ -241,48 +213,35 @@ export class Profile implements OnInit {
 
   // Biografia
 
-  protected openEditProfile(): void {
-    this.editProfileOpen.set(true);
-    this.biographyEditError.set('');
-    this.biographyEditSuccess.set('');
+  protected openBiographyModal(): void {
     this.biographyDraft.set(this.biography() ?? '');
-  }
-
-  protected closeEditProfile(): void {
-    this.editProfileOpen.set(false);
     this.biographyEditError.set('');
+    this.biographyModalOpen.set(true);
   }
 
-  protected onBiographyInput(event: Event): void {
-    const target = event.target as HTMLTextAreaElement | null;
-    if (target) {
-      const value = target.value.substring(0, 200);
-      this.biographyDraft.set(value);
-      target.value = value;
+  protected closeBiographyModal(): void {
+    if (!this.biographyEditLoading()) {
+      this.biographyModalOpen.set(false);
+      this.biographyEditError.set('');
     }
+  }
+
+  protected onBiographyDraftChange(value: string): void {
+    this.biographyDraft.set(value);
   }
 
   protected async saveBiography(): Promise<void> {
-    const currentUserId = this.auth.currentUserId();
-    if (!currentUserId) {
-      this.biographyEditError.set('No se pudo identificar el usuario.');
-      return;
-    }
+    const userId = this.auth.currentUserId();
+    if (!userId) { this.biographyEditError.set('No se pudo identificar el usuario.'); return; }
 
     this.biographyEditLoading.set(true);
     this.biographyEditError.set('');
-    this.biographyEditSuccess.set('');
-
     try {
-      await this.api.put(`users/Biography?id=${currentUserId}`, {
-        biography: this.biographyDraft().trim(),
-      });
+      await this.api.put(`users/Biography?id=${userId}`, { biography: this.biographyDraft().trim() });
       this.biography.set(this.biographyDraft().trim() || null);
-      this.biographyEditSuccess.set('Biografia actualizada correctamente.');
-      this.editProfileOpen.set(false);
-    } catch (error) {
-      console.error('Error actualizando biografia:', error);
-      this.biographyEditError.set('No se pudo actualizar la biografia. Intenta de nuevo.');
+      this.biographyModalOpen.set(false);
+    } catch {
+      this.biographyEditError.set('No se pudo actualizar la biografía. Intenta de nuevo.');
     } finally {
       this.biographyEditLoading.set(false);
     }
@@ -290,85 +249,42 @@ export class Profile implements OnInit {
 
   // Contrasena
 
-  protected openPasswordChange(): void {
-    this.editPasswordOpen.set(true);
+  protected openPasswordModal(): void {
     this.currentPassword.set('');
     this.newPassword.set('');
     this.confirmPassword.set('');
     this.passwordChangeError.set('');
-    this.passwordChangeSuccess.set('');
+    this.passwordModalOpen.set(true);
   }
 
-  protected closePasswordChange(): void {
-    this.editPasswordOpen.set(false);
-    this.currentPassword.set('');
-    this.newPassword.set('');
-    this.confirmPassword.set('');
-    this.passwordChangeError.set('');
-  }
-
-  protected onCurrentPasswordInput(event: Event): void {
-    const target = event.target as HTMLInputElement | null;
-    if (target) this.currentPassword.set(target.value);
-  }
-
-  protected onNewPasswordInput(event: Event): void {
-    const target = event.target as HTMLInputElement | null;
-    if (target) this.newPassword.set(target.value);
-  }
-
-  protected onConfirmPasswordInput(event: Event): void {
-    const target = event.target as HTMLInputElement | null;
-    if (target) this.confirmPassword.set(target.value);
+  protected closePasswordModal(): void {
+    if (!this.passwordChangeLoading()) {
+      this.passwordModalOpen.set(false);
+      this.passwordChangeError.set('');
+    }
   }
 
   protected async savePassword(): Promise<void> {
-    const currentPassword = this.currentPassword().trim();
-    const newPassword = this.newPassword().trim();
-    const confirmPassword = this.confirmPassword().trim();
+    const current = this.currentPassword().trim();
+    const next = this.newPassword().trim();
+    const confirm = this.confirmPassword().trim();
 
-    if (!currentPassword) {
-      this.passwordChangeError.set('Introduce tu contrasena actual.');
-      return;
-    }
+    if (!current) { this.passwordChangeError.set('Introduce tu contraseña actual.'); return; }
+    if (!next || !confirm) { this.passwordChangeError.set('Introduce y confirma la nueva contraseña.'); return; }
+    if (next !== confirm) { this.passwordChangeError.set('Las contraseñas nuevas no coinciden.'); return; }
+    if (next.length < 6) { this.passwordChangeError.set('La nueva contraseña debe tener al menos 6 caracteres.'); return; }
 
-    if (!newPassword || !confirmPassword) {
-      this.passwordChangeError.set('Introduce y confirma la nueva contrasena.');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      this.passwordChangeError.set('Las contrasenas nuevas no coinciden.');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      this.passwordChangeError.set('La nueva contrasena debe tener al menos 6 caracteres.');
-      return;
-    }
-
-    const currentUserId = this.auth.currentUserId();
-    if (!currentUserId) {
-      this.passwordChangeError.set('No se pudo identificar el usuario.');
-      return;
-    }
+    const userId = this.auth.currentUserId();
+    if (!userId) { this.passwordChangeError.set('No se pudo identificar el usuario.'); return; }
 
     this.passwordChangeLoading.set(true);
     this.passwordChangeError.set('');
-    this.passwordChangeSuccess.set('');
-
     try {
-      await this.api.put(`users/Password?id=${currentUserId}`, {
-        currentPassword,
-        newPassword,
-      });
-      this.passwordChangeSuccess.set('Contrasena actualizada correctamente.');
-      this.closePasswordChange();
-    } catch (error: any) {
-      const backendMsg = typeof error?.error === 'string' ? error.error : null;
-      this.passwordChangeError.set(
-        backendMsg ?? 'Contrasena actual incorrecta o error al actualizar.'
-      );
+      await this.api.put(`users/Password?id=${userId}`, { currentPassword: current, newPassword: next });
+      this.passwordModalOpen.set(false);
+    } catch (err: any) {
+      const msg = typeof err?.error === 'string' ? err.error : null;
+      this.passwordChangeError.set(msg ?? 'Contraseña actual incorrecta o error al actualizar.');
     } finally {
       this.passwordChangeLoading.set(false);
     }
@@ -376,48 +292,38 @@ export class Profile implements OnInit {
 
   // Equipo favorito
 
-  protected openFavoriteSelection(): void {
-    this.favoriteSelectionOpen.set(true);
+  protected openFavoriteModal(): void {
     this.favoriteActionError.set('');
+    this.favoriteModalOpen.set(true);
   }
 
-  protected closeFavoriteSelection(): void {
-    this.favoriteSelectionOpen.set(false);
-    this.favoriteActionError.set('');
+  protected closeFavoriteModal(): void {
+    if (!this.favoriteActionLoading()) {
+      this.favoriteModalOpen.set(false);
+      this.favoriteActionError.set('');
+    }
   }
 
-  protected async setFavoriteTeam(teamId: number): Promise<void> {
-    if (this.favoriteTeamId() === teamId) {
-      this.favoriteSelectionOpen.set(false);
-      return;
-    }
+  protected async onFavoriteSelect(teamId: number): Promise<void> {
+    if (this.favoriteTeamId() === teamId) { this.favoriteModalOpen.set(false); return; }
 
-    const currentUserId = this.auth.currentUserId();
-    if (!currentUserId) {
-      this.favoriteActionError.set('No se pudo identificar el usuario.');
-      return;
-    }
+    const userId = this.auth.currentUserId();
+    if (!userId) { this.favoriteActionError.set('No se pudo identificar el usuario.'); return; }
 
     this.favoriteActionLoading.set(true);
     this.favoriteActionError.set('');
-
     try {
-      await this.api.put(`users/FavoriteTeam?id=${currentUserId}`, { favoriteTeamId: teamId });
+      await this.api.put(`users/FavoriteTeam?id=${userId}`, { favoriteTeamId: teamId });
       this.favoriteTeamId.set(teamId);
-      this.favoriteSelectionOpen.set(false);
-    } catch (error) {
-      console.error('Error actualizando equipo favorito:', error);
+      this.favoriteModalOpen.set(false);
+    } catch {
       this.favoriteActionError.set('No se pudo actualizar el equipo favorito. Intenta de nuevo.');
     } finally {
       this.favoriteActionLoading.set(false);
     }
   }
 
-  // Navegacion / sesion
-
-  protected navigateToTeamEdit(teamId: number): void {
-    this.router.navigate(['/team-edit', teamId]);
-  }
+  // Navegacion
 
   protected navigateToTeamBuilder(): void {
     this.router.navigate(['/team-builder']);

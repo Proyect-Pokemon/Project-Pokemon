@@ -4,11 +4,10 @@
 	flex: 1;
 }
 
-/* ─── Page background with grid pattern ────────────────────────────────────── */
 .profile-container {
 	flex: 1;
 	width: 100%;
-	padding: 2.5rem 2rem;
+	padding: 2.5rem 0;
 	background:
 		repeating-linear-gradient(0deg, transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
 		repeating-linear-gradient(90deg, transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
@@ -19,7 +18,6 @@
 	color: #ffffff;
 }
 
-/* ─── Loading state ────────────────────────────────────────────────────────── */
 .loading-state {
 	display: flex;
 	justify-content: center;
@@ -29,7 +27,6 @@
 	font-size: 1.1rem;
 }
 
-/* ─── Error and success messages ───────────────────────────────────────────── */
 .error-message {
 	padding: 16px 20px;
 	border-radius: 12px;
@@ -39,18 +36,9 @@
 	margin-bottom: 16px;
 }
 
-.success-message {
-	padding: 16px 20px;
-	border-radius: 12px;
-	background: rgba(22, 163, 74, 0.15);
-	color: #51cf66;
-	border-left: 4px solid #51cf66;
-	margin-bottom: 16px;
-}
-
-/* ─── Profile header card ──────────────────────────────────────────────────── */
+/* Profile header card */
 .profile-header {
-	width: min(1000px, 96%);
+	min-width: 65%;
 	margin: 0 auto 2rem;
 	padding: 2rem;
 	background: linear-gradient(120deg, #ffffff 0%, #f0eafc 100%);
@@ -64,7 +52,6 @@
 	color: #1f2937;
 }
 
-/* ─── Avatar section ───────────────────────────────────────────────────────── */
 .profile-info {
 	display: flex;
 	flex-direction: row;
@@ -73,28 +60,26 @@
 	flex-shrink: 0;
 }
 
-.profile-avatar:hover {
+.profile-avatar-button {
 	cursor: pointer;
-	box-shadow: 0 8px 16px rgba(137, 65, 214, 0.15);
-	transform: scale(1.02);
-	transition: all 0.2s ease-out;
+	flex-shrink: 0;
 }
 
 .profile-avatar {
-	width: 300px;
-	height: 300px;
+	width: 180px;
+	height: 180px;
 	object-fit: cover;
-	border-radius: 10%;
+	border-radius: 14px;
+	border: 3px solid var(--action-color);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	display: block;
 }
 
-.profile-avatar-empty {
-	width: 100%;
-	height: 100%;
-	border-radius: 50%;
-	background: linear-gradient(135deg, #e0d4f7, #d5c7f0);
+.profile-avatar:hover {
+	transform: scale(1.03);
+	box-shadow: 0 8px 20px rgba(0, 148, 174, 0.3);
 }
 
-/* ─── User meta section ────────────────────────────────────────────────────── */
 .profile-meta {
 	flex: 1;
 	display: flex;
@@ -104,28 +89,19 @@
 
 .profile-meta h1 {
 	margin: 0;
-	font-size: 2.2rem;
-	color: #d64541;
+	font-size: 2rem;
+	color: var(--secondary-color);
 	font-weight: 800;
-	text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
+	text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.08);
 	letter-spacing: 0.02em;
-}
-
-.profile-label {
-	margin: 0;
-	color: #6b7280;
-	font-size: 0.95rem;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 1px;
 }
 
 .profile-bio-container {
 	max-width: 400px;
-	max-height: 200px;
+	max-height: 160px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	padding-right: 8px;
+	padding-right: 6px;
 }
 
 .profile-bio {
@@ -133,9 +109,7 @@
 	color: #374151;
 	font-size: 1rem;
 	line-height: 1.6;
-	word-wrap: break-word;
 	word-break: break-word;
-	white-space: normal;
 	overflow-wrap: break-word;
 }
 
@@ -144,7 +118,6 @@
 	font-style: italic;
 }
 
-/* ─── Profile actions ──────────────────────────────────────────────────────── */
 .profile-actions {
 	display: flex;
 	flex-direction: column;
@@ -152,44 +125,46 @@
 	flex-shrink: 0;
 }
 
+/* Buttons */
 .btn-primary,
 .btn-secondary {
 	padding: 12px 24px;
-	border: none;
 	border-radius: 14px;
 	font-weight: 700;
 	cursor: pointer;
 	transition: all 0.2s ease;
 	font-size: 0.95rem;
-	text-transform: uppercase;
 	letter-spacing: 0.5px;
+	border: none;
 }
 
 .btn-primary {
-	background: linear-gradient(90deg, #d64541 0%, #c03535 100%);
-	color: white;
-	box-shadow: 0 8px 18px rgba(214, 69, 65, 0.3);
+	background: linear-gradient(135deg, var(--action-color) 0%, #39757e 100%);
+	color: var(--primary-color);
+	box-shadow: 0 8px 18px rgba(0, 148, 174, 0.3);
 }
 
 .btn-primary:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 12px 28px rgba(214, 69, 65, 0.4);
+	box-shadow: 0 12px 28px rgba(0, 148, 174, 0.4);
+	filter: brightness(1.06);
 }
 
 .btn-secondary {
-	background: #ffffff;
-	color: #d64541;
-	border: 2px solid #d64541;
+	background: var(--primary-color);
+	color: var(--action-color);
+	border: 2px solid var(--action-color);
 }
 
 .btn-secondary:hover {
-	background: rgba(214, 69, 65, 0.05);
+	background: var(--action-color);
+	color: var(--primary-color);
 	transform: translateY(-1px);
 }
 
 .btn-logout {
-	background: linear-gradient(90deg, #ffffff 0%, #fde7e7 100%);
-	color: #d64541;
+	background: linear-gradient(135deg, #d64541 0%, #b03030 100%);
+	color: #ffffff;
 	border: none;
 	padding: 12px 24px;
 	border-radius: 14px;
@@ -197,163 +172,27 @@
 	cursor: pointer;
 	transition: all 0.2s ease;
 	font-size: 0.95rem;
-	text-transform: uppercase;
 	letter-spacing: 0.5px;
+	box-shadow: 0 8px 18px rgba(214, 69, 65, 0.3);
 }
 
 .btn-logout:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 8px 18px rgba(214, 69, 65, 0.2);
+	box-shadow: 0 12px 28px rgba(214, 69, 65, 0.45);
+	filter: brightness(1.08);
 }
 
-/* ─── Dialog overlays ──────────────────────────────────────────────────────── */
-.overlay-panel,
-.avatar-dialog-overlay {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100vw;
-	height: 100vh;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: rgba(7, 17, 38, 0.65);
-	z-index: 50;
-	backdrop-filter: blur(4px);
-}
-
-.dialog-card,
-.avatar-dialog-card,
-.avatar-selection-panel {
-	width: min(1000px, 96%);
-	max-width: calc(100vw - 40px);
-	padding: 28px;
-	background: linear-gradient(120deg, #ffffff 0%, #f0eafc 100%);
-	border-radius: 24px;
-	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-	color: #1f2937;
-	animation: slide-in 0.3s ease-out;
-}
-
-@keyframes slide-in {
-	from {
-		opacity: 0;
-		transform: scale(0.95) translateY(-20px);
-	}
-	to {
-		opacity: 1;
-		transform: scale(1) translateY(0);
-	}
-}
-
-.dialog-card h3,
-.avatar-dialog-card h3,
-.avatar-selection-panel h3 {
-	margin: 0 0 18px;
-	font-size: 1.5rem;
-	color: #d64541;
-	font-weight: 800;
-	letter-spacing: 0.5px;
-}
-
-/* ─── Form inputs ──────────────────────────────────────────────────────────── */
-.textarea-field,
-.text-input {
-	width: 100%;
-	max-width: 100%;
-	box-sizing: border-box;
-	padding: 14px 16px;
-	border: 2px solid #e5e7eb;
-	border-radius: 12px;
-	background: #ffffff;
-	color: #1f2937;
-	font-size: 1rem;
-	outline: none;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease;
-	font-family: inherit;
-}
-
-.textarea-field:focus,
-.text-input:focus {
-	border-color: #d64541;
-	box-shadow: 0 0 0 3px rgba(214, 69, 65, 0.1);
-}
-
-.textarea-field {
-	resize: vertical;
-	min-height: 120px;
-}
-
-/* ─── Dialog actions ───────────────────────────────────────────────────────── */
-.dialog-actions {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: flex-end;
-	gap: 12px;
-	margin-top: 24px;
-}
-
-.dialog-actions .btn-primary,
-.dialog-actions .btn-secondary {
-	flex: 0 1 auto;
-	min-width: 120px;
-}
-
-/* ─── Password step section ────────────────────────────────────────────────── */
-.password-step label {
-	display: block;
-	margin-top: 16px;
-	margin-bottom: 8px;
-	font-weight: 700;
-	color: #374151;
-	text-transform: uppercase;
+.btn-edit {
+	padding: 8px 16px;
 	font-size: 0.85rem;
-	letter-spacing: 0.5px;
 }
 
-.password-step label:first-child {
-	margin-top: 0;
+.btn-big {
+	padding: 14px 28px;
+	font-size: 1rem;
 }
 
-.avatar-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
-	gap: 16px;
-	margin: 24px 0;
-	max-height: 400px;
-	overflow-y: auto;
-	padding: 8px;
-}
-
-.avatar-option {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	aspect-ratio: 1;
-	padding: 12px;
-	background: #f3f4f6;
-	border: 2px solid #e5e7eb;
-	border-radius: 10%;
-	cursor: pointer;
-	transition: all 0.2s ease;
-	overflow: hidden;
-}
-
-.avatar-option:hover {
-	border-color: #d64541;
-	background: #fef2f2;
-	transform: translateY(-2px);
-	box-shadow: 0 8px 16px rgba(214, 69, 65, 0.15);
-}
-
-.avatar-option img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-	border-radius: 10%;
-}
-
-/* ─── Favorite team section ────────────────────────────────────────────────── */
+/* Favorite section */
 .favorite-section {
 	width: min(1000px, 96%);
 	margin: 0 auto;
@@ -376,10 +215,8 @@
 	letter-spacing: 1px;
 }
 
-/* ─── Team list and cards ──────────────────────────────────────────────────── */
 .favorite-card,
-.favorite-empty,
-.favorite-selection-panel {
+.favorite-empty {
 	padding: 24px;
 	background: linear-gradient(120deg, #ffffff 0%, #f0eafc 100%);
 	border-radius: 20px;
@@ -391,29 +228,15 @@
 .favorite-card-header {
 	display: flex;
 	justify-content: space-between;
-	align-items: flex-start;
+	align-items: center;
 	gap: 16px;
 	margin-bottom: 16px;
 }
 
-.favorite-tag {
-	display: inline-flex;
-	padding: 6px 14px;
-	border-radius: 999px;
-	background: linear-gradient(90deg, #d64541 0%, #c03535 100%);
-	color: #ffffff;
-	font-size: 0.75rem;
-	font-weight: 800;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-	box-shadow: 0 4px 12px rgba(214, 69, 65, 0.25);
-}
-
-.favorite-card h3,
-.favorite-empty h3 {
-	margin: 0 0 12px;
-	font-size: 1.5rem;
-	color: #d64541;
+.favorite-card-header h3 {
+	margin: 0;
+	font-size: 1.4rem;
+	color: var(--action-color);
 	font-weight: 800;
 }
 
@@ -423,20 +246,27 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	min-height: 200px;
+	min-height: 180px;
+	gap: 16px;
 }
 
 .favorite-empty p {
-	margin: 0 0 20px;
+	margin: 0;
 	color: #6b7280;
 	font-size: 1.05rem;
+}
+
+.team-description {
+	margin: 0 0 16px;
+	color: #6b7280;
+	font-size: 0.95rem;
+	line-height: 1.4;
 }
 
 .pokemon-list {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
 	gap: 12px;
-	margin-bottom: 16px;
 }
 
 .pokemon-item {
@@ -453,8 +283,8 @@
 }
 
 .pokemon-item:hover {
-	border-color: #d64541;
-	background: #fef2f2;
+	border-color: var(--action-color);
+	background: rgba(0, 148, 174, 0.06);
 }
 
 .pokemon-sprite-container {
@@ -463,7 +293,6 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: 8px;
 }
 
 .pokemon-sprite {
@@ -474,13 +303,11 @@
 }
 
 .pokemon-info {
-	flex: 1;
-	min-width: 0;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	justify-content: center;
 	gap: 4px;
+	min-width: 0;
 }
 
 .pokemon-name {
@@ -509,8 +336,21 @@
 	font-size: 0.65rem;
 	font-weight: 700;
 	color: white;
-	text-transform: uppercase;
 	letter-spacing: 0.3px;
+}
+
+.empty-state {
+	text-align: center;
+	padding: 60px 20px;
+	background: linear-gradient(120deg, #ffffff 0%, #f0eafc 100%);
+	border-radius: 20px;
+	border: 2px dashed var(--action-color);
+}
+
+.empty-state p {
+	margin: 0 0 24px;
+	color: #6b7280;
+	font-size: 1.1rem;
 }
 
 /* Type colors */
@@ -533,84 +373,7 @@
 .type-badge.type-steel { background: #B8B8D0; }
 .type-badge.type-fairy { background: #EE99AC; }
 
-/* ─── Team selection list ──────────────────────────────────────────────────── */
-.favorite-team-list {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-	gap: 12px;
-	margin-bottom: 16px;
-}
-
-.btn-select {
-	padding: 12px 16px;
-	border: 2px solid #d64541;
-	border-radius: 12px;
-	background: #ffffff;
-	color: #d64541;
-	font-weight: 700;
-	cursor: pointer;
-	transition: all 0.2s ease;
-	text-transform: uppercase;
-	font-size: 0.85rem;
-	letter-spacing: 0.5px;
-}
-
-.btn-select:hover:not(:disabled) {
-	background: linear-gradient(90deg, #d64541 0%, #c03535 100%);
-	color: #ffffff;
-	transform: translateY(-2px);
-}
-
-.btn-select:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-}
-
-.team-description {
-	margin: 0 0 16px;
-	color: #6b7280;
-	font-size: 0.95rem;
-	line-height: 1.4;
-}
-
-.empty-state {
-	text-align: center;
-	padding: 60px 20px;
-	background: linear-gradient(120deg, #ffffff 0%, #f0eafc 100%);
-	border-radius: 20px;
-	border: 2px dashed #d64541;
-}
-
-.empty-state p {
-	margin: 0 0 24px;
-	color: #6b7280;
-	font-size: 1.1rem;
-}
-
-.btn-edit {
-	width: 100%;
-	margin-top: 16px;
-	background: #ffffff;
-	color: #d64541;
-	border: 2px solid #d64541;
-}
-
-.btn-edit:hover {
-	background: rgba(214, 69, 65, 0.05);
-}
-
-.btn-big {
-	padding: 14px 28px;
-	font-size: 1rem;
-}
-
-.btn-small {
-	padding: 8px 16px;
-	font-size: 0.9rem;
-	border-radius: 12px;
-}
-
-/* ─── Responsive design ────────────────────────────────────────────────────── */
+/* Responsive */
 @media (max-width: 768px) {
 	.profile-container {
 		padding: 1.5rem 1rem;
@@ -621,17 +384,29 @@
 		align-items: center;
 		text-align: center;
 		padding: 1.5rem;
+		gap: 1.5rem;
 	}
 
 	.profile-info {
 		flex-direction: column;
 		align-items: center;
 		width: 100%;
+		gap: 1.25rem;
+	}
+
+	.profile-avatar {
+		width: 140px;
+		height: 140px;
 	}
 
 	.profile-meta {
 		width: 100%;
 		text-align: center;
+		align-items: center;
+	}
+
+	.profile-bio-container {
+		max-width: 100%;
 	}
 
 	.profile-actions {
@@ -647,44 +422,25 @@
 	.section-header {
 		flex-direction: column;
 		align-items: flex-start;
+		gap: 12px;
+	}
+
+	.favorite-card-header {
+		flex-direction: column;
+		align-items: flex-start;
 	}
 
 	.pokemon-list {
 		grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
 	}
-
-	.dialog-card,
-	.avatar-dialog-card,
-	.avatar-selection-panel {
-		width: 96%;
-		padding: 20px;
-	}
-
-	.avatar-grid {
-		grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-	}
 }
 
 @media (max-width: 480px) {
-	.profile-header {
-		gap: 1rem;
-	}
-
 	.profile-meta h1 {
 		font-size: 1.5rem;
 	}
 
 	.section-header h2 {
 		font-size: 1.2rem;
-	}
-
-	.dialog-actions {
-		flex-direction: column;
-	}
-
-	.dialog-actions .btn-primary,
-	.dialog-actions .btn-secondary {
-		width: 100%;
-		min-width: auto;
 	}
 }

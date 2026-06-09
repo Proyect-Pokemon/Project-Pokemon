@@ -1,209 +1,140 @@
 <div class="profile-container">
-	@if (loading()) {
-		<div class="loading-state">
-			<p>Cargando perfil...</p>
-		</div>
-	} @else {
-		<div class="profile-header">
-			<div class="profile-info">
-				<div class="profile-avatar-button" (click)="toggleAvatarSelection()">
-					@if (avatarSrc()) {
-						<img src="{{ avatarSrc() }}" alt="Foto de perfil" class="profile-avatar" />
-					} @else {
-						<div class="profile-avatar profile-avatar-empty"></div>
-					}
-				</div>
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Cargando perfil...</p>
+    </div>
+  } @else {
 
-				<div class="profile-meta">
-					<h1>{{ nickname() }}</h1>
-					<div class="profile-bio-container">
-						@if (biography()) {
-							<p class="profile-bio">{{ biography() }}</p>
-						} @else {
-							<p class="profile-bio profile-bio-empty">Aún no has añadido una biografía.</p>
-						}
-					</div>
-				</div>
-			</div>
+    <!-- Cabecera de perfil -->
+    <div class="profile-header">
+      <div class="profile-info">
+        <div class="profile-avatar-button" (click)="openAvatarModal()">
+          <img [src]="avatarSrc()" alt="Foto de perfil" class="profile-avatar" />
+        </div>
 
-			<div class="profile-actions">
-				<button (click)="openEditProfile()" class="btn-secondary btn-edit-profile">Editar biografía</button>
-				<button (click)="openPasswordChange()" class="btn-secondary btn-edit-profile">Cambiar contraseña</button>
-				<button (click)="logout()" class="btn-logout">Cerrar sesión</button>
-			</div>
-		</div>
+        <div class="profile-meta">
+          <h1>{{ nickname() }}</h1>
+          <div class="profile-bio-container">
+            @if (biography()) {
+              <p class="profile-bio">{{ biography() }}</p>
+            } @else {
+              <p class="profile-bio profile-bio-empty">Aún no has añadido una biografía.</p>
+            }
+          </div>
+        </div>
+      </div>
 
-		@if (avatarSelectionOpen()) {
-			<div class="avatar-selection-panel">
-				<h3>Selecciona tu avatar</h3>
-				@if (avatarActionError()) {
-					<div class="error-message">{{ avatarActionError() }}</div>
-				}
-				<div class="avatar-grid">
-					@for (avatar of avatarOptions; track avatar) {
-						<button
-							class="avatar-option"
-							(click)="setAvatar(avatar)"
-							[disabled]="avatarActionLoading()"
-						>
-							<img src="/assets/Images/{{ avatar }}" alt="Avatar" />
-						</button>
-					}
-				</div>
-				<button class="btn-secondary btn-edit" (click)="cancelAvatarChange()">Cancelar</button>
-			</div>
-		}
+      <div class="profile-actions">
+        <button class="btn-secondary" (click)="openBiographyModal()">Editar biografía</button>
+        <button class="btn-secondary" (click)="openPasswordModal()">Cambiar contraseña</button>
+        <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+      </div>
+    </div>
 
-		@if (editProfileOpen()) {
-			<div class="overlay-panel">
-				<div class="dialog-card">
-					<h3>Editar biografía</h3>
-					@if (biographyEditError()) {
-						<div class="error-message">{{ biographyEditError() }}</div>
-					}
-					@if (biographyEditSuccess()) {
-						<div class="success-message">{{ biographyEditSuccess() }}</div>
-					}
-					<textarea
-						class="textarea-field"
-						rows="6"
-						[value]="biographyDraft()"
-						(input)="onBiographyInput($event)"
-						maxlength="200"
-					></textarea>
-					<div class="char-counter">{{ biographyDraft().length }} / 200</div>
-					<div class="dialog-actions">
-						<button class="btn-primary" (click)="saveBiography()" [disabled]="biographyEditLoading()">Guardar</button>
-						<button class="btn-secondary" (click)="closeEditProfile()">Cancelar</button>
-					</div>
-				</div>
-			</div>
-		}
+    <!-- Sección equipo favorito -->
+    <div class="favorite-section">
+      <div class="section-header">
+        <h2>Equipo favorito</h2>
+        <button class="btn-primary" (click)="navigateToTeamBuilder()">
+          Crear equipo
+        </button>
+      </div>
 
-		@if (editPasswordOpen()) {
-			<div class="overlay-panel">
-				<div class="dialog-card">
-					<h3>Cambiar contraseña</h3>
-					@if (passwordChangeError()) {
-						<div class="error-message">{{ passwordChangeError() }}</div>
-					}
-					@if (passwordChangeSuccess()) {
-						<div class="success-message">{{ passwordChangeSuccess() }}</div>
-					}
-					<label>Contraseña actual</label>
-					<input
-						type="password"
-						class="text-input"
-						[value]="currentPassword()"
-						(input)="onCurrentPasswordInput($event)"
-					/>
-					<label>Nueva contraseña</label>
-					<input
-						type="password"
-						class="text-input"
-						[value]="newPassword()"
-						(input)="onNewPasswordInput($event)"
-					/>
-					<label>Confirmar nueva contraseña</label>
-					<input
-						type="password"
-						class="text-input"
-						[value]="confirmPassword()"
-						(input)="onConfirmPasswordInput($event)"
-					/>
-					<div class="dialog-actions">
-						<button class="btn-primary" (click)="savePassword()" [disabled]="passwordChangeLoading()">
-							{{ passwordChangeLoading() ? 'Guardando...' : 'Guardar' }}
-						</button>
-						<button class="btn-secondary" (click)="closePasswordChange()">Cancelar</button>
-					</div>
-				</div>
-			</div>
-		}
+      @if (teamsLoading()) {
+        <div class="loading-state"><p>Cargando equipos...</p></div>
+      } @else if (teamsError()) {
+        <div class="error-message">{{ teamsError() }}</div>
+      } @else if (userTeams().length === 0) {
+        <div class="empty-state">
+          <p>Aún no tienes equipos.</p>
+          <button class="btn-secondary" (click)="navigateToTeamBuilder()">Crear tu primer equipo</button>
+        </div>
+      } @else if (favoriteTeam()) {
+        <div class="favorite-card">
+          <div class="favorite-card-header">
+            <h3>{{ favoriteTeam()?.name }}</h3>
+            <button class="btn-secondary btn-edit" (click)="openFavoriteModal()">
+              Cambiar favorito
+            </button>
+          </div>
 
-		<div class="favorite-section">
-			<div class="section-header">
-				<h2>Equipo favorito</h2>
-				<button (click)="navigateToTeamBuilder()" class="btn-primary">Crear Equipo</button>
-			</div>
+          @if (favoriteTeam()?.description) {
+            <p class="team-description">{{ favoriteTeam()?.description }}</p>
+          }
 
-			@if (teamsLoading()) {
-				<div class="loading-state">
-					<p>Cargando equipos...</p>
-				</div>
-			} @else if (teamsError()) {
-				<div class="error-message">
-					{{ teamsError() }}
-				</div>
-			} @else if (userTeams().length === 0) {
-				<div class="empty-state">
-					<p>Aún no tienes equipos.</p>
-					<button (click)="navigateToTeamBuilder()" class="btn-secondary">Crear tu primer equipo</button>
-				</div>
-			} @else {
-				@if (favoriteTeam()) {
-					<div class="favorite-card">
-						<div class="favorite-card-header">
-							<div>
-								<span class="favorite-tag">Favorito</span>
-								<h3>{{ favoriteTeam()?.name }}</h3>
-							</div>
-							<button (click)="openFavoriteSelection()" class="btn-secondary btn-edit">
-								Cambiar favorito
-							</button>
-						</div>
+          <div class="pokemon-list">
+            @for (pokemon of favoriteTeam()?.pokemons; track pokemon.slot) {
+              <div class="pokemon-item">
+                <div class="pokemon-sprite-container">
+                  <img [src]="pokemon.sprite" [alt]="pokemon.pokemonName" class="pokemon-sprite" />
+                </div>
+                <div class="pokemon-info">
+                  <span class="pokemon-name">{{ pokemon.nickname || pokemon.pokemonName }}</span>
+                  <span class="pokemon-species">{{ pokemon.pokemonName }}</span>
+                  <div class="type-badges">
+                    @for (type of pokemon.types; track $index) {
+                      <span class="type-badge" [ngClass]="'type-' + type.toLowerCase()">{{ type }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="favorite-empty">
+          <p>Aún no tienes equipo favorito.</p>
+          <button class="btn-primary btn-big" (click)="openFavoriteModal()">Añadir equipo favorito</button>
+        </div>
+      }
+    </div>
 
-						@if (favoriteTeam()?.description) {
-							<p class="team-description">{{ favoriteTeam()?.description }}</p>
-						}
-
-						<div class="pokemon-list">
-							@for (pokemon of favoriteTeam()?.pokemons; track pokemon.slot) {
-								<div class="pokemon-item">
-									<div class="pokemon-sprite-container">
-										<img [src]="pokemon.sprite" [alt]="pokemon.pokemonName" class="pokemon-sprite" />
-									</div>
-									<div class="pokemon-info">
-										<span class="pokemon-name">{{ pokemon.nickname || pokemon.pokemonName }}</span>
-										<span class="pokemon-species">{{ pokemon.pokemonName }}</span>
-										<div class="type-badges">
-											@for (type of pokemon.types; track $index) {
-												<span class="type-badge" [ngClass]="'type-' + type.toLowerCase()">{{ type }}</span>
-											}
-										</div>
-									</div>
-								</div>
-							}
-						</div>
-					</div>
-				} @else {
-					<div class="favorite-empty">
-						<p>Aún no tienes equipo favorito.</p>
-						<button (click)="openFavoriteSelection()" class="btn-primary btn-big">Añadir equipo favorito</button>
-					</div>
-				}
-
-				@if (favoriteSelectionOpen()) {
-					<div class="favorite-selection-panel">
-						<h3>Selecciona tu equipo favorito</h3>
-						@if (favoriteActionError()) {
-							<div class="error-message">{{ favoriteActionError() }}</div>
-						}
-						<div class="favorite-team-list">
-							@for (team of userTeams(); track team.id) {
-								<button
-									class="btn-select"
-									(click)="setFavoriteTeam(team.id)"
-									[disabled]="favoriteActionLoading()"
-								>
-									{{ team.name }} ({{ team.pokemonCount }}/6)
-								</button>
-							}
-						</div>
-						<button class="btn-secondary btn-edit" (click)="closeFavoriteSelection()">Cancelar</button>
-					</div>
-				}
-			}
-		</div>
-	}
+  }
 </div>
+
+<!-- Modales -->
+@if (avatarModalOpen()) {
+  <app-profile-avatar-modal
+    [avatarOptions]="avatarOptions"
+    [loading]="avatarActionLoading()"
+    [error]="avatarActionError()"
+    (select)="onAvatarSelect($event)"
+    (close)="closeAvatarModal()"
+  />
+}
+
+@if (biographyModalOpen()) {
+  <app-profile-biography-modal
+    [draft]="biographyDraft()"
+    [loading]="biographyEditLoading()"
+    [error]="biographyEditError()"
+    (draftChange)="onBiographyDraftChange($event)"
+    (save)="saveBiography()"
+    (close)="closeBiographyModal()"
+  />
+}
+
+@if (passwordModalOpen()) {
+  <app-profile-password-modal
+    [currentPassword]="currentPassword()"
+    [newPassword]="newPassword()"
+    [confirmPassword]="confirmPassword()"
+    [loading]="passwordChangeLoading()"
+    [error]="passwordChangeError()"
+    (currentPasswordChange)="currentPassword.set($event)"
+    (newPasswordChange)="newPassword.set($event)"
+    (confirmPasswordChange)="confirmPassword.set($event)"
+    (save)="savePassword()"
+    (close)="closePasswordModal()"
+  />
+}
+
+@if (favoriteModalOpen()) {
+  <app-profile-favorite-modal
+    [teams]="teamOptions()"
+    [loading]="favoriteActionLoading()"
+    [error]="favoriteActionError()"
+    (select)="onFavoriteSelect($event)"
+    (close)="closeFavoriteModal()"
+  />
+}
