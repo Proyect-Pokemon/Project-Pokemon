@@ -376,7 +376,7 @@
 /* Responsive */
 @media (max-width: 768px) {
 	.profile-container {
-		padding: 1.5rem 1rem;
+		padding: 1.5rem 0;
 	}
 
 	.profile-header {
@@ -423,6 +423,10 @@
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 12px;
+	}
+
+	.favorite-card {
+		margin: 0 5px
 	}
 
 	.favorite-card-header {
