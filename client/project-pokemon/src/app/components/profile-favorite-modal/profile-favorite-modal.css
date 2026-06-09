@@ -1,0 +1,169 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 17, 38, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 100;
+}
+
+.modal-card {
+  width: min(560px, 100%);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(120deg, #ffffff 0%, #f0eafc 100%);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  padding: 28px;
+  gap: 16px;
+  animation: slide-in 0.25s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--action-color);
+  letter-spacing: 0.02em;
+}
+
+.modal-close-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(0, 148, 174, 0.1);
+  color: var(--action-color);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.modal-close-btn:hover:not(:disabled) {
+  background: rgba(0, 148, 174, 0.2);
+}
+
+.modal-close-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-error {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border-left: 3px solid #dc2626;
+  font-size: 0.9rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+
+.team-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 2px solid var(--action-color);
+  background: #ffffff;
+  color: var(--action-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.team-option:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--action-color) 0%, #39757e 100%);
+  color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 148, 174, 0.25);
+}
+
+.team-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.team-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.team-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.btn-secondary {
+  padding: 10px 22px;
+  border-radius: 12px;
+  border: 2px solid var(--action-color);
+  background: #ffffff;
+  color: var(--action-color);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--action-color);
+  color: var(--primary-color);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .modal-card {
+    padding: 20px 16px;
+    border-radius: 18px;
+    max-height: 85vh;
+  }
+
+  .modal-header h3 {
+    font-size: 1.1rem;
+  }
+}

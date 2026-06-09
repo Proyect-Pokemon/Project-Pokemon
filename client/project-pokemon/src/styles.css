@@ -1,1 +1,64 @@
-/* You can add global styles to this file, and also import other style files */
+@font-face {
+    font-family: 'Satoshi';
+    src: url('/assets/fonts/Satoshi-Variable.woff2') format('woff2');
+    font-weight: 300 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Satoshi';
+    src: url('/assets/fonts/Satoshi-VariableItalic.woff2') format('woff2');
+    font-weight: 300 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+:root {
+    --primary-color: #F0F0F8;
+    --secondary-color: #1B1227;
+    --action-color: #55A3AB;
+    --action-color-hover: #60b1ba;
+    --fighting-color-hover: #d64541;
+    
+    --grass-color: #76C850;
+    --fire-color: #F07F2F;
+    --water-color: #6890F0;
+    --electric-color: #F9CF2E;
+    --normal-color: #A9A878;
+    --poison-color: #A040A1;
+    --ice-color: #A2D7D5;
+    --ground-color: #E0C069;
+    --rock-color: #B7A038;
+    --fighting-color: #C85048;
+    --flying-color: #A890F0;
+    --dark-color: #6F5848;
+    --psychic-color: #F85888;
+    --ghost-color: #705798;
+    --steel-color: #B8B8D0;
+    --bug-color: #A8B821;
+    --dragon-color: #7138F9;
+    --fairy-color: #EE99AC;
+}
+
+/* Tamaño de las cabeceras */
+h1 { font-size: 36px; }
+h2 { font-size: 24px; }
+h3 { font-size: 20px; }
+h4 { font-size: 16px; }
+h5 { font-size: 14px; }
+
+body {
+    margin: 0;
+    font-family: 'Satoshi', sans-serif;
+}
+
+app-root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+button {
+    font-family: inherit;
+}

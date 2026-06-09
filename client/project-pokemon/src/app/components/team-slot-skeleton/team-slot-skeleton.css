@@ -1,0 +1,47 @@
+.team-slot-skeleton {
+    margin-bottom: 1rem;
+}
+
+.skeleton-button-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.skeleton-button {
+    width: 250px;
+    height: 48px;
+    background: linear-gradient(
+        90deg,
+        #e0e0e0 0%,
+        #f0f0f0 50%,
+        #e0e0e0 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 8px;
+    animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-icon {
+    width: 2rem;
+    height: 2rem;
+    background: linear-gradient(
+        90deg,
+        #e0e0e0 0%,
+        #f0f0f0 50%,
+        #e0e0e0 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 999px;
+    animation: shimmer 1.5s ease-in-out infinite;
+    animation-delay: 0.2s;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}

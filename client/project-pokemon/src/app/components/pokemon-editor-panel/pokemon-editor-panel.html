@@ -1,0 +1,63 @@
+@if (isOpen) {
+    <div class="panel-overlay" (click)="onClose()"></div>
+}
+<div class="pokemon-editor-panel" [class.open]="isOpen">
+    <div class="panel-header">
+        <h2>Añadir Pokémon</h2>
+        <button class="close-button" (click)="onClose()">
+            <span class="close-icon">✕</span>
+        </button>
+    </div>
+    
+    <div class="panel-content">
+        @if (pokemonDisplayName && pokemonSprite) {
+            <app-pokemon-preview
+                [pokemonDisplayName]="pokemonDisplayName"
+                [pokemonSprite]="pokemonSprite"
+                [pokemonId]="pokemonId"
+                [pokemonBaseName]="pokemonBaseName"
+                [pokemonNickname]="pokemonNickname"
+                [pokemonTeamId]="pokemonTeamId"
+                [teamId]="teamId"
+                [slot]="slot"
+                [isEasterEggSlot]="isEasterEggSlot"
+                [disablePreviousArrow]="disablePreviousArrow"
+                [disableNextArrow]="disableNextArrow"
+                [animationDirection]="animationDirection()"
+                (openStatsDialog)="openStatsDialog()"
+                (previousSlot)="onPreviousSlot()"
+                (nextSlot)="onNextSlot()"
+                (nicknameUpdated)="nicknameUpdated.emit($event)">
+            </app-pokemon-preview>
+
+            <app-pokemon-moves-grid
+                [movements]="movements()"
+                [allMovements]="allMovementsCache()"
+                (movementChanged)="onMovementChanged($event)">
+            </app-pokemon-moves-grid>
+        } @else {
+            <div class="empty-pokemon-preview" aria-label="Slot vacío">
+                <app-pokemon-search-panel
+                    #searchPanel
+                    (pokemonSelected)="onPokemonSelected($event)">
+                </app-pokemon-search-panel>
+            </div>
+        }
+
+        @if (pokemonDisplayName && pokemonSprite) {
+            <app-pokemon-nature-selector
+                #natureSelector
+                [natureId]="natureId"
+                (natureChanged)="onSelectedNatureChanged($event)">
+            </app-pokemon-nature-selector>
+        }
+    </div>
+
+    <app-pokemon-stats-dialog 
+        [isOpen]="showStatsDialog()"
+        [stats]="currentPokemonStats()"
+        [natureBoostStat]="selectedNature()?.statBoost ?? null"
+        [natureDropStat]="selectedNature()?.statDrop ?? null"
+        (close)="closeStatsDialog()">
+    </app-pokemon-stats-dialog>
+</div>

@@ -1,0 +1,38 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bio-modal-title">
+    <header class="modal-header">
+      <h3 id="bio-modal-title">Editar biografía</h3>
+      <button
+        type="button"
+        class="modal-close-btn"
+        aria-label="Cerrar"
+        [disabled]="loading()"
+        (click)="close.emit()"
+      >✕</button>
+    </header>
+
+    @if (error()) {
+      <p class="modal-error">{{ error() }}</p>
+    }
+
+    <textarea
+      class="textarea-field"
+      rows="6"
+      [value]="draft()"
+      [disabled]="loading()"
+      (input)="onInput($event)"
+      maxlength="200"
+      placeholder="Cuéntanos algo sobre ti..."
+    ></textarea>
+    <p class="char-counter">{{ draft().length }} / 200</p>
+
+    <footer class="modal-footer">
+      <button type="button" class="btn-secondary" [disabled]="loading()" (click)="close.emit()">
+        Cancelar
+      </button>
+      <button type="button" class="btn-primary" [disabled]="loading()" (click)="save.emit()">
+        {{ loading() ? 'Guardando...' : 'Guardar' }}
+      </button>
+    </footer>
+  </div>
+</div>

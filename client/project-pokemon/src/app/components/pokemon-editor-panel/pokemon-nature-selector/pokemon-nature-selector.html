@@ -1,0 +1,42 @@
+<div class="nature-section">
+    <button
+        type="button"
+        class="nature-toggle"
+        (click)="toggleNatureSection()"
+        [attr.aria-expanded]="'false'">
+        <span class="nature-toggle-title">Naturaleza</span>
+        <span class="nature-toggle-summary">
+            @if (selectedNature(); as activeNature) {
+                {{ getNatureName(activeNature) }}
+            } @else if (isLoadingNatures()) {
+                Cargando...
+            } @else {
+                Sin naturaleza
+            }
+        </span>
+        <span class="nature-toggle-icon">&#9662;</span>
+    </button>
+
+    <select
+        #natureSelect
+        class="nature-select nature-select-hidden"
+        [value]="selectedNatureId()"
+        (change)="onNatureChange($event)">
+        @for (nature of allNaturesCache(); track nature.id) {
+            <option [value]="nature.id">
+                {{ getNatureName(nature) }} ({{ getNatureDescriptor(nature) }})
+            </option>
+        }
+    </select>
+
+    @if (selectedNature(); as activeNature) {
+        <div class="nature-impact" [class.neutral]="isNeutralNature(activeNature)">
+            @if (isNeutralNature(activeNature)) {
+                <span class="nature-chip nature-chip-neutral">Sin cambios en stats</span>
+            } @else {
+                <span class="nature-chip nature-chip-boost">+ {{ getNatureStatLabel(activeNature.statBoost) }}</span>
+                <span class="nature-chip nature-chip-drop">- {{ getNatureStatLabel(activeNature.statDrop) }}</span>
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,44 @@
+<div class="search-container">
+    <input
+        #searchInput
+        type="text"
+        placeholder="Buscar por nombre o número"
+        [value]="searchQuery()"
+        (input)="onSearchInput($event)"
+        class="search-input"
+        autofocus
+    >
+</div>
+
+@if (searchError()) {
+    <p class="search-error">{{ searchError() }}</p>
+}
+
+@if (selectedPokemon()) {
+    <div class="selected-pokemon-preview">
+        <h3 class="pokemon-display-name">{{ selectedPokemon()?.name }}</h3>
+        <div class="pokemon-sprite-container">
+            <img [src]="selectedPokemon()?.spriteFront" [alt]="selectedPokemon()?.name" class="pokemon-preview-sprite">
+            @if (selectedPokemon()?.id) {
+                <span class="pokemon-number">#{{ ('00' + selectedPokemon()?.id).slice(-3) }}</span>
+            }
+        </div>
+    </div>
+    <button class="add-pokemon-button" (click)="onAddPokemon()">
+        Añadir a equipo
+    </button>
+    <button class="show-all-button" (click)="showAllPokemonList()">
+        Ver todos los Pokémon
+    </button>
+}
+
+@if (searchResults().length > 0 && !selectedPokemon()) {
+    <div class="pokemon-grid">
+        @for (pokemon of searchResults(); track pokemon.id) {
+            <app-pokemon-grid-item
+                [pokemon]="pokemon"
+                (pokeSelected)="selectPokemonFromGrid($event)">
+            </app-pokemon-grid-item>
+        }
+    </div>
+}

@@ -1,22 +1,26 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { Prueba } from './services/prueba';
-import { Navbar } from "./shared/navbar/navbar";
-import { Footer } from "./shared/footer/footer";
+import { Component, inject } from '@angular/core';
+import { RouterOutlet, RouterLinkWithHref } from '@angular/router';
+import { AuthService } from './services/auth';
+import { SocketService } from './services/websocket-service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, Footer],
+  imports: [RouterOutlet, RouterLinkWithHref],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
+export class App {
 
-export class App implements OnInit {
-  async ngOnInit(): Promise<void> {
-    const data = await this.apiService.getData();
-    console.log(data)
+  private readonly authService = inject(AuthService);
+  private readonly socketService = inject(SocketService);
+
+  isAuthenticated = this.authService.isAuthenticated;
+  isAdmin = this.authService.isAdmin;
+
+  constructor() {
+    const jwt = this.authService.jwt;
+    if (jwt) {
+      this.socketService.connect(jwt);
+    }
   }
-
-  protected readonly title = signal('project-pokemon');
-  private apiService = inject(Prueba);
 }

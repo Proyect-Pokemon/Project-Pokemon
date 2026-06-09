@@ -1,0 +1,132 @@
+.stats-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 1100;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.stats-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 1101;
+    min-width: 350px;
+    max-width: 420px;
+    overflow: hidden;
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translate(-50%, -40%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+}
+
+.stats-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.stats-dialog-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.stats-dialog-close {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    transition: transform 0.2s ease;
+}
+
+.stats-dialog-close:hover {
+    transform: scale(1.1);
+}
+
+.stats-dialog-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stats-header-row {
+    display: grid;
+    grid-template-columns: 1fr 0.8fr 0.8fr;
+    gap: 0.5rem;
+    padding: 0.65rem 0.8rem;
+    margin-bottom: 0.25rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+    font-size: 0.85rem;
+    text-align: right;
+}
+
+.stats-header-label {
+    text-align: left;
+}
+
+.stats-header-value {
+    text-align: center;
+}
+
+.stat-row {
+    display: grid;
+    grid-template-columns: 1fr 0.8fr 0.8fr;
+    gap: 0.5rem;
+    padding: 0.65rem 0.8rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid var(--secondary-color);
+    align-items: center;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.stat-value {
+    font-weight: 700;
+    color: var(--secondary-color);
+    font-size: 1rem;
+    text-align: center;
+}

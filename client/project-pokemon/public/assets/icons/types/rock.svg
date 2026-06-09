@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Rock" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 155.76 155.32">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #f0f0f8;
+      }
+    </style>
+  </defs>
+  <polygon class="cls-1" points="43.26 127.26 95.25 144.43 123.43 112.56 104.26 85.18 43.26 127.26"/>
+  <polyline class="cls-1" points="123.43 15.59 52.98 15.59 0 72.34 2.32 113.74 31.18 123.27 102.31 76.01 123.43 15.59"/>
+  <polygon class="cls-1" points="112.39 80.01 129.89 105.26 155.76 76.01 136.07 15.59 112.39 80.01"/>
+</svg>

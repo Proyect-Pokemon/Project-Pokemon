@@ -1,5 +1,27 @@
-<app-navbar></app-navbar>
+<header>
+    <nav>
+        <ul>
+            @if (isAuthenticated()) {
+                <li><a routerLink="/battle">Combate</a></li>
+            }
+            <li><a routerLink="/about">Sobre nosotros</a></li>
+            @if (isAuthenticated()) {
+                <li><a routerLink="/team-builder">Equipos</a></li>
+                <li><a routerLink="/friends">Amigos</a></li>
+                @if (isAdmin()) {
+                    <li><a routerLink="/admin-panel">Panel de administración</a></li>
+                }
+                <li><a routerLink="/profile">Perfil</a></li>
+            } @else {
+                <li><a routerLink="/login">Iniciar sesión</a></li>
+                <li><a routerLink="/register">Registrarse</a></li>
+            }
+        </ul>
+    </nav>
+</header>
 
-<router-outlet></router-outlet>
+<main class="page-content">
+    <router-outlet></router-outlet>
+</main>
 
-<app-footer></app-footer>
+<footer>Project Pokémon - 2026</footer>

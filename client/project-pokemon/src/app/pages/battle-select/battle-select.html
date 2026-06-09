@@ -1,0 +1,132 @@
+<div class="team-select-page">
+    <section class="team-selector">
+        <header class="selector-header">
+            <h1>Elige un equipo</h1>
+            <p class="mode-label">Modo {{ mode() === 'online' ? 'VS. ONLINE' : 'VS. CPU' }}</p>
+        </header>
+
+        @if (isLoadingTeams()) {
+            <p class="state-message">Cargando equipos...</p>
+        } @else if (mode() === 'online' && isSearchingBattle()) {
+            <div class="searching-box">
+                <h2>Buscando rival...</h2>
+                <p>{{ searchingMessage() || 'Esperando a otro jugador en cola' }}</p>
+                <button type="button" class="cancel-search-btn" (click)="cancelSearch($event)">Cancelar búsqueda</button>
+            </div>
+        } @else if (teams().length === 0) {
+            <p class="state-message">No tienes equipos creados. Crea uno en el Team Builder para empezar.</p>
+        } @else {
+            <div class="team-columns">
+                @for (team of teams(); track team.id) {
+                    <article
+                        class="team-column"
+                        [style.--i]="$index"
+                        [class.selected]="selectedTeamId() === team.id"
+                        (click)="openTeamConfirmation(team.id, $event)">
+                        <h2 class="team-name">{{ team.name }}</h2>
+
+                        <div class="slot-list">
+                            @for (slot of team.slots; track $index) {
+                                <div class="slot-item" [class.slot-empty]="slot.isEmpty">
+                                    @if (slot.isEmpty) {
+                                        <span class="slot-empty-label">Hueco vacío</span>
+                                    } @else {
+                                        <span class="slot-name">{{ slot.displayName }}</span>
+                                        @if (slot.sprite) {
+                                            <img [src]="slot.sprite" [alt]="slot.displayName" class="slot-sprite" />
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+
+        @if (selectedTeam()) {
+            <div class="team-confirm-overlay" (click)="closeTeamConfirmation()">
+                <section class="team-confirm-card" (click)="$event.stopPropagation()">
+                    <header class="team-confirm-header">
+                        <div>
+                            <span class="confirm-kicker">Confirmación de equipo</span>
+                            <h2>{{ selectedTeam()!.name }}</h2>
+                            <p>Revisa el resumen del equipo antes de buscar combate.</p>
+                        </div>
+
+                        <div class="team-confirm-actions team-confirm-actions-top">
+                            <button type="button" class="confirm-button confirm-button-secondary" (click)="closeTeamConfirmation()">Cancelar</button>
+                            <button type="button" class="confirm-button confirm-button-primary" (click)="confirmSelectedTeam()">Buscar combate</button>
+                        </div>
+                    </header>
+
+                    <div class="team-confirm-summary">
+                        <span>{{ selectedTeamFilledCount() }} Pokémon preparados</span>
+                        <span>{{ mode() === 'online' ? 'Busqueda online' : 'Combate contra CPU' }}</span>
+                    </div>
+
+                    <div class="team-confirm-grid">
+                        @for (slot of selectedTeam()!.slots; track $index) {
+                            <article class="pokemon-card" [class.pokemon-card-empty]="slot.isEmpty">
+                                @if (slot.isEmpty) {
+                                    <div class="pokemon-empty-state">
+                                        <span>Hueco vacío</span>
+                                    </div>
+                                } @else {
+                                    <div class="pokemon-card-top">
+                                        <div class="pokemon-sprite-shell">
+                                            @if (slot.sprite) {
+                                                <img [src]="slot.sprite" [alt]="slot.displayName" class="pokemon-sprite" />
+                                            }
+                                        </div>
+
+                                        <div class="pokemon-main-info">
+                                            <h3>{{ slot.displayName }}</h3>
+                                            <span class="pokemon-species">{{ slot.speciesName }}</span>
+
+                                            <div class="type-badges">
+                                                @for (type of slot.types; track $index) {
+                                                    <span
+                                                        class="type-badge"
+                                                        [style.background-color]="getTypeBadgeColor(type)"
+                                                        [style.border-color]="getTypeBadgeBorderColor(type)">
+                                                        {{ getTypeLabelEs(type) }}
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="pokemon-details-grid">
+                                        <div class="detail-block pokemon-details-wide">
+                                            <span class="detail-label">Naturaleza</span>
+                                            <strong>{{ slot.nature }}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div class="moves-list">
+                                        @for (move of slot.moves; track $index) {
+                                            <div
+                                                class="move-chip"
+                                                [class.move-chip-empty]="move.isEmpty"
+                                                [style.background-color]="move.isEmpty ? '' : getMoveChipColor(move.type)"
+                                                [style.border-color]="move.isEmpty ? '' : getMoveChipColor(move.type)">
+                                                @if (move.isEmpty) {
+                                                    <span>-</span>
+                                                } @else {
+                                                    <span>{{ move.name }}</span>
+                                                    <small>{{ getTypeLabelEs(move.type) }} · {{ getMoveClassLabelEs(move.movementClass) }}</small>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </article>
+                        }
+                    </div>
+
+                </section>
+            </div>
+        }
+    </section>
+</div>

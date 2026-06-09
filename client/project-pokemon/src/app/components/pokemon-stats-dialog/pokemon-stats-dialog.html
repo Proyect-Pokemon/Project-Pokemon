@@ -1,0 +1,46 @@
+@if (isOpen && stats) {
+    <div class="stats-dialog-overlay" (click)="onOverlayClick()"></div>
+    <div class="stats-dialog">
+        <div class="stats-dialog-header">
+            <h3>Estadísticas</h3>
+            <button class="stats-dialog-close" (click)="onCloseButton()">✕</button>
+        </div>
+        <div class="stats-dialog-content">
+            <div class="stats-header-row">
+                <span class="stats-header-label">Stat</span>
+                <span class="stats-header-value">Base</span>
+                <span class="stats-header-value">Finales</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">PS</span>
+                <span class="stat-value">{{ stats.hp }}</span>
+                <span class="stat-value stat-final" [style.color]="getStatColor(calculateHp(stats.hp))">{{ calculateHp(stats.hp) }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label" [style.color]="getNatureStatColor('attack')">Ataque</span>
+                <span class="stat-value">{{ stats.attack }}</span>
+                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.attack, 'attack'))">{{ calculateStat(stats.attack, 'attack') }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label" [style.color]="getNatureStatColor('defense')">Defensa</span>
+                <span class="stat-value">{{ stats.defense }}</span>
+                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.defense, 'defense'))">{{ calculateStat(stats.defense, 'defense') }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label" [style.color]="getNatureStatColor('specialattack')">Ataque Esp.</span>
+                <span class="stat-value">{{ stats.specialAttack }}</span>
+                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.specialAttack, 'specialattack'))">{{ calculateStat(stats.specialAttack, 'specialattack') }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label" [style.color]="getNatureStatColor('specialdefense')">Defensa Esp.</span>
+                <span class="stat-value">{{ stats.specialDefense }}</span>
+                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.specialDefense, 'specialdefense'))">{{ calculateStat(stats.specialDefense, 'specialdefense') }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label" [style.color]="getNatureStatColor('speed')">Velocidad</span>
+                <span class="stat-value">{{ stats.speed }}</span>
+                <span class="stat-value stat-final" [style.color]="getStatColor(calculateStat(stats.speed, 'speed'))">{{ calculateStat(stats.speed, 'speed') }}</span>
+            </div>
+        </div>
+    </div>
+}
