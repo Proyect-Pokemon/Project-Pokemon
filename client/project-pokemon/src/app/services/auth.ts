@@ -10,6 +10,11 @@ type JwtPayload = {
   role?: string;
   unique_name?: string;
   AvatarPath?: string | null;
+  // Some backends may return the field with a typo 'AvatarPaht' or lowercase 'avatarPath'
+  AvatarPaht?: string | null;
+  avatarPath?: string | null;
+  favoriteTeamId?: string | number | null;
+  FavoriteTeamId?: string | number | null;
 };
 
 @Injectable({
@@ -53,14 +58,36 @@ export class AuthService {
     this.decodedPayload()?.role?.toLowerCase() === 'admin'
   );
 
+  readonly favoriteTeamId = computed(() => {
+    const decoded = this.decodedPayload();
+    const value = decoded?.favoriteTeamId ?? decoded?.FavoriteTeamId ?? null;
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    const numeric = Number(value);
+    return Number.isNaN(numeric) ? null : numeric;
+  });
+
   readonly nickname = computed(() => {
     const name = this.decodedPayload()?.unique_name?.trim();
     return name?.length ? name : 'Usuario';
   });
 
   readonly avatarPath = computed(() => {
-    const path = this.decodedPayload()?.AvatarPath?.trim();
-    return path?.length ? path : '/assets/avatar-default.png';
+    const decoded = this.decodedPayload();
+    const raw = decoded?.AvatarPath ?? decoded?.AvatarPaht ?? decoded?.avatarPath ?? null;
+    const path = typeof raw === 'string' ? raw.trim() : null;
+
+    if (!path || !path.length) {
+      return '/assets/Images/avatar-default.jpg';
+    }
+
+    if (path.startsWith('/') || path.startsWith('http')) {
+      return path;
+    }
+
+    return `/assets/Images/${path}`;
   });
 
   get jwt(): string | null {

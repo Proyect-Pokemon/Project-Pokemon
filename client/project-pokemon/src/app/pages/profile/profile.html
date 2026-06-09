@@ -1,1 +1,140 @@
-<p>profile works!</p>
+<div class="profile-container">
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Cargando perfil...</p>
+    </div>
+  } @else {
+
+    <!-- Cabecera de perfil -->
+    <div class="profile-header">
+      <div class="profile-info">
+        <div class="profile-avatar-button" (click)="openAvatarModal()">
+          <img [src]="avatarSrc()" alt="Foto de perfil" class="profile-avatar" />
+        </div>
+
+        <div class="profile-meta">
+          <h1>{{ nickname() }}</h1>
+          <div class="profile-bio-container">
+            @if (biography()) {
+              <p class="profile-bio">{{ biography() }}</p>
+            } @else {
+              <p class="profile-bio profile-bio-empty">Aún no has añadido una biografía.</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn-secondary" (click)="openBiographyModal()">Editar biografía</button>
+        <button class="btn-secondary" (click)="openPasswordModal()">Cambiar contraseña</button>
+        <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+      </div>
+    </div>
+
+    <!-- Sección equipo favorito -->
+    <div class="favorite-section">
+      <div class="section-header">
+        <h2>Equipo favorito</h2>
+        <button class="btn-primary" (click)="navigateToTeamBuilder()">
+          Crear equipo
+        </button>
+      </div>
+
+      @if (teamsLoading()) {
+        <div class="loading-state"><p>Cargando equipos...</p></div>
+      } @else if (teamsError()) {
+        <div class="error-message">{{ teamsError() }}</div>
+      } @else if (userTeams().length === 0) {
+        <div class="empty-state">
+          <p>Aún no tienes equipos.</p>
+          <button class="btn-secondary" (click)="navigateToTeamBuilder()">Crear tu primer equipo</button>
+        </div>
+      } @else if (favoriteTeam()) {
+        <div class="favorite-card">
+          <div class="favorite-card-header">
+            <h3>{{ favoriteTeam()?.name }}</h3>
+            <button class="btn-secondary btn-edit" (click)="openFavoriteModal()">
+              Cambiar favorito
+            </button>
+          </div>
+
+          @if (favoriteTeam()?.description) {
+            <p class="team-description">{{ favoriteTeam()?.description }}</p>
+          }
+
+          <div class="pokemon-list">
+            @for (pokemon of favoriteTeam()?.pokemons; track pokemon.slot) {
+              <div class="pokemon-item">
+                <div class="pokemon-sprite-container">
+                  <img [src]="pokemon.sprite" [alt]="pokemon.pokemonName" class="pokemon-sprite" />
+                </div>
+                <div class="pokemon-info">
+                  <span class="pokemon-name">{{ pokemon.nickname || pokemon.pokemonName }}</span>
+                  <span class="pokemon-species">{{ pokemon.pokemonName }}</span>
+                  <div class="type-badges">
+                    @for (type of pokemon.types; track $index) {
+                      <span class="type-badge" [ngClass]="'type-' + type.toLowerCase()">{{ type }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="favorite-empty">
+          <p>Aún no tienes equipo favorito.</p>
+          <button class="btn-primary btn-big" (click)="openFavoriteModal()">Añadir equipo favorito</button>
+        </div>
+      }
+    </div>
+
+  }
+</div>
+
+<!-- Modales -->
+@if (avatarModalOpen()) {
+  <app-profile-avatar-modal
+    [avatarOptions]="avatarOptions"
+    [loading]="avatarActionLoading()"
+    [error]="avatarActionError()"
+    (select)="onAvatarSelect($event)"
+    (close)="closeAvatarModal()"
+  />
+}
+
+@if (biographyModalOpen()) {
+  <app-profile-biography-modal
+    [draft]="biographyDraft()"
+    [loading]="biographyEditLoading()"
+    [error]="biographyEditError()"
+    (draftChange)="onBiographyDraftChange($event)"
+    (save)="saveBiography()"
+    (close)="closeBiographyModal()"
+  />
+}
+
+@if (passwordModalOpen()) {
+  <app-profile-password-modal
+    [currentPassword]="currentPassword()"
+    [newPassword]="newPassword()"
+    [confirmPassword]="confirmPassword()"
+    [loading]="passwordChangeLoading()"
+    [error]="passwordChangeError()"
+    (currentPasswordChange)="currentPassword.set($event)"
+    (newPasswordChange)="newPassword.set($event)"
+    (confirmPasswordChange)="confirmPassword.set($event)"
+    (save)="savePassword()"
+    (close)="closePasswordModal()"
+  />
+}
+
+@if (favoriteModalOpen()) {
+  <app-profile-favorite-modal
+    [teams]="teamOptions()"
+    [loading]="favoriteActionLoading()"
+    [error]="favoriteActionError()"
+    (select)="onFavoriteSelect($event)"
+    (close)="closeFavoriteModal()"
+  />
+}
