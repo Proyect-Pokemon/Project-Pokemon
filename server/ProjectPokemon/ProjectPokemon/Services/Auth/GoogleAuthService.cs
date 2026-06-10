@@ -1,5 +1,4 @@
 ﻿using Google.Apis.Auth;
-using Microsoft.Extensions.Options;
 using ProjectPokemon.Models.Database;
 using ProjectPokemon.Models.Database.Entities;
 
@@ -13,25 +12,20 @@ public sealed class GoogleAuthService
 {
     private readonly UnitOfWork _unitOfWork;
     private readonly TokenService _tokenService;
-    private readonly GoogleAuthSettings _settings;
+    private readonly string _googleClientId;
 
     public GoogleAuthService(
-        UnitOfWork unitOfWork,
-        TokenService tokenService,
-        IOptions<GoogleAuthSettings> settings)
+     UnitOfWork unitOfWork,
+     TokenService tokenService)
     {
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
 
-        _settings =
-            settings.Value
-            ?? throw new ArgumentNullException(
-                nameof(settings)
+        _googleClientId =
+            Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")
+            ?? throw new InvalidOperationException(
+                "GOOGLE_CLIENT_ID no definida."
             );
-
-        ArgumentException.ThrowIfNullOrWhiteSpace(
-            _settings.ClientId
-        );
     }
 
     /// <summary>
@@ -57,9 +51,9 @@ public sealed class GoogleAuthService
                     new GoogleJsonWebSignature.ValidationSettings
                     {
                         Audience =
-                        [
-                            _settings.ClientId
-                        ]
+                            [
+                                _googleClientId
+                            ]
                     });
         }
         catch (InvalidJwtException)

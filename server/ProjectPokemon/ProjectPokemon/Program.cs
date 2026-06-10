@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -36,8 +37,20 @@ public class Program {
         builder.Services.AddScoped<UnitOfWork>();
 
         // DbContext
-        builder.Services.AddDbContext<PokemonDbContext>(options => {
-            options.UseSqlite("Data Source=pokemon.db");
+        string? connectionString =
+        builder.Configuration["DB_CONNECTION"];
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("DB_CONNECTION no definida.");
+        }
+
+        builder.Services.AddDbContext<PokemonDbContext>(options =>
+        {
+            options.UseMySql(
+                connectionString,
+                ServerVersion.AutoDetect(connectionString)
+            );
         });
 
         // Internal Services
@@ -48,9 +61,6 @@ public class Program {
         // Auth & JWT
         builder.Services.AddScoped<TokenService>();
         builder.Services.AddScoped<AuthService>();
-
-        builder.Services.Configure<GoogleAuthSettings>(
-            builder.Configuration.GetSection("GoogleAuth"));
         builder.Services.AddScoped<GoogleAuthService>();
 
         // Battle Services - WebSocket Nativo
@@ -102,9 +112,40 @@ public class Program {
             );
         });
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("Frontend", policy =>
+            {
+                policy.WithOrigins("https://projectpokemon.runasp.net")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
+        });
+
+        /*
+        builder.Services.ConfigureApplicationCookie(options =>
+        {
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        });
+        */
+
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders =
+                ForwardedHeaders.XForwardedFor |
+                ForwardedHeaders.XForwardedProto;
+        });
+
+        builder.Services.AddHttpsRedirection(options =>
+        {
+            options.HttpsPort = 443;
+        });
+
         var app = builder.Build();
 
-        if (app.Environment.IsDevelopment()) {
+        /*
+         if (app.Environment.IsDevelopment()) {
             app.UseSwagger();
             app.UseSwaggerUI();
             app.UseCors(policy =>
@@ -112,8 +153,12 @@ public class Program {
                       .AllowAnyHeader()
                       .AllowAnyMethod());
         }
+        */
 
+        app.UseForwardedHeaders();
         app.UseHttpsRedirection();   // redirige HTTP a HTTPS
+        app.UseCors("Frontend");
+        app.UseDefaultFiles();
         app.UseStaticFiles();        // permite servir archivos desde wwwroot
 
         app.UseWebSockets();
@@ -137,17 +182,25 @@ public class Program {
             var network = context.RequestServices.GetRequiredService<Network>();
             var socket = await context.WebSockets.AcceptWebSocketAsync();
 
-            app.Logger.LogInformation("[WS] Conectado usuario={UserId} nick={Nickname}", parsedUserId, userNickname);
+            //app.Logger.LogInformation("[WS] Conectado usuario={UserId} nick={Nickname}", parsedUserId, userNickname);
 
             await network.ConnectAsync(socket, parsedUserId, userNickname);
 
-            app.Logger.LogInformation("[WS] Desconectado usuario={UserId} nick={Nickname}", parsedUserId, userNickname);
+            //app.Logger.LogInformation("[WS] Desconectado usuario={UserId} nick={Nickname}", parsedUserId, userNickname);
         });
 
         app.MapControllers();        // mapea los endpoints de los controladores
+        app.MapFallbackToFile("index.html");
 
         // Llamar al método antes de ejecutar la app
-        await SeedDatabase(app.Services);
+        try
+        {
+            await SeedDatabase(app.Services);
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogError(ex, "DB seed failed");
+        }
 
         app.Run();
     }
