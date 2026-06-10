@@ -35,6 +35,8 @@ export class TeamEdit {
   allMovements = signal<Movement[]>([]);
   selectedSlot = signal(1);
   isLoading = signal(true);
+  isDeletingPokemon = signal(false);
+  showDeletePokemonModal = signal(false);
   searchQuery = signal('');
   searchResults = signal<Pokemon[]>([]);
   selectedPokemonFromSearch = signal<Pokemon | null>(null);
@@ -240,24 +242,25 @@ export class TeamEdit {
 
     const targetSlot = this.selectedSlot();
 
-    const created = await this.pokemonTeamService.addPokemonTeam({
-      nickname: null,
-      shiny: false,
-      slot: targetSlot,
-      teamId: currentTeam.id,
-      pokemonId: pokemon.id,
-      natureId: 1,
-      movementId1: 1,
-      movementId2: null,
-      movementId3: null,
-      movementId4: null,
-    });
+    try {
+      await this.pokemonTeamService.addPokemonTeam({
+        nickname: null,
+        shiny: false,
+        slot: targetSlot,
+        teamId: currentTeam.id,
+        pokemonId: pokemon.id,
+        natureId: 1,
+        movementId1: 1,
+        movementId2: null,
+        movementId3: null,
+        movementId4: null,
+      });
 
-    if (!created) {
-      return;
+      await this.loadData(currentTeam.id, targetSlot);
+
+    } catch (error) {
+      console.error('Error añadiendo Pokémon', error);
     }
-
-    await this.loadData(currentTeam.id, targetSlot);
   }
 
   private tryPrepareSearchPanel() {
@@ -290,6 +293,14 @@ export class TeamEdit {
 
     await this.onPokemonSelected(pokemon);
     this.resetSearchState();
+  }
+
+  showAllPokemonFromSearch(): void {
+    this.selectedPokemonFromSearch.set(null);
+    this.searchError.set(null);
+    this.searchQuery.set('');
+    this.updateSearchResults();
+    this.focusSearchInput();
   }
 
   private updateSearchResults() {
@@ -444,20 +455,36 @@ export class TeamEdit {
 
   getTypeIconSrc(type: string): string | null {
     const map: Record<string, string> = {
-      grass: 'leaf', fire: 'fire', water: 'water', electric: 'electric',
+      grass: 'leaf', planta: 'leaf', fire: 'fire', water: 'water', electric: 'electric',
       ice: 'ice', fighting: 'fighting', poison: 'poison', ground: 'ground',
       flying: 'flying', bug: 'bug', rock: 'rock', ghost: 'ghost',
       dark: 'dark', steel: 'steel', fairy: 'fairy', normal: 'normal',
+      psychic: 'psychic', psiquico: 'psychic', dragon: 'dragon',
     };
-    const file = map[type?.toLowerCase()];
+    const normalizedType = type
+      ?.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+    const file = map[normalizedType];
     return file ? `/assets/icons/types/${file}.svg` : null;
   }
 
   getTypeClass(type: string): string {
-    return type ? `type-${type.toLowerCase()}` : '';
+    const normalizedType = type
+      ?.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+    return normalizedType ? `type-${normalizedType}` : '';
   }
 
   getTypeColor(type: string): string {
+    const normalizedType = type
+      ?.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
     const colors: Record<string, string> = {
       grass: 'var(--grass-color)',     fire: 'var(--fire-color)',
       water: 'var(--water-color)',     electric: 'var(--electric-color)',
@@ -469,7 +496,7 @@ export class TeamEdit {
       steel: 'var(--steel-color)',     bug: 'var(--bug-color)',
       dragon: 'var(--dragon-color)',   fairy: 'var(--fairy-color)',
     };
-    return colors[type?.toLowerCase()] ?? '#aaa';
+    return colors[normalizedType] ?? '#aaa';
   }
 
   capitalize(s: string): string {
@@ -494,5 +521,56 @@ export class TeamEdit {
     }
 
     this.router.navigate(['/team-builder', currentTeam.id, 'pokemon', selectedPokemonTeam.id, 'edit']);
+  }
+
+  requestDeleteSelectedPokemon() {
+    if (!this.selectedPokemonTeam() || this.isDeletingPokemon()) {
+      return;
+    }
+
+    this.showDeletePokemonModal.set(true);
+  }
+
+  cancelDeleteSelectedPokemon() {
+    this.showDeletePokemonModal.set(false);
+  }
+
+  async onDeleteSelectedPokemon() {
+    const currentTeam = this.team();
+    const selectedPokemonTeam = this.selectedPokemonTeam();
+
+    if (!currentTeam || !selectedPokemonTeam || this.isDeletingPokemon()) {
+      return;
+    }
+
+    this.isDeletingPokemon.set(true);
+    this.showDeletePokemonModal.set(false);
+
+    const deletedSlot = selectedPokemonTeam.slot;
+    const remainingCount = currentTeam.pokemons.length - 1;
+
+    try {
+      this.isDeletingPokemon.set(true);
+      this.showDeletePokemonModal.set(false);
+
+      const deletedSlot = selectedPokemonTeam.slot;
+      const remainingCount = currentTeam.pokemons.length - 1;
+
+      await this.pokemonTeamService.deletePokemonTeam(selectedPokemonTeam.id);
+
+      const nextSlot = Math.min(deletedSlot, remainingCount + 1);
+      await this.loadData(currentTeam.id, nextSlot);
+
+    } catch (error) {
+      console.error('Error eliminando Pokémon', error);
+
+    } finally {
+      this.isDeletingPokemon.set(false);
+    }
+
+    const nextSlot = Math.min(deletedSlot, remainingCount + 1);
+    await this.loadData(currentTeam.id, nextSlot);
+
+    this.isDeletingPokemon.set(false);
   }
 }

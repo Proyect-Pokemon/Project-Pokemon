@@ -10,8 +10,16 @@ export interface BattleMatchedEvent {
 export interface BattleStateEvent {
   action: number;
   battle: any;
-  messages: string[];
-  requiresSwitch: boolean;
+  replaySteps: Array<{
+    stepIndex: number;
+    message?: string | null;
+    structuredMessage?: { code: string; args: Record<string, any> } | null;
+    events: any[];
+    delayMs?: number | null;
+    metadata?: Record<string, any> | null;
+  }>;
+  requiresSwitchSelection: boolean;
+  availableSlotsForSwitch: number[];
   winnerUserId: number | null;
 }
 
@@ -114,16 +122,19 @@ export class SocketService {
     /*console.info('[WS][Battle] Update', {
       action: message.action,
       battleId: message.battle?.battleId,
-      requiresSwitch: message.requiresSwitch ?? false,
+      requiresSwitchSelection: message.requiresSwitchSelection ?? false,
+      availableSlotsForSwitch: message.availableSlotsForSwitch ?? [],
       winnerUserId: message.winnerUserId ?? null,
       messages: message.messages ?? [],
+      replaySteps: message.replaySteps ?? []
     });*/
 
     this.onBattleState.set({
       action: message.action ?? 0,
       battle: message.battle,
-      messages: message.messages ?? [],
-      requiresSwitch: message.requiresSwitch ?? false,
+      replaySteps: message.replaySteps ?? [],
+      requiresSwitchSelection: message.requiresSwitchSelection ?? message.requiresSwitch ?? false,
+      availableSlotsForSwitch: message.availableSlotsForSwitch ?? [],
       winnerUserId: message.winnerUserId ?? null,
     });
   }

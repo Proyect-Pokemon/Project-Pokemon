@@ -21,9 +21,8 @@ export class PokemonMovesGrid {
     filteredMovements = computed(() => {
         const query = this.normalizeSearchText(this.pickerSearchQuery());
         if (!query) return this.allMovements;
-        return this.allMovements.filter(m =>
-            this.normalizeSearchText(m.name).includes(query) ||
-            this.normalizeSearchText(m.type).includes(query)
+        return this.allMovements.filter((movement) =>
+            this.getMovementSearchTokens(movement).some((token) => token.includes(query))
         );
     });
 
@@ -58,7 +57,7 @@ export class PokemonMovesGrid {
     }
 
     getTypeClass(type: string): string {
-        return 'type-' + type.toLowerCase();
+        return 'type-' + this.normalizeTypeKey(type);
     }
 
     getClassLabel(movementClass: string): string {
@@ -71,6 +70,7 @@ export class PokemonMovesGrid {
     }
 
     getTypeLabel(type: string): string {
+        const normalizedType = this.normalizeTypeKey(type);
         const typeMap: Record<string, string> = {
             normal: 'Normal',
             fire: 'Fuego',
@@ -92,7 +92,7 @@ export class PokemonMovesGrid {
             fairy: 'Hada',
         };
 
-        return typeMap[type?.toLowerCase()] ?? type;
+        return typeMap[normalizedType] ?? type;
     }
 
     onTypeIconLoad(event: Event): void {
@@ -104,18 +104,78 @@ export class PokemonMovesGrid {
     }
 
     private readonly TYPE_ICON_MAP: Record<string, string> = {
+        normal: 'normal',
+        fire: 'fire',
+        water: 'water',
+        electric: 'electric',
         grass: 'leaf',
+        planta: 'leaf',
+        ice: 'ice',
+        fighting: 'fighting',
+        poison: 'poison',
+        ground: 'ground',
+        flying: 'flying',
+        psychic: 'psychic',
+        psiquico: 'psychic',
+        bug: 'bug',
+        rock: 'rock',
+        ghost: 'ghost',
+        dragon: 'dragon',
+        dark: 'dark',
+        steel: 'steel',
+        fairy: 'fairy',
+    };
+
+    private readonly TYPE_SEARCH_ALIASES: Record<string, string[]> = {
+        normal: ['normal'],
+        fire: ['fire', 'fuego'],
+        water: ['water', 'agua'],
+        electric: ['electric', 'electrico'],
+        grass: ['grass', 'planta'],
+        ice: ['ice', 'hielo'],
+        fighting: ['fighting', 'lucha'],
+        poison: ['poison', 'veneno'],
+        ground: ['ground', 'tierra'],
+        flying: ['flying', 'volador'],
+        psychic: ['psychic', 'psiquico'],
+        bug: ['bug', 'bicho'],
+        rock: ['rock', 'roca'],
+        ghost: ['ghost', 'fantasma'],
+        dragon: ['dragon', 'dragon'],
+        dark: ['dark', 'siniestro'],
+        steel: ['steel', 'acero'],
+        fairy: ['fairy', 'hada'],
     };
 
     getTypeIconSrc(type: string): string {
-        const key = type.toLowerCase();
+        const key = this.normalizeTypeKey(type);
         const filename = this.TYPE_ICON_MAP[key] ?? key;
-        return `assets/icons/types/${filename}.svg`;
+        return `/assets/icons/types/${filename}.svg`;
+    }
+
+    private getMovementSearchTokens(movement: Movement): string[] {
+        const normalizedType = this.normalizeTypeKey(movement.type);
+        const typeAliases = this.TYPE_SEARCH_ALIASES[normalizedType] ?? [normalizedType];
+
+        return [
+            this.normalizeSearchText(movement.name),
+            this.normalizeSearchText(movement.type),
+            this.normalizeSearchText(this.getTypeLabel(movement.type)),
+            ...typeAliases.map((alias) => this.normalizeSearchText(alias)),
+        ];
     }
 
     private normalizeSearchText(value: string): string {
         return value
             .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+    }
+
+    private normalizeTypeKey(type: string): string {
+        return type
+            ?.normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
             .toLowerCase()
             .trim();

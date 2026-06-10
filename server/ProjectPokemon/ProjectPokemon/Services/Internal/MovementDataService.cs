@@ -18,7 +18,7 @@ namespace ProjectPokemon.Services.Internal {
                 .FirstOrDefault(entry => entry.Language.Name == "es")?.Name
                 ?? move.Name;
 
-            return new Movement {
+            var movement = new Movement {
                 Id = move.Id,
                 Name = Name,
                 Description = description,
@@ -43,6 +43,22 @@ namespace ProjectPokemon.Services.Internal {
                 Category = move.Meta.Category.Name,
                 Type = System.Enum.Parse<PokeType>(move.Type.Name, true)
             };
+
+            // Cargar stat_changes desde la API
+
+            if (move.StatChanges != null && move.StatChanges.Count > 0) {
+                foreach (var statChange in move.StatChanges) {
+                    var stat = ConvertStatType(statChange.Stat.Name);
+                    if (stat.HasValue) {
+                        movement.StatChanges.Add(new MovementStatChange {
+                            Stat = stat.Value,
+                            Change = statChange.Change
+                        });
+                    }
+                }
+            }
+
+            return movement;
         }
 
         private PokeTarget ConvertTarget(string apiTarget) {
@@ -67,6 +83,19 @@ namespace ProjectPokemon.Services.Internal {
                 "physical" => MovementClass.Physical,
                 "special" => MovementClass.Special,
                 "status" => MovementClass.Status
+            };
+        }
+
+        private StatType? ConvertStatType(string apiStatName) {
+            return apiStatName switch {
+                "attack" => StatType.Attack,
+                "defense" => StatType.Defense,
+                "special-attack" => StatType.SpecialAttack,
+                "special-defense" => StatType.SpecialDefense,
+                "speed" => StatType.Speed,
+                "accuracy" => StatType.Accuracy,
+                "evasion" => StatType.Evasion,
+                _ => null // Si no es un stat reconocido, devolver null
             };
         }
     }

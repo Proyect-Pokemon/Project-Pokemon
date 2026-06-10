@@ -288,6 +288,42 @@
     box-shadow: 3px 5px 0 rgba(0, 0, 0, 0.15);
 }
 
+.pokemon-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.delete-pokemon-btn {
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 12px;
+    background: #e2d5f5;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.delete-pokemon-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 3px 5px 0 rgba(0, 0, 0, 0.15);
+    filter: brightness(0.96);
+}
+
+.delete-pokemon-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.delete-icon {
+    width: 20px;
+    height: 20px;
+}
+
 .add-pokemon-panel {
     width: min(760px, 100%);
     background: linear-gradient(120deg, #ffffff 0%, #f0eafc 100%);
@@ -388,6 +424,26 @@
 
 .add-pokemon-button:hover {
     background-color: #0b4153;
+}
+
+.show-all-pokemon-button {
+    margin-top: 0.5rem;
+    border: 2px solid #0f5368;
+    border-radius: 8px;
+    background-color: transparent;
+    color: #0f5368;
+    font-weight: 700;
+    padding: 0.55rem 1.1rem;
+    cursor: pointer;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.show-all-pokemon-button:hover {
+    background-color: #0f5368;
+    color: #ffffff;
 }
 
 .pokemon-grid {
@@ -611,6 +667,70 @@
     height: 50px;
     image-rendering: pixelated;
     object-fit: contain;
+}
+
+.confirm-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(6, 19, 25, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.confirm-modal {
+    width: min(420px, 100%);
+    border-radius: 16px;
+    padding: 1.25rem 1.15rem;
+    background: linear-gradient(120deg, #ffffff 0%, #f0eafc 100%);
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(15, 83, 104, 0.14);
+}
+
+.confirm-title {
+    margin: 0;
+    color: #0f5368;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.confirm-message {
+    margin: 0.75rem 0 1rem;
+    color: #0f5368;
+    line-height: 1.4;
+}
+
+.confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+.confirm-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 0.5rem 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.confirm-btn.cancel {
+    color: #0f5368;
+    background: #d8e1e7;
+}
+
+.confirm-btn.accept {
+    color: #ffffff;
+    background: #d64541;
+}
+
+.confirm-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
 }
 
 /* ─── Responsive ────────────────────────────────────────────────────────────── */

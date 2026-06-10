@@ -3,14 +3,16 @@ using ProjectPokemon.Enum;
 using ProjectPokemon.Models.Database.Entities;
 
 namespace ProjectPokemon.Models.Database;
+
 public class PokemonDbContext : DbContext {
     public DbSet<Pokemon> Pokemons { get; set; }
     public DbSet<Movement> Movements { get; set; }
     public DbSet<Nature> Natures { get; set; }
     public DbSet<PokemonMovement> PokemonMovements { get; set; }
     public DbSet<User> Users { get; set; }
-    public DbSet<Team> Teams { get; set; } 
+    public DbSet<Team> Teams { get; set; }
     public DbSet<PokemonTeam> PokemonTeams { get; set; }
+    public DbSet<MovementStatChange> MovementStatChanges { get; set; }
 
     public PokemonDbContext(DbContextOptions<PokemonDbContext> options) : base(options) { }
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
@@ -20,11 +22,21 @@ public class PokemonDbContext : DbContext {
         ConfigureMovement(modelBuilder);
         ConfigureNature(modelBuilder);
         ConfigurePokemonMovement(modelBuilder);
+        ConfigureTeam(modelBuilder);
+        ConfigureMovementStatChange(modelBuilder);
+    }
+
+    private static void ConfigureTeam(ModelBuilder modelBuilder) {
+        modelBuilder.Entity<User>(entity => {
+            entity.HasOne(u => u.FavoriteTeam)
+                  .WithMany()
+                  .HasForeignKey(u => u.FavoriteTeamId)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
     }
 
     private static void ConfigurePokemon(ModelBuilder modelBuilder) {
-        modelBuilder.Entity<Pokemon>(entity =>
-        {
+        modelBuilder.Entity<Pokemon>(entity => {
             //Para guardar los enum como string, no como int
             entity.Property(p => p.Type1)
                     .HasConversion<string>()
@@ -35,8 +47,7 @@ public class PokemonDbContext : DbContext {
         });
     }
     private static void ConfigureMovement(ModelBuilder modelBuilder) {
-        modelBuilder.Entity<Movement>(entity =>
-        {
+        modelBuilder.Entity<Movement>(entity => {
             entity.Property(m => m.MovementClass)
                     .HasConversion<string>()
                     .IsRequired();
@@ -51,8 +62,7 @@ public class PokemonDbContext : DbContext {
         });
     }
     private static void ConfigureNature(ModelBuilder modelBuilder) {
-        modelBuilder.Entity<Nature>(entity =>
-        {
+        modelBuilder.Entity<Nature>(entity => {
             entity.Property(n => n.Name)
                     .HasConversion<string>()
                     .IsRequired();
@@ -74,14 +84,29 @@ public class PokemonDbContext : DbContext {
                     .WithMany(p => p.PokemonMovements)
                     .HasForeignKey(pm => pm.PokemonId)
                     .OnDelete(DeleteBehavior.Cascade);
-                    // Si el Pokemon se elimina, se elimina la fila
+            // Si el Pokemon se elimina, se elimina la fila
 
             // Relación con Movement
             entity.HasOne(pm => pm.Movement)
                     .WithMany(m => m.PokemonMovements)
                     .HasForeignKey(pm => pm.MovementId)
                     .OnDelete(DeleteBehavior.Cascade);
-                    // Si el Movimiento se elimina, se elimina la fila
+            // Si el Movimiento se elimina, se elimina la fila
+        });
+    }
+    private static void ConfigureMovementStatChange(ModelBuilder modelBuilder) {
+        modelBuilder.Entity<MovementStatChange>(entity => {
+            entity.HasKey(msc => msc.Id);
+
+            entity.Property(msc => msc.Stat)
+                    .HasConversion<string>()
+                    .IsRequired();
+
+            // Relación con Movement
+            entity.HasOne(msc => msc.Movement)
+                    .WithMany(m => m.StatChanges)
+                    .HasForeignKey(msc => msc.MovementId)
+                    .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

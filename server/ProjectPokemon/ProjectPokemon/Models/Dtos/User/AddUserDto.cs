@@ -15,7 +15,7 @@ namespace ProjectPokemon.Models.Dtos.User {
         [StringLength(100, MinimumLength = 6, ErrorMessage = "La contraseña debe tener minimo 6 caracteres.")]
         public required string Password { get; set; } = null!;
 
-        public string? AvatarPath { get; set; }
+        public string? AvatarPath { get; set; } = null;
         public string? Biography { get; set; }
     }
 }

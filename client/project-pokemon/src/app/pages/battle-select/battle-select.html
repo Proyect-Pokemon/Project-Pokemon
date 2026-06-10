@@ -14,7 +14,7 @@
                 <button type="button" class="cancel-search-btn" (click)="cancelSearch($event)">Cancelar búsqueda</button>
             </div>
         } @else if (teams().length === 0) {
-            <p class="state-message">No tienes equipos creados. Crea uno en Team Builder para empezar.</p>
+            <p class="state-message">No tienes equipos creados. Crea uno en el Team Builder para empezar.</p>
         } @else {
             <div class="team-columns">
                 @for (team of teams(); track team.id) {
@@ -29,7 +29,7 @@
                             @for (slot of team.slots; track $index) {
                                 <div class="slot-item" [class.slot-empty]="slot.isEmpty">
                                     @if (slot.isEmpty) {
-                                        <span class="slot-empty-label">Hueco vacio</span>
+                                        <span class="slot-empty-label">Hueco vacío</span>
                                     } @else {
                                         <span class="slot-name">{{ slot.displayName }}</span>
                                         @if (slot.sprite) {
@@ -49,7 +49,7 @@
                 <section class="team-confirm-card" (click)="$event.stopPropagation()">
                     <header class="team-confirm-header">
                         <div>
-                            <span class="confirm-kicker">Confirmacion de equipo</span>
+                            <span class="confirm-kicker">Confirmación de equipo</span>
                             <h2>{{ selectedTeam()!.name }}</h2>
                             <p>Revisa el resumen del equipo antes de buscar combate.</p>
                         </div>
@@ -70,7 +70,7 @@
                             <article class="pokemon-card" [class.pokemon-card-empty]="slot.isEmpty">
                                 @if (slot.isEmpty) {
                                     <div class="pokemon-empty-state">
-                                        <span>Hueco vacio</span>
+                                        <span>Hueco vacío</span>
                                     </div>
                                 } @else {
                                     <div class="pokemon-card-top">

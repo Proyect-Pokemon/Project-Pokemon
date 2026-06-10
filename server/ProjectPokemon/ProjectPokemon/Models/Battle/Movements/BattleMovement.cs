@@ -1,4 +1,5 @@
 ﻿using ProjectPokemon.Enum;
+using ProjectPokemon.Models.Database.Entities;
 
 namespace ProjectPokemon.Models.Battle.Movements;
 
@@ -29,7 +30,10 @@ public abstract class BattleMovement : IMovement {
     public int AilmentChance { get; } // Probabilidad de que el movimiento cause el estado alterado al objetivo
     public string Category { get; }   // Categoría del movimiento: daño, estado, unico, etc.
 
-    protected BattleMovement(IMovement movement) : base() {
+    // Lista de cambios de estadísticas (cargados desde la base de datos)
+    public List<MovementStatChange> StatChanges { get; }
+
+    protected BattleMovement(Movement movement) : base() {
         // Copiar todas las propiedades del movimiento
         Id = movement.Id;
         Name = movement.Name;
@@ -55,6 +59,9 @@ public abstract class BattleMovement : IMovement {
         Ailment = movement.Ailment;
         AilmentChance = movement.AilmentChance;
         Category = movement.Category;
+
+        // Copiar los cambios de estadísticas
+        StatChanges = movement.StatChanges.ToList();
     }
 
     // Comprobar si el movimiento acierta
@@ -75,7 +82,7 @@ public abstract class BattleMovement : IMovement {
     }
 
     // Realizar el movimiento. Método abstracto que cada tipo de movimiento implementará diferente
-    public abstract void ExecuteMovement(PokemonBattle attacker, PokemonBattle defender);
+    public abstract MovementResult ExecuteMovement(PokemonBattle attacker, PokemonBattle defender);
 
     // Resta PP al movimiento
     public void ConsumePp() {
