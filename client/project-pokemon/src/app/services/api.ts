@@ -1,13 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
+import { environment } from '../enviroments/enviroment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ApiService {
 
-  private readonly BASE_URL = 'https://localhost:7277/api/';
+  private readonly BASE_URL = environment.apiUrl;
   private readonly http = inject(HttpClient);
 
   jwt: string | null = null;
