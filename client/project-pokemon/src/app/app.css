@@ -1,27 +1,4 @@
-header {
-    background-color: var(--secondary-color);
-    padding: 10px 30px;
-    text-align: right;
-}
-
-li {
-    display: inline-block;
-    margin-left: 20px;
-}
-
-a {
-    text-decoration: none;
-    padding: 5px;
-    color: var(--primary-color);
-    transition: 0.3s;
-}
-
-a:hover {
-    color: var(--secondary-color);
-    background-color: var(--action-color);
-    border-radius: 5px;
-}
-
+/* Layout */
 .page-content {
     flex: 1;
     display: flex;
@@ -35,4 +12,137 @@ footer {
     padding: 20px 0;
     width: 100%;
     margin: 0;
+}
+
+/* Navbar */
+header {
+    background-color: var(--secondary-color);
+    padding: 0 30px;
+    position: relative;
+}
+
+/* El menú desplegable móvil sí necesita z-index para salir por encima del contenido */
+
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+}
+
+.nav-brand {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.nav-brand-text {
+    color: var(--primary-color);
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+    opacity: 0.85;
+}
+
+/* Enlaces (escritorio) */
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links li {
+    display: inline-block;
+}
+
+.nav-links a {
+    display: block;
+    text-decoration: none;
+    padding: 6px 12px;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.92rem;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    background-color: var(--action-color);
+    color: var(--primary-color);
+}
+
+/* Botón de hamburguesa (oculto en escritorio) */
+.hamburger-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.hamburger-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.hamburger-icon {
+    width: 22px;
+    height: 22px;
+    filter: brightness(0) invert(1);
+    display: block;
+}
+
+.hamburger-close {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* Móvil */
+@media (max-width: 680px) {
+    header {
+        padding: 0 16px;
+    }
+
+    .hamburger-btn {
+        display: flex;
+    }
+
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 2px;
+        position: absolute;
+        top: 56px;
+        left: 0;
+        right: 0;
+        z-index: 150;
+        background-color: var(--secondary-color);
+        padding: 10px 16px 16px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-links.open {
+        display: flex;
+    }
+
+    .nav-links li {
+        display: block;
+    }
+
+    .nav-links a {
+        padding: 10px 14px;
+        font-size: 1rem;
+    }
 }

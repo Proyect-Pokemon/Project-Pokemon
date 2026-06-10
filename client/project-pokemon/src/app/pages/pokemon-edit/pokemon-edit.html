@@ -15,9 +15,12 @@
                 <div class="control-block">
                     <div class="option-row">
                         <span class="option-label">Shiny</span>
-                        <button class="toggle-btn" [class.active]="isShiny()" (click)="isShiny.set(!isShiny())">
-                            {{ isShiny() ? 'Si' : 'No' }}
-                        </button>
+                        <label class="switch">
+                            <input type="checkbox" [checked]="isShiny()" (change)="isShiny.set(!isShiny())" />
+                            <span class="switch-track">
+                                <span class="switch-thumb"></span>
+                            </span>
+                        </label>
                     </div>
 
                     <div class="option-row">

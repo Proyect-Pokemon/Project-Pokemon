@@ -28,10 +28,7 @@ export class PokemonMovesGrid {
 
     constructor() {
         effect(() => {
-            if (this.openPickerIndex() === null) {
-                return;
-            }
-
+            if (this.openPickerIndex() === null) return;
             setTimeout(() => {
                 this.pickerSearchInput?.nativeElement.focus();
             }, 0);
@@ -62,9 +59,9 @@ export class PokemonMovesGrid {
 
     getClassLabel(movementClass: string): string {
         const classMap: Record<string, string> = {
-            'Physical': 'Físico',
-            'Special': 'Especial',
-            'Status': 'Estado',
+            'Physical': 'Fís',
+            'Special': 'Esp',
+            'Status': 'Est',
         };
         return classMap[movementClass] ?? movementClass;
     }
@@ -91,7 +88,6 @@ export class PokemonMovesGrid {
             steel: 'Acero',
             fairy: 'Hada',
         };
-
         return typeMap[normalizedType] ?? type;
     }
 
@@ -104,47 +100,22 @@ export class PokemonMovesGrid {
     }
 
     private readonly TYPE_ICON_MAP: Record<string, string> = {
-        normal: 'normal',
-        fire: 'fire',
-        water: 'water',
-        electric: 'electric',
-        grass: 'leaf',
-        planta: 'leaf',
-        ice: 'ice',
-        fighting: 'fighting',
-        poison: 'poison',
-        ground: 'ground',
-        flying: 'flying',
-        psychic: 'psychic',
-        psiquico: 'psychic',
-        bug: 'bug',
-        rock: 'rock',
-        ghost: 'ghost',
-        dragon: 'dragon',
-        dark: 'dark',
-        steel: 'steel',
-        fairy: 'fairy',
+        normal: 'normal', fire: 'fire', water: 'water', electric: 'electric',
+        grass: 'leaf', planta: 'leaf', ice: 'ice', fighting: 'fighting',
+        poison: 'poison', ground: 'ground', flying: 'flying', psychic: 'psychic',
+        psiquico: 'psychic', bug: 'bug', rock: 'rock', ghost: 'ghost',
+        dragon: 'dragon', dark: 'dark', steel: 'steel', fairy: 'fairy',
     };
 
     private readonly TYPE_SEARCH_ALIASES: Record<string, string[]> = {
-        normal: ['normal'],
-        fire: ['fire', 'fuego'],
-        water: ['water', 'agua'],
-        electric: ['electric', 'electrico'],
-        grass: ['grass', 'planta'],
-        ice: ['ice', 'hielo'],
-        fighting: ['fighting', 'lucha'],
-        poison: ['poison', 'veneno'],
-        ground: ['ground', 'tierra'],
-        flying: ['flying', 'volador'],
-        psychic: ['psychic', 'psiquico'],
-        bug: ['bug', 'bicho'],
-        rock: ['rock', 'roca'],
-        ghost: ['ghost', 'fantasma'],
-        dragon: ['dragon', 'dragon'],
-        dark: ['dark', 'siniestro'],
-        steel: ['steel', 'acero'],
-        fairy: ['fairy', 'hada'],
+        normal: ['normal'], fire: ['fire', 'fuego'], water: ['water', 'agua'],
+        electric: ['electric', 'electrico'], grass: ['grass', 'planta'],
+        ice: ['ice', 'hielo'], fighting: ['fighting', 'lucha'],
+        poison: ['poison', 'veneno'], ground: ['ground', 'tierra'],
+        flying: ['flying', 'volador'], psychic: ['psychic', 'psiquico'],
+        bug: ['bug', 'bicho'], rock: ['rock', 'roca'], ghost: ['ghost', 'fantasma'],
+        dragon: ['dragon', 'dragon'], dark: ['dark', 'siniestro'],
+        steel: ['steel', 'acero'], fairy: ['fairy', 'hada'],
     };
 
     getTypeIconSrc(type: string): string {
@@ -156,7 +127,6 @@ export class PokemonMovesGrid {
     private getMovementSearchTokens(movement: Movement): string[] {
         const normalizedType = this.normalizeTypeKey(movement.type);
         const typeAliases = this.TYPE_SEARCH_ALIASES[normalizedType] ?? [normalizedType];
-
         return [
             this.normalizeSearchText(movement.name),
             this.normalizeSearchText(movement.type),
@@ -166,18 +136,10 @@ export class PokemonMovesGrid {
     }
 
     private normalizeSearchText(value: string): string {
-        return value
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .trim();
+        return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     }
 
     private normalizeTypeKey(type: string): string {
-        return type
-            ?.normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .trim();
+        return type?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     }
 }
