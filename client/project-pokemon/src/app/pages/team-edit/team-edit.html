@@ -16,7 +16,7 @@
         <!-- Main 3-column layout -->
         <div class="main-area">
 
-            <!-- ── Left: Stats panel ───────────────────────────────── -->
+            <!-- Left: Stats panel -->
             @if (selectedPokemonTeam()) {
             <div class="stats-panel card">
 
@@ -74,7 +74,7 @@
             </div>
             }
 
-            <!-- ── Center: Sprite area ────────────────────────────── -->
+            <!-- Center: Sprite area -->
             <div class="sprite-area">
                 <ng-container *ngIf="selectedPokemonTeam(); else emptySelectedSlot">
                     <div class="sprite-container">
@@ -168,7 +168,7 @@
                 </ng-template>
             </div>
 
-            <!-- ── Right: Moves panel ─────────────────────────────── -->
+            <!-- Right: Moves panel -->
             @if (selectedPokemonTeam()) {
             <div class="moves-panel card">
                 <h3 class="moves-title">Movimientos</h3>

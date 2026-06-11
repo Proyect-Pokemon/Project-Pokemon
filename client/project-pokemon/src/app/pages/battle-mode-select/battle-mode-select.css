@@ -124,3 +124,44 @@
     display: block;
     text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.3);
 }
+
+/* En móvil */
+@media (max-width: 480px) {
+    .battle-mode-selector {
+        padding: 1rem;
+        box-sizing: border-box;
+    }
+
+    .container {
+        width: 100%;
+    }
+
+    .title {
+        font-size: 1.2rem;
+        letter-spacing: 1px;
+        text-align: center;
+    }
+
+    .modes-container {
+        width: 100%;
+        padding: 0;
+        gap: 1rem;
+    }
+
+    .mode-button {
+        width: 100%;
+        min-height: 64px;
+        padding: 1rem;
+        font-size: 1rem;
+        letter-spacing: 1px;
+        border-radius: 18px 0 18px 0;
+        box-sizing: border-box;
+    }
+
+    .mode-cpu,
+    .mode-online,
+    .mode-friend {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
