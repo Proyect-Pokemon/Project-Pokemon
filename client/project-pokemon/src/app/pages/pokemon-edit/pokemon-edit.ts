@@ -52,21 +52,12 @@ export class PokemonEdit {
   spriteUrl = computed<string | null>(() => {
     const pokemon = this.selectedPokemon();
     if (!pokemon) return null;
-
     const isFemale = this.selectedSex() === 'H';
-
     if (this.isShiny()) {
-      if (isFemale && pokemon.spriteFrontFemShiny) {
-        return pokemon.spriteFrontFemShiny;
-      }
-
+      if (isFemale && pokemon.spriteFrontFemShiny) return pokemon.spriteFrontFemShiny;
       return pokemon.spriteFrontShiny ?? pokemon.spriteFront;
     }
-
-    if (isFemale && pokemon.spriteFrontFem) {
-      return pokemon.spriteFrontFem;
-    }
-
+    if (isFemale && pokemon.spriteFrontFem) return pokemon.spriteFrontFem;
     return pokemon.spriteFront;
   });
 
@@ -101,7 +92,9 @@ export class PokemonEdit {
       this.natureService.getAllNatures(),
     ]);
 
-    const dto = allPokemonTeams.find((pt: GetAllPokemonTeamDto) => pt.id === pokemonTeamId && pt.teamId === teamId);
+    const dto = allPokemonTeams.find(
+      (pt: GetAllPokemonTeamDto) => pt.id === pokemonTeamId && pt.teamId === teamId
+    );
 
     if (!dto) {
       this.router.navigate(['/team-builder', teamId]);
@@ -127,7 +120,6 @@ export class PokemonEdit {
 
     this.pokemonTeam.set(mapped);
     this.allMovements.set(movements);
-
     this.selectedNatureId.set(mapped.natureId || 1);
     this.selectedSex.set(mapped.sex === 'M' || mapped.sex === 'H' ? mapped.sex : null);
     this.isShiny.set(mapped.shiny);
@@ -145,10 +137,9 @@ export class PokemonEdit {
     this.selectedNatureId.set(nature.id);
   }
 
-  onMovementChanged(change: { index: number; movementId: number | null }) {
-    const next = [...this.movementIds()];
-    next[change.index] = change.movementId;
-    this.movementIds.set(next);
+  // Recibe el array completo ya deduplicado y compactado desde el componente hijo
+  onMovementsChanged(ids: (number | null)[]): void {
+    this.movementIds.set(ids);
   }
 
   setSex(value: 'M' | 'H' | null) {
@@ -157,9 +148,7 @@ export class PokemonEdit {
 
   async savePokemonSettings() {
     const current = this.pokemonTeam();
-    if (!current || this.isSaving()) {
-      return;
-    }
+    if (!current || this.isSaving()) return;
 
     const ids = this.movementIds();
     const movementId1 = ids[0] ?? 1;
@@ -167,36 +156,30 @@ export class PokemonEdit {
     this.isSaving.set(true);
     this.saveMessage.set(null);
 
-  try {
-    await this.pokemonTeamService.updatePokemonTeam(current.id, {
-      nickname: current.nickname,
-      shiny: this.isShiny(),
-      sex: this.selectedSex(),
-      slot: current.slot,
-      teamId: current.teamId,
-      pokemonId: current.pokemonId,
-      natureId: this.selectedNatureId(),
-      movementId1,
-      movementId2: ids[1],
-      movementId3: ids[2],
-      movementId4: ids[3],
-    });
+    try {
+      await this.pokemonTeamService.updatePokemonTeam(current.id, {
+        nickname: current.nickname,
+        shiny: this.isShiny(),
+        sex: this.selectedSex(),
+        slot: current.slot,
+        teamId: current.teamId,
+        pokemonId: current.pokemonId,
+        natureId: this.selectedNatureId(),
+        movementId1,
+        movementId2: ids[1],
+        movementId3: ids[2],
+        movementId4: ids[3],
+      });
 
-    this.router.navigate(['/team-builder', current.teamId], {
-      queryParams: { slot: current.slot },
-    });
-
+      this.router.navigate(['/team-builder', current.teamId], {
+        queryParams: { slot: current.slot },
+      });
     } catch (error) {
       this.saveMessage.set('No se pudieron guardar los cambios.');
       console.error(error);
-
     } finally {
       this.isSaving.set(false);
     }
-
-    this.router.navigate(['/team-builder', current.teamId], {
-      queryParams: { slot: current.slot },
-    });
   }
 
   goBack() {

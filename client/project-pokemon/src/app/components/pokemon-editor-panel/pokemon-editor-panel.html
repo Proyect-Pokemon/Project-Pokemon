@@ -33,7 +33,7 @@
             <app-pokemon-moves-grid
                 [movements]="movements()"
                 [allMovements]="allMovementsCache()"
-                (movementChanged)="onMovementChanged($event)">
+                (movementsChanged)="onMovementsChanged($event)">
             </app-pokemon-moves-grid>
         } @else {
             <div class="empty-pokemon-preview" aria-label="Slot vacío">
