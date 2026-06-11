@@ -12,6 +12,8 @@ import { Nature } from '../../models/nature';
 import { PokemonMovesGrid } from '../../components/pokemon-editor-panel/pokemon-moves-grid/pokemon-moves-grid';
 import { PokemonNatureSelector } from '../../components/pokemon-editor-panel/pokemon-nature-selector/pokemon-nature-selector';
 
+const MAX_NICKNAME_LENGTH = 12;
+
 @Component({
   selector: 'app-pokemon-edit',
   standalone: true,
@@ -27,6 +29,8 @@ export class PokemonEdit {
   private movementService = inject(MovementService);
   private natureService = inject(NatureService);
 
+  readonly MAX_NICKNAME_LENGTH = MAX_NICKNAME_LENGTH;
+
   teamId = signal<number | null>(null);
   pokemonTeam = signal<PokemonTeam | null>(null);
   allMovements = signal<Movement[]>([]);
@@ -39,6 +43,12 @@ export class PokemonEdit {
   selectedSex = signal<'M' | 'H' | null>(null);
   isShiny = signal(false);
   movementIds = signal<(number | null)[]>([null, null, null, null]);
+
+  // Nickname
+  nicknameModalOpen = signal(false);
+  nicknameDraft = signal('');
+  nicknameSaving = signal(false);
+  nicknameError = signal('');
 
   selectedPokemon = computed<Pokemon | null>(() => this.pokemonTeam()?.pokemon ?? null);
 
@@ -137,7 +147,6 @@ export class PokemonEdit {
     this.selectedNatureId.set(nature.id);
   }
 
-  // Recibe el array completo ya deduplicado y compactado desde el componente hijo
   onMovementsChanged(ids: (number | null)[]): void {
     this.movementIds.set(ids);
   }
@@ -145,6 +154,49 @@ export class PokemonEdit {
   setSex(value: 'M' | 'H' | null) {
     this.selectedSex.set(value);
   }
+
+  // ── Nickname ────────────────────────────────────────────────────────────
+
+  openNicknameModal(): void {
+    this.nicknameDraft.set(this.pokemonTeam()?.nickname ?? '');
+    this.nicknameError.set('');
+    this.nicknameModalOpen.set(true);
+  }
+
+  closeNicknameModal(): void {
+    if (this.nicknameSaving()) return;
+    this.nicknameModalOpen.set(false);
+    this.nicknameError.set('');
+  }
+
+  onNicknameDraftInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value.substring(0, MAX_NICKNAME_LENGTH);
+    (event.target as HTMLInputElement).value = value;
+    this.nicknameDraft.set(value);
+  }
+
+  async saveNickname(): Promise<void> {
+    const current = this.pokemonTeam();
+    if (!current || this.nicknameSaving()) return;
+
+    const nickname = this.nicknameDraft().trim() || null;
+
+    this.nicknameSaving.set(true);
+    this.nicknameError.set('');
+
+    try {
+      await this.pokemonTeamService.updateNickname(current.id, { nickname });
+      // Actualizar el estado local sin recargar
+      this.pokemonTeam.set({ ...current, nickname });
+      this.nicknameModalOpen.set(false);
+    } catch {
+      this.nicknameError.set('No se pudo guardar el apodo. Inténtalo de nuevo.');
+    } finally {
+      this.nicknameSaving.set(false);
+    }
+  }
+
+  // ── Guardar todo ─────────────────────────────────────────────────────────
 
   async savePokemonSettings() {
     const current = this.pokemonTeam();
@@ -174,9 +226,8 @@ export class PokemonEdit {
       this.router.navigate(['/team-builder', current.teamId], {
         queryParams: { slot: current.slot },
       });
-    } catch (error) {
+    } catch {
       this.saveMessage.set('No se pudieron guardar los cambios.');
-      console.error(error);
     } finally {
       this.isSaving.set(false);
     }
