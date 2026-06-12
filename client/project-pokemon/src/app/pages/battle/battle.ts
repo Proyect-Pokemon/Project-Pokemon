@@ -757,7 +757,7 @@ export class Battle {
 
   private showStatStageIndicator(side: BattleSideKey, event: any): void {
     const rawStat = String(event?.stat ?? event?.Stat ?? '');
-    const statKey = this.normalizeName(rawStat);
+    const statKey = this.normalizeName(rawStat).replace(/[\s_\-]/g, '');
     if (!statKey) return;
 
     const newStage = Number(event?.newStage ?? event?.NewStage ?? NaN);

@@ -163,7 +163,7 @@
 .stat-hp-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 8px;
     flex-wrap: wrap;
 }
@@ -173,6 +173,13 @@
     flex-wrap: wrap;
     gap: 4px;
     flex: 1;
+    justify-content: flex-start;
+}
+
+/* El HP siempre a la derecha, los chips crecen hacia la izquierda */
+.hp-display {
+    flex-shrink: 0;
+    margin-left: auto;
 }
 
 .stat-chip {
