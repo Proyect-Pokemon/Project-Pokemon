@@ -25,6 +25,7 @@ interface BattleStateEventPayload {
   }>;
   requiresSwitchSelection: boolean;
   availableSlotsForSwitch: number[];
+  opponentRequiresSwitch: boolean;
   winnerUserId: number | null;
 }
 
@@ -140,6 +141,7 @@ export class Battle {
           replaySteps,
           requiresSwitchSelection: battleEvent.requiresSwitchSelection ?? false,
           availableSlotsForSwitch: (battleEvent.availableSlotsForSwitch ?? []).filter((slot: unknown) => Number.isInteger(slot)) as number[],
+          opponentRequiresSwitch: battleEvent.opponentRequiresSwitch ?? false,
           winnerUserId: battleEvent.winnerUserId ?? null,
         });
         return;
@@ -148,6 +150,11 @@ export class Battle {
       this.applySnapshotToView(battleEvent.battle);
       this.syncActivePokemonAfterFaint(battleEvent.battle);
       this.applyBattleEventState(battleEvent, false);
+      // Si el rival necesita elegir switch, bloquear acciones hasta que lo haga
+      if (battleEvent.opponentRequiresSwitch) {
+        this.isWaitingForOpponent.set(true);
+        this.attacksDisabled.set(true);
+      }
     });
   }
 
@@ -442,7 +449,9 @@ export class Battle {
       } finally {
         if (!this.isDestroyed) {
           this.applySnapshotToView(event.battle);
-          this.applyBattleEventState(event, replayIsWaitingForOpponent);
+          // Si el rival necesita switch, la reproducción termina pero seguimos esperando
+          const waitingAfterPlayback = replayIsWaitingForOpponent || (event.opponentRequiresSwitch ?? false);
+          this.applyBattleEventState(event, waitingAfterPlayback);
         }
       }
     });
@@ -476,8 +485,11 @@ export class Battle {
       return;
     }
 
-    this.isWaitingForOpponent.set(waitingForOpponent);
-    this.attacksDisabled.set(waitingForOpponent);
+    // Si el rival aún necesita elegir Pokémon, mantener bloqueado aunque el turno se haya resuelto
+    const opponentStillSwitching = (event as any).opponentRequiresSwitch ?? false;
+    const effectiveWaiting = waitingForOpponent || opponentStillSwitching;
+    this.isWaitingForOpponent.set(effectiveWaiting);
+    this.attacksDisabled.set(effectiveWaiting);
 
     this.actionPanel.set('root');
   }

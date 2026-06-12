@@ -31,14 +31,14 @@ public class BattleActionRequest : BattleMessage {
 public class BattleStateUpdate : BattleMessage {
     public required BattleSnapshot Battle { get; set; }
 
-    /// <summary>
-    /// Lista ordenada de pasos de replay para reproducción determinista del turno.
-    /// Cada step contiene mensaje(s) + evento(s) + metadata en orden de ejecución.
-    /// Frontend debe consumir esta lista para reproducir el turno paso a paso.
-    /// </summary>
+    // Lista ordenada de pasos de replay para reproducción determinista del turno.
+    // Cada step contiene mensaje(s) + evento(s) + metadata en orden de ejecución.
+    // Frontend debe consumir esta lista para reproducir el turno paso a paso.
     public List<ReplayStep> ReplaySteps { get; set; } = new();
 
     public bool RequiresSwitch { get; set; } = false;
+    // true cuando el RIVAL (no el receptor) necesita elegir Pokémon de reemplazo
+    public bool OpponentRequiresSwitch { get; set; } = false;
     public int? WinnerUserId { get; set; }
 }
 

@@ -19,6 +19,7 @@ export interface BattleStateEvent {
   }>;
   requiresSwitchSelection: boolean;
   availableSlotsForSwitch: number[];
+  opponentRequiresSwitch: boolean;
   winnerUserId: number | null;
 }
 
@@ -133,6 +134,7 @@ export class SocketService {
       replaySteps: message.replaySteps ?? [],
       requiresSwitchSelection: message.requiresSwitchSelection ?? message.requiresSwitch ?? false,
       availableSlotsForSwitch: message.availableSlotsForSwitch ?? [],
+      opponentRequiresSwitch: message.opponentRequiresSwitch ?? false,
       winnerUserId: message.winnerUserId ?? null,
     });
   }

@@ -206,8 +206,8 @@ public class BattleService {
                 battle.PendingActionsByUserId.Clear();
 
                 // Obtener nombre del jugador que se rindió
-                string forfeitPlayerName = userId == battle.PlayerUserId 
-                    ? (battle.PlayerUserName ?? "Jugador") 
+                string forfeitPlayerName = userId == battle.PlayerUserId
+                    ? (battle.PlayerUserName ?? "Jugador")
                     : (battle.Player2UserName ?? "Jugador");
                 string forfeitMessage = $"{forfeitPlayerName} se rindió.";
 
@@ -266,6 +266,54 @@ public class BattleService {
                     }
                 }
 
+                // Switch forzoso completado. Si el rival ya había enviado su acción
+                // mientras esperaba, y nosotros ya no necesitamos más switches,
+                // resolver el turno ahora en lugar de esperar otra ronda.
+                if (!stillRequiresSwitch
+                    && opponentUserId.HasValue
+                    && !battle.RequiredSwitchByUserId.Contains(opponentUserId.Value)
+                    && battle.PendingActionsByUserId.ContainsKey(opponentUserId.Value)) {
+
+                    int p2UserIdAfterSwitch = battle.Player2UserId ?? opponentUserId.Value;
+                    if (battle.PendingActionsByUserId.TryGetValue(battle.PlayerUserId, out PendingBattleAction? actionP1AfterSwitch)
+                        && battle.PendingActionsByUserId.TryGetValue(p2UserIdAfterSwitch, out PendingBattleAction? actionP2AfterSwitch)) {
+
+                        var turnAfterSwitch = ResolveSimultaneousTurn(battle, actionP1AfterSwitch, actionP2AfterSwitch, battle.PlayerUserId, p2UserIdAfterSwitch);
+                        battle.PendingActionsByUserId.Clear();
+                        battle.Turn++;
+
+                        // Fusionar los steps del switch con los del turno resuelto
+                        var allSteps = switchResult.StepBuilder.Build();
+                        int nextIndex = allSteps.Count;
+                        foreach (var step in turnAfterSwitch.StepBuilder.Build()) {
+                            step.StepIndex = nextIndex++;
+                            allSteps.Add(step);
+                        }
+
+                        bool requiresSwitchAfter = battle.RequiredSwitchByUserId.Contains(userId);
+                        List<int> slotsAfter = new List<int>();
+                        if (requiresSwitchAfter) {
+                            var sideAfter = battle.GetSideForUser(userId);
+                            if (sideAfter != null) {
+                                for (int i = 0; i < sideAfter.Team.Count; i++) {
+                                    if (i != sideAfter.ActiveSlot && !sideAfter.Team[i].IsFainted()) {
+                                        slotsAfter.Add(i);
+                                    }
+                                }
+                            }
+                        }
+
+                        return new SubmitBattleActionResult {
+                            Accepted = true,
+                            TurnResolved = true,
+                            ReplaySteps = allSteps,
+                            WinnerUserId = battle.WinnerUserId,
+                            RequiresSwitchSelection = requiresSwitchAfter,
+                            AvailableSlotsForSwitch = slotsAfter
+                        };
+                    }
+                }
+
                 return new SubmitBattleActionResult {
                     Accepted = true,
                     TurnResolved = false,
@@ -273,6 +321,17 @@ public class BattleService {
                     WinnerUserId = battle.WinnerUserId,
                     RequiresSwitchSelection = stillRequiresSwitch,
                     AvailableSlotsForSwitch = availableSwitchSlots
+                };
+            }
+
+            // Si el rival tiene un cambio forzoso pendiente, bloquear hasta que lo complete.
+            // El jugador ha elegido su acción pero el turno no puede resolverse aún.
+            if (battle.RequiredSwitchByUserId.Contains(opponentUserId.Value)) {
+                return new SubmitBattleActionResult {
+                    Accepted = true,
+                    TurnResolved = false,
+                    ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = "Acción recibida. Esperando a que el rival elija su siguiente Pokémon..." } },
+                    WinnerUserId = battle.WinnerUserId
                 };
             }
 
@@ -338,8 +397,8 @@ public class BattleService {
 
     // Métodos auxiliares para crear identificadores de Pokémon
     private Networking.Messages.Battle.PokemonIdentifier CreatePokemonIdentifier(
-        BattleSession battle, 
-        int userId, 
+        BattleSession battle,
+        int userId,
         Models.Battle.PokemonBattle pokemon) {
 
         bool isPlayer = battle.PlayerUserId == userId;
@@ -382,12 +441,12 @@ public class BattleService {
 
         if (change > 0) {
             // Aumento
-            return absChange >= 2 
+            return absChange >= 2
                 ? $"{statNameEs} de {pokemonName} ha subido mucho."
                 : $"{statNameEs} de {pokemonName} ha subido.";
         } else {
             // Reducción
-            return absChange >= 2 
+            return absChange >= 2
                 ? $"{statNameEs} de {pokemonName} ha bajado mucho."
                 : $"{statNameEs} de {pokemonName} ha bajado.";
         }
@@ -395,8 +454,8 @@ public class BattleService {
 
     // Helper para crear args basicos de actor
     private Dictionary<string, object> CreateActorArgs(
-        BattleSession battle, 
-        int userId, 
+        BattleSession battle,
+        int userId,
         Models.Battle.PokemonBattle pokemon) {
 
         return new Dictionary<string, object> {
@@ -756,8 +815,9 @@ public class BattleService {
 
             // Legacy
             result.StepBuilder.AddMessageStep(errorMsg);
-            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = errorMsg
-             });
+            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent {
+                Message = errorMsg
+            });
 
             // ReplayStep
             result.StepBuilder.AddStep(
@@ -810,8 +870,9 @@ public class BattleService {
         if (attacker.IsFainted()) {
             string msg = $"{attacker.GetDisplayName()} está debilitado y no puede atacar.";
             result.StepBuilder.AddMessageStep(msg);
-            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = msg
-             });
+            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent {
+                Message = msg
+            });
             return;
         }
 
@@ -909,8 +970,9 @@ public class BattleService {
         if (selectedMove == null || !selectedMove.HasPpAvailable()) {
             string msg = $"{attacker.GetDisplayName()} no pudo usar el movimiento.";
             result.StepBuilder.AddMessageStep(msg);
-            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = msg
-             });
+            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent {
+                Message = msg
+            });
             return;
         }
 
@@ -948,8 +1010,9 @@ public class BattleService {
             var noPpArgs = CreateActorArgs(battle, userId, attacker);
             result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.OutOfPp, noPpArgs));
 
-            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = noPpMsg
-             });
+            result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent {
+                Message = noPpMsg
+            });
             return;
         }
 
@@ -1022,14 +1085,14 @@ public class BattleService {
             bool damageReduced = false;
 
             // Light Screen: protege contra ataques especiales
-            if (rivalSide.LightScreenTurnsRemaining > 0 && 
+            if (rivalSide.LightScreenTurnsRemaining > 0 &&
                 selectedMove.MovementClass == Enum.MovementClass.Special) {
                 damage = damage / 2;
                 damageReduced = true;
             }
 
             // Reflect: protege contra ataques físicos
-            if (rivalSide.ReflectTurnsRemaining > 0 && 
+            if (rivalSide.ReflectTurnsRemaining > 0 &&
                 selectedMove.MovementClass == Enum.MovementClass.Physical) {
                 damage = damage / 2;
                 damageReduced = true;
@@ -1119,8 +1182,9 @@ public class BattleService {
                         result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.StatProtected, mistArgs));
                     }
 
-                    result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = mistBlockMsg
-                     });
+                    result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent {
+                        Message = mistBlockMsg
+                    });
 
                     // Actualizar la lista para no registrar el cambio
                     // (el cambio fue bloqueado)
@@ -1270,7 +1334,7 @@ public class BattleService {
 
                 // Emitir eventos de cambio de estadísticas del defensor si ocurrieron
                 foreach (var (stat, change, newStage) in defenderStatChanges) {
-                    string statMsg = change > 0 
+                    string statMsg = change > 0
                         ? $"{defender.GetDisplayName()} aumenta {stat} en {change}."
                         : $"{defender.GetDisplayName()} reduce {stat} en {Math.Abs(change)}.";
                     result.StepBuilder.AddMessageStep(statMsg);
@@ -1359,8 +1423,9 @@ public class BattleService {
                 var seededArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
                 result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.Seeded, seededArgs));
 
-                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = seededMsg
-                 });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent {
+                    Message = seededMsg
+                });
             }
             // Inmunidad a Drenadoras (tipo Planta)
             else if (movementResult.ImmuneToSeeded && rivalUserId.HasValue) {
@@ -1370,8 +1435,9 @@ public class BattleService {
                 var immuneArgs = CreateActorTargetArgs(battle, userId, attacker, rivalUserId.Value, defender);
                 result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.NoEffect, immuneArgs));
 
-                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = immuneMsg
-                 });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent {
+                    Message = immuneMsg
+                });
             }
 
             // Caso especial: Haze (ID 114) resetea todas las características
@@ -1383,8 +1449,9 @@ public class BattleService {
                 // Mensaje estructurado para reset de stats
                 result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.StatsReset, new Dictionary<string, object>()));
 
-                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = hazeMsg
-                 });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent {
+                    Message = hazeMsg
+                });
             }
             // Para otros movimientos, emitir eventos individuales de cambio de estadísticas
             else {
@@ -1473,8 +1540,9 @@ public class BattleService {
                 };
                 result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.MistStart, mistArgs));
 
-                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = mistMsg
-                 });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent {
+                    Message = mistMsg
+                });
             }
             // Light Screen (ID 113): Reduce el daño de ataques especiales enemigos a la mitad durante 5 turnos
             else if (selectedMove.Id == 113) {
@@ -1489,8 +1557,9 @@ public class BattleService {
                 };
                 result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.LightScreenStart, lightScreenArgs));
 
-                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = lightScreenMsg
-                 });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent {
+                    Message = lightScreenMsg
+                });
             }
             // Reflect (ID 115): Reduce el daño de ataques físicos enemigos a la mitad durante 5 turnos
             else if (selectedMove.Id == 115) {
@@ -1505,8 +1574,9 @@ public class BattleService {
                 };
                 result.StepBuilder.AddStructuredStep(null, BattleMessageBuilder.Create(BattleMessageCode.ReflectStart, reflectArgs));
 
-                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent { Message = reflectMsg
-                 });
+                result.StepBuilder.AddEventToLastStep(new Networking.Messages.Battle.MessageEvent {
+                    Message = reflectMsg
+                });
             }
         }
 
