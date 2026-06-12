@@ -11,9 +11,12 @@ import { Movement } from '../../../models/move';
 })
 export class PokemonMovesGrid {
     @ViewChild('pickerSearchInput') pickerSearchInput?: ElementRef<HTMLInputElement>;
+
     @Input() movements: (Movement | null)[] = [null, null, null, null];
     @Input() allMovements: Movement[] = [];
-    @Output() movementChanged = new EventEmitter<{ index: number; movementId: number | null }>();
+
+    // Ahora emite el array completo de 4 ids tras aplicar deduplicación y compactación
+    @Output() movementsChanged = new EventEmitter<(number | null)[]>();
 
     openPickerIndex = signal<number | null>(null);
     pickerSearchQuery = signal('');
@@ -28,13 +31,8 @@ export class PokemonMovesGrid {
 
     constructor() {
         effect(() => {
-            if (this.openPickerIndex() === null) {
-                return;
-            }
-
-            setTimeout(() => {
-                this.pickerSearchInput?.nativeElement.focus();
-            }, 0);
+            if (this.openPickerIndex() === null) return;
+            setTimeout(() => this.pickerSearchInput?.nativeElement.focus(), 0);
         });
     }
 
@@ -46,7 +44,31 @@ export class PokemonMovesGrid {
     onSelectMovement(movement: Movement | null): void {
         const index = this.openPickerIndex();
         if (index === null) return;
-        this.movementChanged.emit({ index, movementId: movement?.id ?? null });
+
+        // Array actual de ids (null = vacío)
+        const current = this.movements.map((m) => m?.id ?? null);
+        const next: (number | null)[] = [...current];
+
+        if (movement === null) {
+            // Quitar movimiento del slot
+            next[index] = null;
+        } else {
+            // Si el movimiento ya existe en otro slot, lo quitamos de allí
+            const existingSlot = next.findIndex((id) => id === movement.id);
+            if (existingSlot !== -1 && existingSlot !== index) {
+                next[existingSlot] = null;
+            }
+            next[index] = movement.id;
+        }
+
+        // Compactar: mover los no-nulos al frente, rellenar el resto con null
+        const filled = next.filter((id): id is number => id !== null);
+        const compacted: (number | null)[] = [
+            ...filled,
+            ...Array(4 - filled.length).fill(null),
+        ];
+
+        this.movementsChanged.emit(compacted);
         this.openPickerIndex.set(null);
         this.pickerSearchQuery.set('');
     }
@@ -62,9 +84,9 @@ export class PokemonMovesGrid {
 
     getClassLabel(movementClass: string): string {
         const classMap: Record<string, string> = {
-            'Physical': 'Físico',
-            'Special': 'Especial',
-            'Status': 'Estado',
+            'Physical': 'Fís',
+            'Special': 'Esp',
+            'Status': 'Est',
         };
         return classMap[movementClass] ?? movementClass;
     }
@@ -72,26 +94,12 @@ export class PokemonMovesGrid {
     getTypeLabel(type: string): string {
         const normalizedType = this.normalizeTypeKey(type);
         const typeMap: Record<string, string> = {
-            normal: 'Normal',
-            fire: 'Fuego',
-            water: 'Agua',
-            electric: 'Eléctrico',
-            grass: 'Planta',
-            ice: 'Hielo',
-            fighting: 'Lucha',
-            poison: 'Veneno',
-            ground: 'Tierra',
-            flying: 'Volador',
-            psychic: 'Psíquico',
-            bug: 'Bicho',
-            rock: 'Roca',
-            ghost: 'Fantasma',
-            dragon: 'Dragón',
-            dark: 'Siniestro',
-            steel: 'Acero',
-            fairy: 'Hada',
+            normal: 'Normal', fire: 'Fuego', water: 'Agua', electric: 'Eléctrico',
+            grass: 'Planta', ice: 'Hielo', fighting: 'Lucha', poison: 'Veneno',
+            ground: 'Tierra', flying: 'Volador', psychic: 'Psíquico', bug: 'Bicho',
+            rock: 'Roca', ghost: 'Fantasma', dragon: 'Dragón', dark: 'Siniestro',
+            steel: 'Acero', fairy: 'Hada',
         };
-
         return typeMap[normalizedType] ?? type;
     }
 
@@ -104,47 +112,22 @@ export class PokemonMovesGrid {
     }
 
     private readonly TYPE_ICON_MAP: Record<string, string> = {
-        normal: 'normal',
-        fire: 'fire',
-        water: 'water',
-        electric: 'electric',
-        grass: 'leaf',
-        planta: 'leaf',
-        ice: 'ice',
-        fighting: 'fighting',
-        poison: 'poison',
-        ground: 'ground',
-        flying: 'flying',
-        psychic: 'psychic',
-        psiquico: 'psychic',
-        bug: 'bug',
-        rock: 'rock',
-        ghost: 'ghost',
-        dragon: 'dragon',
-        dark: 'dark',
-        steel: 'steel',
-        fairy: 'fairy',
+        normal: 'normal', fire: 'fire', water: 'water', electric: 'electric',
+        grass: 'leaf', planta: 'leaf', ice: 'ice', fighting: 'fighting',
+        poison: 'poison', ground: 'ground', flying: 'flying', psychic: 'psychic',
+        psiquico: 'psychic', bug: 'bug', rock: 'rock', ghost: 'ghost',
+        dragon: 'dragon', dark: 'dark', steel: 'steel', fairy: 'fairy',
     };
 
     private readonly TYPE_SEARCH_ALIASES: Record<string, string[]> = {
-        normal: ['normal'],
-        fire: ['fire', 'fuego'],
-        water: ['water', 'agua'],
-        electric: ['electric', 'electrico'],
-        grass: ['grass', 'planta'],
-        ice: ['ice', 'hielo'],
-        fighting: ['fighting', 'lucha'],
-        poison: ['poison', 'veneno'],
-        ground: ['ground', 'tierra'],
-        flying: ['flying', 'volador'],
-        psychic: ['psychic', 'psiquico'],
-        bug: ['bug', 'bicho'],
-        rock: ['rock', 'roca'],
-        ghost: ['ghost', 'fantasma'],
-        dragon: ['dragon', 'dragon'],
-        dark: ['dark', 'siniestro'],
-        steel: ['steel', 'acero'],
-        fairy: ['fairy', 'hada'],
+        normal: ['normal'], fire: ['fire', 'fuego'], water: ['water', 'agua'],
+        electric: ['electric', 'electrico'], grass: ['grass', 'planta'],
+        ice: ['ice', 'hielo'], fighting: ['fighting', 'lucha'],
+        poison: ['poison', 'veneno'], ground: ['ground', 'tierra'],
+        flying: ['flying', 'volador'], psychic: ['psychic', 'psiquico'],
+        bug: ['bug', 'bicho'], rock: ['rock', 'roca'], ghost: ['ghost', 'fantasma'],
+        dragon: ['dragon', 'dragon'], dark: ['dark', 'siniestro'],
+        steel: ['steel', 'acero'], fairy: ['fairy', 'hada'],
     };
 
     getTypeIconSrc(type: string): string {
@@ -156,7 +139,6 @@ export class PokemonMovesGrid {
     private getMovementSearchTokens(movement: Movement): string[] {
         const normalizedType = this.normalizeTypeKey(movement.type);
         const typeAliases = this.TYPE_SEARCH_ALIASES[normalizedType] ?? [normalizedType];
-
         return [
             this.normalizeSearchText(movement.name),
             this.normalizeSearchText(movement.type),
@@ -166,18 +148,10 @@ export class PokemonMovesGrid {
     }
 
     private normalizeSearchText(value: string): string {
-        return value
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .trim();
+        return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     }
 
     private normalizeTypeKey(type: string): string {
-        return type
-            ?.normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .trim();
+        return type?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     }
 }

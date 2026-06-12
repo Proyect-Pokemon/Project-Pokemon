@@ -251,8 +251,9 @@ public class PokemonTeamController : ControllerBase {
             return NotFound();
         }
         pokemonteam.Shiny = dto.Shiny;
-        pokemonteam.NatureId = dto.NatureId;
         pokemonteam.Sex = dto.Sex;
+        pokemonteam.Slot = dto.Slot;
+        pokemonteam.NatureId = dto.NatureId;
         pokemonteam.MovementId1 = dto.MovementId1;
         pokemonteam.MovementId2 = dto.MovementId2;
         pokemonteam.MovementId3 = dto.MovementId3;

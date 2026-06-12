@@ -1,15 +1,31 @@
 <header>
-    <nav>
-        <ul>
+    <nav class="navbar">
+        <a routerLink="/" class="nav-brand">
+            <span class="nav-brand-text">Project Pokémon</span>
+        </a>
+
+        <button
+            class="hamburger-btn"
+            [class.open]="menuOpen()"
+            (click)="toggleMenu()"
+            aria-label="Abrir menú"
+        >
+            @if (menuOpen()) {
+                <span class="hamburger-close">✕</span>
+            } @else {
+                <img src="/assets/icons/UI/menu-hamburguesa.svg" alt="Menú" class="hamburger-icon" />
+            }
+        </button>
+
+        <ul class="nav-links" [class.open]="menuOpen()" (click)="closeMenu()">
             @if (isAuthenticated()) {
                 <li><a routerLink="/battle">Combate</a></li>
             }
             <li><a routerLink="/about">Sobre nosotros</a></li>
             @if (isAuthenticated()) {
                 <li><a routerLink="/team-builder">Equipos</a></li>
-                <li><a routerLink="/friends">Amigos</a></li>
                 @if (isAdmin()) {
-                    <li><a routerLink="/admin-panel">Panel de administración</a></li>
+                    <li><a routerLink="/admin-panel">Administración</a></li>
                 }
                 <li><a routerLink="/profile">Perfil</a></li>
             } @else {

@@ -21,7 +21,7 @@
 .team-selector {
     width: min(1220px, 96%);
     margin: 0 auto;
-    padding: 1rem 0.75rem 1.25rem 0.75rem;
+    padding: 1rem 0 1.25rem 0;
     position: relative;
 }
 

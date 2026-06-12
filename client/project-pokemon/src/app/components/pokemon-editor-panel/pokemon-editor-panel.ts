@@ -122,13 +122,14 @@ export class PokemonEditorPanel {
         this.selectedNature.set(nature);
     }
 
-    onMovementChanged(data: { index: number; movementId: number | null }): void {
-        const ids = [...this.movementIdsSignal()];
-        ids[data.index] = data.movementId;
+    onMovementsChanged(ids: (number | null)[]): void {
         this.movementIdsSignal.set(ids);
 
         if (this.pokemonTeamId !== null) {
-            this.movementsUpdated.emit({ pokemonTeamId: this.pokemonTeamId, movementIds: ids });
+            this.movementsUpdated.emit({
+                pokemonTeamId: this.pokemonTeamId,
+                movementIds: ids,
+            });
         }
     }
 
