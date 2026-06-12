@@ -223,6 +223,7 @@ public class Network {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle, userId.Value),
                 ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, userId.Value),
+                TurnResolved = false,
                 RequiresSwitch = result.RequiresSwitchSelection,
                 WinnerUserId = battle.WinnerUserId
             });
@@ -252,6 +253,7 @@ public class Network {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle, userId.Value),
                 ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, userId.Value),
+                TurnResolved = false,
                 RequiresSwitch = result.RequiresSwitchSelection,
                 OpponentRequiresSwitch = opponentId.HasValue && battle.RequiredSwitchByUserId.Contains(opponentId.Value),
                 WinnerUserId = battle.WinnerUserId
@@ -269,6 +271,7 @@ public class Network {
                             Action = actionRequest.Action,
                             Battle = CreateBattleSnapshot(battle, perspectiveUserId),
                             ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, perspectiveUserId),
+                            TurnResolved = false,
                             RequiresSwitch = opponentStillNeedsSwitch,
                             OpponentRequiresSwitch = battle.RequiredSwitchByUserId.Contains(userId.Value),
                             WinnerUserId = battle.WinnerUserId
@@ -319,6 +322,7 @@ public class Network {
                         Action = actionRequest.Action,
                         Battle = CreateBattleSnapshot(battle, perspectiveUserId),
                         ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, perspectiveUserId),
+                        TurnResolved = true,
                         RequiresSwitch = requiresSwitchForThisClient,
                         OpponentRequiresSwitch = opponentRequiresSwitchForThisClient,
                         WinnerUserId = battle.WinnerUserId
@@ -461,6 +465,7 @@ public class Network {
                         Message = "¡La batalla comienza!"
                     }
                 },
+                TurnResolved = true,
                 RequiresSwitch = false,
                 WinnerUserId = null
             };
@@ -474,6 +479,7 @@ public class Network {
                         Message = "¡La batalla comienza!"
                     }
                 },
+                TurnResolved = true,
                 RequiresSwitch = false,
                 WinnerUserId = null
             };

@@ -330,7 +330,7 @@ public class BattleService {
                 return new SubmitBattleActionResult {
                     Accepted = true,
                     TurnResolved = false,
-                    ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = "Acción recibida. Esperando a que el rival elija su siguiente Pokémon..." } },
+                    ReplaySteps = new List<ReplayStep>(),
                     WinnerUserId = battle.WinnerUserId
                 };
             }
@@ -339,7 +339,7 @@ public class BattleService {
                 return new SubmitBattleActionResult {
                     Accepted = true,
                     TurnResolved = false,
-                    ReplaySteps = new List<ReplayStep> { new ReplayStep { StepIndex = 0, Message = "Acción recibida. Esperando al rival..." } },
+                    ReplaySteps = new List<ReplayStep>(),
                     WinnerUserId = battle.WinnerUserId
                 };
             }

@@ -2,10 +2,8 @@
 
 namespace ProjectPokemon.Models.Database.Entities;
 
-/// <summary>
-/// Representa un cambio de estadística asociado a un movimiento.
-/// Un movimiento puede tener múltiples cambios de estadísticas.
-/// </summary>
+// Representa un cambio de estadística asociado a un movimiento.
+// Un movimiento puede tener múltiples cambios de estadísticas.
 public class MovementStatChange {
     public int Id { get; set; }
     public int MovementId { get; set; }
