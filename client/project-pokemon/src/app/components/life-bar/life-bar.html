@@ -17,9 +17,20 @@
             <div class="health" [style.width.%]="hpPercent" [class]="healthColor"></div>
         </div>
     </div>
-    @if (showHp) {
-        <span class="hp-display">{{ displayHp }}/{{ maxHp }}</span>
-    } @else {
-        <span class="hp-display subtle">{{ displayHpPercent }}%</span>
-    }
+    <div class="stat-hp-row">
+        @if (statChips.length > 0) {
+            <div class="stat-chips">
+                @for (chip of statChips; track chip.key) {
+                    <span class="stat-chip" [class.stat-up]="chip.stage > 0" [class.stat-down]="chip.stage < 0">
+                        {{ chip.label }} {{ chip.stage > 0 ? '+' : '' }}{{ chip.stage }}
+                    </span>
+                }
+            </div>
+        }
+        @if (showHp) {
+            <span class="hp-display">{{ displayHp }}/{{ maxHp }}</span>
+        } @else {
+            <span class="hp-display subtle">{{ displayHpPercent }}%</span>
+        }
+    </div>
 </div>

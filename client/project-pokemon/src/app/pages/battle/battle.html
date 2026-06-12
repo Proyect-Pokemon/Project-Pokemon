@@ -15,15 +15,13 @@
                         [pokemonSex]="battleInfo()!.pokemonB.sex ?? null"
                         [currentHp]="hpB()"
                         [maxHp]="battleInfo()!.pokemonB.maxHp"
-                        [status]="battleInfo()!.pokemonB.statusCondition ?? ''">
+                        [status]="battleInfo()!.pokemonB.statusCondition ?? ''"
+                        [statStages]="opponentStatStages()">
                     </app-life-bar>
                     <img
                         class="battle-sprite enemy-sprite"
                         [class.attack-dash-left]="opponentAttackAnimating()"
                         [src]="battleInfo()!.pokemonB.sprite">
-                }
-                @if (opponentStatStageIndicator()) {
-                    <span class="stat-stage-indicator opponent-indicator">{{ opponentStatStageIndicator() }}</span>
                 }
             </div>
             <div class="ally">
@@ -38,11 +36,9 @@
                         [currentHp]="hpA()"
                         [maxHp]="battleInfo()!.pokemonA.maxHp"
                         [status]="battleInfo()!.pokemonA.statusCondition ?? ''"
-                        [showHp]="true">
+                        [showHp]="true"
+                        [statStages]="playerStatStages()">
                     </app-life-bar>
-                }
-                @if (playerStatStageIndicator()) {
-                    <span class="stat-stage-indicator player-indicator">{{ playerStatStageIndicator() }}</span>
                 }
             </div>
             <div id="moves">

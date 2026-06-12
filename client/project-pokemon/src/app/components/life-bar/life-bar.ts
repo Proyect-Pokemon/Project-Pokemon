@@ -23,6 +23,27 @@ export class LifeBar {
   @Input() maxHp: number | null = null;
   @Input() showHp: boolean = false;
   @Input() status: string = '';
+  @Input() statStages: Record<string, number> = {};
+
+  private static readonly STAT_LABELS: Record<string, string> = {
+    attack:        'Atq',
+    defense:       'Def',
+    specialattack: 'AtEsp',
+    specialdefense:'DeEsp',
+    speed:         'Vel',
+    evasion:       'Eva',
+    accuracy:      'Pre',
+  };
+
+  get statChips(): { key: string; label: string; stage: number }[] {
+    return Object.entries(this.statStages)
+      .filter(([, stage]) => stage !== 0)
+      .map(([key, stage]) => ({
+        key,
+        label: LifeBar.STAT_LABELS[key] ?? key,
+        stage,
+      }));
+  }
 
   get showGenderBadge(): boolean {
     return this.genderClass !== null;

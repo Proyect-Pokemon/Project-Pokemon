@@ -68,8 +68,9 @@ export class Battle {
   showLeaveConfirmation = signal(false);
   playerAttackAnimating = signal(false);
   opponentAttackAnimating = signal(false);
-  playerStatStageIndicator = signal<string | null>(null);
-  opponentStatStageIndicator = signal<string | null>(null);
+  // Stages acumulados por stat para cada lado. Clave = stat key, valor = stage (-6..+6)
+  playerStatStages = signal<Record<string, number>>({});
+  opponentStatStages = signal<Record<string, number>>({});
 
   private leaveDecisionResolver: ((decision: boolean) => void) | null = null;
   private leaveDecisionPromise: Promise<boolean> | null = null;
@@ -695,8 +696,12 @@ export class Battle {
       }
 
       case 'switch':
-        if (this.resolveEventSide(event) === 'player' || this.resolveEventSide(event) === 'opponent') {
-          this.applySwitchFromTimeline(event, finalSnapshot, futureSteps);
+        {
+          const switchSide = this.resolveEventSide(event);
+          if (switchSide === 'player' || switchSide === 'opponent') {
+            this.resetStatStages(switchSide);
+            this.applySwitchFromTimeline(event, finalSnapshot, futureSteps);
+          }
         }
         return;
 
@@ -751,23 +756,31 @@ export class Battle {
   }
 
   private showStatStageIndicator(side: BattleSideKey, event: any): void {
-    const stat = this.formatStatLabel(event?.stat ?? event?.Stat ?? 'stat');
-    const change = Number(event?.change ?? event?.Change ?? event?.stages ?? event?.Stages ?? event?.delta ?? event?.Delta ?? 0);
-    const direction = change >= 0 ? '↑' : '↓';
-    const amount = Math.max(1, Math.abs(Math.trunc(change || 1)));
+    const rawStat = String(event?.stat ?? event?.Stat ?? '');
+    const statKey = this.normalizeName(rawStat);
+    if (!statKey) return;
+
     const newStage = Number(event?.newStage ?? event?.NewStage ?? NaN);
-    const stageSuffix = Number.isFinite(newStage) ? ` (${newStage > 0 ? '+' : ''}${Math.trunc(newStage)})` : '';
-    const label = `${direction}${amount} ${stat}${stageSuffix}`;
+    if (!Number.isFinite(newStage)) return;
 
-    const signalRef = side === 'player' ? this.playerStatStageIndicator : this.opponentStatStageIndicator;
-    signalRef.set(label);
+    const signalRef = side === 'player' ? this.playerStatStages : this.opponentStatStages;
+    signalRef.update(stages => {
+      const updated = { ...stages };
+      if (newStage === 0) {
+        delete updated[statKey];
+      } else {
+        updated[statKey] = Math.max(-6, Math.min(6, newStage));
+      }
+      return updated;
+    });
+  }
 
-    const clearTimeoutId = setTimeout(() => {
-      signalRef.set(null);
-      this.playbackTimeouts.delete(clearTimeoutId);
-    }, 900);
-
-    this.playbackTimeouts.add(clearTimeoutId);
+  private resetStatStages(side: BattleSideKey): void {
+    if (side === 'player') {
+      this.playerStatStages.set({});
+    } else {
+      this.opponentStatStages.set({});
+    }
   }
 
   private formatStatLabel(rawStat: string): string {
