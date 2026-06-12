@@ -249,11 +249,14 @@ public class Network {
                 && !battle.RequiredSwitchByUserId.Contains(userId.Value)
                 && result.ReplaySteps.Count > 0;
 
+            // Si el emisor completó un switch forzoso, para él también es TurnResolved = true
+            // porque el switch forzoso no es una acción de turno — ya puede elegir acción libremente.
+            bool emitterTurnResolved = emitterJustCompletedForcedSwitch;
             await client.SendAsync(new BattleStateUpdate {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle, userId.Value),
                 ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, userId.Value),
-                TurnResolved = false,
+                TurnResolved = emitterTurnResolved,
                 RequiresSwitch = result.RequiresSwitchSelection,
                 OpponentRequiresSwitch = opponentId.HasValue && battle.RequiredSwitchByUserId.Contains(opponentId.Value),
                 WinnerUserId = battle.WinnerUserId
@@ -267,11 +270,16 @@ public class Network {
                     .Select(id => {
                         int perspectiveUserId = opponentId.Value;
                         bool opponentStillNeedsSwitch = battle.RequiredSwitchByUserId.Contains(perspectiveUserId);
+                        // Para el oponente del que hizo switch forzoso:
+                        // TurnResolved = true porque puede elegir acción libremente.
+                        // Para el que hizo el switch: TurnResolved = false, su acción ya está
+                        // registrada como switch y espera al turno siguiente.
+                        bool isOpponentClient = _clients[id].UserId == opponentId.Value;
                         return _clients[id].SendAsync(new BattleStateUpdate {
                             Action = actionRequest.Action,
                             Battle = CreateBattleSnapshot(battle, perspectiveUserId),
                             ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, perspectiveUserId),
-                            TurnResolved = false,
+                            TurnResolved = isOpponentClient,
                             RequiresSwitch = opponentStillNeedsSwitch,
                             OpponentRequiresSwitch = battle.RequiredSwitchByUserId.Contains(userId.Value),
                             WinnerUserId = battle.WinnerUserId
