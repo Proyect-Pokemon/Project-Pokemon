@@ -45,6 +45,11 @@ export class TeamEdit {
 
   readonly MAX_SLOTS = 6;
 
+  // Drag & drop
+  dragSourceSlot = signal<number | null>(null);
+  dragOverSlot = signal<number | null>(null);
+  isSwapping = signal(false);
+
   readonly statRows: { key: string; label: string; natureKey: string }[] = [
     { key: 'hp',             label: 'PS',         natureKey: 'hp' },
     { key: 'attack',         label: 'Ataque',     natureKey: 'attack' },
@@ -550,27 +555,126 @@ export class TeamEdit {
     const remainingCount = currentTeam.pokemons.length - 1;
 
     try {
-      this.isDeletingPokemon.set(true);
-      this.showDeletePokemonModal.set(false);
-
-      const deletedSlot = selectedPokemonTeam.slot;
-      const remainingCount = currentTeam.pokemons.length - 1;
-
       await this.pokemonTeamService.deletePokemonTeam(selectedPokemonTeam.id);
-
       const nextSlot = Math.min(deletedSlot, remainingCount + 1);
       await this.loadData(currentTeam.id, nextSlot);
-
     } catch (error) {
       console.error('Error eliminando Pokémon', error);
-
     } finally {
       this.isDeletingPokemon.set(false);
     }
+  }
 
-    const nextSlot = Math.min(deletedSlot, remainingCount + 1);
-    await this.loadData(currentTeam.id, nextSlot);
+  // Drag & drop
 
-    this.isDeletingPokemon.set(false);
+  onDragStart(event: DragEvent, slotNumber: number): void {
+    const slot = this.slots()[slotNumber - 1];
+    if (!slot) return;
+    this.dragSourceSlot.set(slotNumber);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', String(slotNumber));
+    }
+  }
+
+  onDragOver(event: DragEvent, slotNumber: number): void {
+    const source = this.dragSourceSlot();
+    if (source === null || source === slotNumber) return;
+    const targetSlot = this.slots()[slotNumber - 1];
+    if (!targetSlot) return; // solo se puede soltar sobre slots con pokemon
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    this.dragOverSlot.set(slotNumber);
+  }
+
+  onDragLeave(slotNumber: number): void {
+    if (this.dragOverSlot() === slotNumber) {
+      this.dragOverSlot.set(null);
+    }
+  }
+
+  onDragEnd(): void {
+    this.dragSourceSlot.set(null);
+    this.dragOverSlot.set(null);
+  }
+
+  async onDrop(event: DragEvent, targetSlotNumber: number): Promise<void> {
+    event.preventDefault();
+    const sourceSlotNumber = this.dragSourceSlot();
+    this.dragSourceSlot.set(null);
+    this.dragOverSlot.set(null);
+
+    if (sourceSlotNumber === null || sourceSlotNumber === targetSlotNumber) return;
+
+    const currentTeam = this.team();
+    if (!currentTeam || this.isSwapping()) return;
+
+    const sourceEntry = this.slots()[sourceSlotNumber - 1];
+    const targetEntry = this.slots()[targetSlotNumber - 1];
+    if (!sourceEntry || !targetEntry) return;
+
+    this.isSwapping.set(true);
+
+    try {
+      // Swap optimista en local para feedback inmediato
+      const updatedPokemons = currentTeam.pokemons.map(p => {
+        if (p.slot === sourceSlotNumber) return { ...p, slot: targetSlotNumber };
+        if (p.slot === targetSlotNumber) return { ...p, slot: sourceSlotNumber };
+        return p;
+      });
+      this.team.set({ ...currentTeam, pokemons: updatedPokemons });
+      // Mover el foco al slot destino
+      this.selectedSlot.set(targetSlotNumber);
+
+      // Persistir: intercambiamos usando un slot temporal (999) para evitar conflicto unique
+      await this.pokemonTeamService.updatePokemonTeam(sourceEntry.id, {
+        nickname: sourceEntry.nickname,
+        shiny: sourceEntry.shiny,
+        sex: sourceEntry.sex,
+        slot: 999,
+        teamId: sourceEntry.teamId,
+        pokemonId: sourceEntry.pokemonId,
+        natureId: sourceEntry.natureId,
+        movementId1: sourceEntry.movementId1,
+        movementId2: sourceEntry.movementId2,
+        movementId3: sourceEntry.movementId3,
+        movementId4: sourceEntry.movementId4,
+      });
+
+      await this.pokemonTeamService.updatePokemonTeam(targetEntry.id, {
+        nickname: targetEntry.nickname,
+        shiny: targetEntry.shiny,
+        sex: targetEntry.sex,
+        slot: sourceSlotNumber,
+        teamId: targetEntry.teamId,
+        pokemonId: targetEntry.pokemonId,
+        natureId: targetEntry.natureId,
+        movementId1: targetEntry.movementId1,
+        movementId2: targetEntry.movementId2,
+        movementId3: targetEntry.movementId3,
+        movementId4: targetEntry.movementId4,
+      });
+
+      await this.pokemonTeamService.updatePokemonTeam(sourceEntry.id, {
+        nickname: sourceEntry.nickname,
+        shiny: sourceEntry.shiny,
+        sex: sourceEntry.sex,
+        slot: targetSlotNumber,
+        teamId: sourceEntry.teamId,
+        pokemonId: sourceEntry.pokemonId,
+        natureId: sourceEntry.natureId,
+        movementId1: sourceEntry.movementId1,
+        movementId2: sourceEntry.movementId2,
+        movementId3: sourceEntry.movementId3,
+        movementId4: sourceEntry.movementId4,
+      });
+
+    } catch (error) {
+      console.error('Error al intercambiar slots', error);
+      // Recargar para restaurar estado real
+      await this.loadData(currentTeam.id, this.selectedSlot());
+    } finally {
+      this.isSwapping.set(false);
+    }
   }
 }

@@ -765,3 +765,29 @@
         height: 40px;
     }
 }
+
+/* Drag & drop */
+.slot-btn[draggable="true"] {
+    cursor: grab;
+}
+
+.slot-btn[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.slot-btn.drag-source {
+    opacity: 0.45;
+    transform: scale(0.95) !important;
+    box-shadow: none !important;
+}
+
+.slot-btn.drag-source .slot-mini-sprite {
+    filter: grayscale(0.4);
+}
+
+.slot-btn.drag-over {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-color: #0f5368 !important;
+    transform: scale(1.14) !important;
+    box-shadow: 0 6px 20px rgba(15, 83, 104, 0.35) !important;
+}

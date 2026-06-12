@@ -202,14 +202,23 @@
                     [class.active]="selectedSlot() === $index + 1"
                     [class.addable]="isNextAvailableSlot($index + 1)"
                     [class.locked]="!isSlotSelectable($index + 1)"
+                    [class.drag-source]="dragSourceSlot() === $index + 1"
+                    [class.drag-over]="dragOverSlot() === $index + 1"
                     [disabled]="!isSlotSelectable($index + 1)"
+                    [attr.draggable]="slot !== null ? 'true' : null"
                     (click)="onSlotSelect($index + 1)"
+                    (dragstart)="onDragStart($event, $index + 1)"
+                    (dragover)="onDragOver($event, $index + 1)"
+                    (dragleave)="onDragLeave($index + 1)"
+                    (dragend)="onDragEnd()"
+                    (drop)="onDrop($event, $index + 1)"
                 >
                     @if (slot !== null && slot.pokemon !== null) {
                         <img
                             [src]="slot.pokemon.miniSprite"
                             [alt]="slot.pokemon.name"
                             class="slot-mini-sprite"
+                            [class.dragging]="dragSourceSlot() === $index + 1"
                         />
                     } @else if (isNextAvailableSlot($index + 1)) {
                         <span class="slot-plus">+</span>
