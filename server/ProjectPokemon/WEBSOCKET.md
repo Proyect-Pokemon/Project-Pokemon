@@ -6,10 +6,6 @@
 3. [Flujo de Comunicación](#flujo-de-comunicación)
 4. [Tipos de Mensajes](#tipos-de-mensajes)
 5. [Ejemplos de Uso](#ejemplos-de-uso)
-6. [Implementación Frontend](#implementación-frontend)
-7. [Cambios de Arquitectura](#cambios-de-arquitectura)
-
----
 
 ## Filosofía del Sistema
 
@@ -23,12 +19,9 @@ Flujo Correcto:
 4. Servidor → Responde mensajes (WebSocket)
 ```
 
-**BattleController está marcado como obsoleto** - Las batallas se inician por WebSocket.
-
----
+Los combates se inician por WebSocket.
 
 ## Arquitectura
-
 ### Estructura del Proyecto
 
 ```
@@ -64,7 +57,6 @@ ProjectPokemon/
 ```
 
 ### Componente: Network.cs
-
 El componente central que gestiona todas las conexiones y enruta mensajes:
 
 ```csharp
@@ -82,29 +74,6 @@ public class Network {
 - Un cliente puede estar en múltiples contextos simultáneamente
 - Broadcast eficiente a grupos de clientes
 - Fácil agregar nuevos contextos (lobby, trade, etc.)
-
-### Cambio: BattleClient → Client
-
-**Antes:**
-```csharp
-public class BattleClient {
-    public string? BattleId { get; set; }  // Solo 1 batalla
-}
-```
-
-**Ahora:**
-```csharp
-public class Client {
-    public Guid ClientId { get; }
-    public int? UserId { get; set; }
-    // Sin propiedades de contexto específico
-    // Network gestiona las relaciones cliente-contexto
-}
-```
-
-**Motivo:** Un cliente puede participar en batallas, chat, lobby, etc. simultáneamente.
-
----
 
 ## Flujo de Comunicación
 
@@ -229,7 +198,7 @@ ws.onmessage = (event) => {
 }
 ```
 
-### 6. Chat Durante Batalla
+### 6. Chat Durante Combate
 ```json
 // Cliente → Servidor
 {
@@ -250,8 +219,6 @@ ws.onmessage = (event) => {
   "timestamp": "2025-01-15T10:30:00Z"
 }
 ```
-
----
 
 ## Tipos de Mensajes
 
@@ -279,11 +246,9 @@ ws.onmessage = (event) => {
 | 3 | GetOnlineFriends | Obtener amigos online |
 | 4 | SendFriendRequest | Enviar solicitud de amistad |
 
----
-
 ## Ejemplos de Uso
 
-### Backend: Enviar Mensaje a Todos en una Batalla
+### Backend: Enviar Mensaje a Todos en un combate
 
 ```csharp
 // En Network.cs
@@ -312,184 +277,11 @@ private async Task HandleBattleAction(Client client, BattleActionRequest request
 }
 ```
 
----
-
-## Implementación Frontend
-
-### Clase WebSocket Service
-
-```typescript
-class WebSocketService {
-  private ws: WebSocket;
-  private messageHandlers = new Map<MessageType, Function[]>();
-
-  connect(token: string) {
-    this.ws = new WebSocket(`ws://localhost:5000/websocket?token=${token}`);
-
-    this.ws.onopen = () => this.joinLobby();
-    this.ws.onmessage = (e) => this.handleMessage(JSON.parse(e.data));
-  }
-
-  send(message: any) {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
-    }
-  }
-
-  on(type: MessageType, handler: Function) {
-    if (!this.messageHandlers.has(type)) {
-      this.messageHandlers.set(type, []);
-    }
-    this.messageHandlers.get(type)!.push(handler);
-  }
-
-  private handleMessage(message: any) {
-    const handlers = this.messageHandlers.get(message.type);
-    if (handlers) {
-      handlers.forEach(h => h(message));
-    }
-  }
-
-  joinLobby() {
-    this.send({ type: 4, action: 1 });
-  }
-
-  startBattle(teamId: number) {
-    this.send({ type: 1, action: 0, teamId });
-  }
-
-  attack(battleId: string, moveName: string) {
-    this.send({ type: 1, action: 1, battleId, moveName });
-  }
-
-  switchPokemon(battleId: string, targetSlot: number) {
-    this.send({ type: 1, action: 2, battleId, targetSlot });
-  }
-
-  forfeit(battleId: string) {
-    this.send({ type: 1, action: 3, battleId });
-  }
-
-  sendChat(battleId: string, content: string) {
-    this.send({ type: 2, battleId, content });
-  }
-}
-```
-
-### Uso en Componente
-
-```typescript
-const ws = new WebSocketService();
-
-// Conectar
-ws.connect(localStorage.getItem('jwt')!);
-
-// Escuchar mensajes de batalla
-ws.on(MessageType.Battle, (message) => {
-  if (message.action === 0) {
-    console.log('Batalla iniciada:', message.battleId);
-    setBattle(message.initialState);
-  } else {
-    console.log('Actualización de batalla');
-    updateBattle(message.battle);
-    showMessages(message.messages);
-  }
-});
-
-// Escuchar chat
-ws.on(MessageType.Chat, (message) => {
-  console.log(`${message.senderName}: ${message.content}`);
-  addChatMessage(message);
-});
-
-// Iniciar batalla
-function handleStartBattle() {
-  ws.startBattle(selectedTeamId);
-}
-
-// Atacar
-function handleAttack(moveName: string) {
-  ws.attack(currentBattleId, moveName);
-}
-
-// Cambiar Pokemon
-function handleSwitch(slot: number) {
-  ws.switchPokemon(currentBattleId, slot);
-}
-
-// Rendirse
-function handleForfeit() {
-  ws.forfeit(currentBattleId);
-}
-
-// Enviar chat
-function handleSendChat() {
-  ws.sendChat(currentBattleId, chatInput);
-}
-```
-
----
-
-## Cambios de Arquitectura
-
-### Antes vs Ahora
-
-**Antes:**
-```
-Cliente WebSocket (BattleClient)
-├── ClientId: Guid
-├── UserId: int?
-└── BattleId: string?  <- Solo UNA batalla
-```
-
-**Ahora:**
-```
-Cliente WebSocket (Client)
-├── ClientId: Guid
-└── UserId: int?
-
-Network (gestiona relaciones)
-├── _clients: Dictionary<Guid, Client>
-├── _battleClients: Dictionary<string, HashSet<Guid>>
-└── Futuro: _chatRooms, _lobbies, etc.
-```
-
 ### Sistema de Broadcast
 
-**Ahora:**
 ```csharp
 // Broadcast a TODOS los clientes de la batalla
 await BroadcastToBattleAsync(battleId, update);
 ```
 
 Esto permite que ambos jugadores reciban actualizaciones simultáneas en tiempo real.
-
----
-
-## TODO Pendiente
-
-1. **Autenticación JWT en WebSocket**
-   - Extraer `userId` del token en `WebSocketMiddleware`
-   - Asignar `client.UserId` al conectarse
-
-2. **Integrar BattleService completo**
-   - Crear batalla real en `HandleStartBattle`
-   - Conectar con base de datos
-
-3. **Implementar PvP**
-   - Matchmaking entre jugadores
-   - Gestión de salas para 2 jugadores
-
-4. **Sistema de lobby completo**
-   - Lista de amigos online
-   - Invitaciones a batalla
-
-5. **Chat global**
-   - Chat fuera de batallas
-   - Sistema de notificaciones
-
-6. **Reconexión automática**
-   - Detectar desconexiones
-   - Reconectar y restaurar estado
-
----
