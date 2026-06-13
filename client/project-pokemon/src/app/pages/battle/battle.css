@@ -578,3 +578,38 @@ app-battle-chat {
         grid-template-columns: 1fr;
     }
 }
+/* Music toggle button */
+.music-toggle-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 10;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(11, 28, 59, 0.75);
+    border: 1px solid rgba(126, 201, 255, 0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.15s;
+    backdrop-filter: blur(4px);
+}
+
+.music-toggle-btn:hover {
+    background: rgba(11, 28, 59, 0.95);
+    transform: scale(1.1);
+}
+
+.music-toggle-btn img {
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(1);
+    opacity: 0.85;
+    /* Override the generic .enemy img / .ally img rules */
+    width: 18px !important;
+    height: 18px !important;
+    image-rendering: auto;
+}

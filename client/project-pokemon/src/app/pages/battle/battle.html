@@ -8,6 +8,9 @@
 } @else {
     <div class="battle-container">
         <div id="canvas">
+            <button class="music-toggle-btn" (click)="toggleMusic()" [attr.aria-label]="isMusicPlaying() ? 'Silenciar música' : 'Reproducir música'" type="button">
+                <img [src]="isMusicPlaying() ? 'assets/icons/UI/unmuted.svg' : 'assets/icons/UI/muted.svg'" alt="" />
+            </button>
             <div class="enemy">
                 @if ((hpB() ?? 0) > 0) {
                     <app-life-bar

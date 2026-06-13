@@ -47,6 +47,8 @@ export class Battle {
   private playbackChain: Promise<void> = Promise.resolve();
   private readonly playbackTimeouts = new Set<ReturnType<typeof setTimeout>>();
   private isDestroyed = false;
+  private battleMusic: HTMLAudioElement | null = null;
+  readonly isMusicPlaying = signal(false);
 
   mode = signal<'cpu' | 'online'>('cpu');
   battleId = signal<string | null>(null);
@@ -214,8 +216,41 @@ export class Battle {
     this.startOnlineBattleBootstrapTimeout();
   }
 
+  private initBattleMusic(): void {
+    if (this.battleMusic) return;
+    try {
+      this.battleMusic = new Audio('assets/music/battle.mp3');
+      this.battleMusic.loop = true;
+      this.battleMusic.volume = 0.4;
+    } catch {
+      // Audio no disponible
+    }
+  }
+
+  protected toggleMusic(): void {
+    this.initBattleMusic();
+    if (!this.battleMusic) return;
+
+    if (this.isMusicPlaying()) {
+      this.battleMusic.pause();
+      this.isMusicPlaying.set(false);
+    } else {
+      this.battleMusic.play().catch(() => {});
+      this.isMusicPlaying.set(true);
+    }
+  }
+
+  private stopBattleMusic(): void {
+    if (!this.battleMusic) return;
+    this.battleMusic.pause();
+    this.battleMusic.currentTime = 0;
+    this.battleMusic = null;
+    this.isMusicPlaying.set(false);
+  }
+
   ngOnDestroy(): void {
     this.isDestroyed = true;
+    this.stopBattleMusic();
     this.clearPlaybackTimeouts();
     this.clearOnlineBattleBootstrapTimeout();
     this.socketService.resetBattleContext();
@@ -459,7 +494,8 @@ export class Battle {
 
     if (isFinished) {
       this.battleResult.set(this.resolveBattleResult(event.winnerUserId));
-      this.showFinishDialog.set(true);
+      this.stopBattleMusic();
+    this.showFinishDialog.set(true);
       this.isWaitingForOpponent.set(false);
       this.attacksDisabled.set(true);
       this.requiresSwitchSelection.set(false);
@@ -690,7 +726,8 @@ export class Battle {
         const winnerUserId = event?.winnerUserId ?? event?.WinnerUserId ?? null;
         if (winnerUserId !== null && winnerUserId !== undefined) {
           this.battleResult.set(this.resolveBattleResult(Number(winnerUserId)));
-          this.showFinishDialog.set(true);
+          this.stopBattleMusic();
+    this.showFinishDialog.set(true);
         }
         return;
       }
