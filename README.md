@@ -36,6 +36,12 @@ La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pok√
 
 ---
 
+## Enlaces
+- Versi√≥n desplegada: https://projectpokemon.runasp.net
+- Video tutorial: https://youtu.be/cg7Q7EiPu7w
+
+---
+
 ## Tecnolog√≠as utilizadas
 
 ### Backend
@@ -45,7 +51,6 @@ La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pok√
 * Entity Framework Core
 * WebSockets
 * JSON Web Tokens (JWT)
-* OAuth 2.0
 
 ### Frontend
 
