@@ -1,4 +1,4 @@
-![Cabecera con logo](https://raw.githubusercontent.com/Proyect-Pokemon/.github/blob/3c795ecb73cf34392adbf4768336eed1745f5de4/HeaderProjectPokemon.png)
+![Project Pokémon](https://raw.githubusercontent.com/Proyect-Pokemon/.github/main/HeaderProjectPokemon.png)
 # Project Pokémon
 **Project Pokémon** es una aplicación web multijugador de simulación de combates Pokémon desarrollada como proyecto final del ciclo formativo de Administración de Sistemas Informáticos en Red (ASIR).
 
@@ -12,7 +12,6 @@ La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pok�
   - Backend
   - Frontend
   - Despliegue
-- 🎨 Prototipos en Figma
 - 📗 [Memoria](/docs/MemoriaProjectPokemon.pdf)
 - ✨ Vista previa
 - 📁 Arquitectura de sistemas
