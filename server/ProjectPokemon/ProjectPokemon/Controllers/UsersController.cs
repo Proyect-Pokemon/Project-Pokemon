@@ -16,7 +16,7 @@ public class UsersController : ControllerBase {
         _unitOfWork = unitOfWork;
     }
 
-    // Obtiene el ID del usuario autenticado desde el token JWT
+    // Obtiene el ID del usuario autenticado desde el JWT
     private int? GetAuthenticatedUserId() {
         var userIdClaim = User.FindFirst("id")?.Value;
         if (int.TryParse(userIdClaim, out int userId)) return userId;

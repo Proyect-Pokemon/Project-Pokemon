@@ -4,5 +4,4 @@
     public required string Name { get; set; }
     public string? Description { get; set; } = null;
     public int UserId { get; set; }
-    //public string User { get; set; } = null!;
 }

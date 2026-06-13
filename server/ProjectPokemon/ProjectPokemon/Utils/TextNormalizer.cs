@@ -3,11 +3,11 @@ using System.Text;
 
 namespace ProjectPokemon.Utils;
 
-// Utilidad para normalizar texto eliminando tildes y caracteres especiales
+// Utilidad para normalizar texto eliminando tildes y carácteres especiales
 // Usado para generar identificadores y mensajes para el frontend
 
 public static class TextNormalizer {
-    // Elimina tildes y caracteres diacriticos de un texto
+    // Elimina tildes y carácteres diacríticos de un texto
     // Ejemplo: "Pokémon" -> "Pokemon", "Niño" -> "Nino"
     public static string RemoveDiacritics(string text) {
         if (string.IsNullOrWhiteSpace(text)) {
@@ -17,7 +17,7 @@ public static class TextNormalizer {
         // Normalizar a forma NFD (Canonical Decomposition)
         string normalized = text.Normalize(NormalizationForm.FormD);
 
-        // Filtrar solo caracteres que no sean marcas diacriticas
+        // Filtrar sólo caracteres que no sean marcas diacríticas
         StringBuilder result = new StringBuilder();
         foreach (char c in normalized) {
             UnicodeCategory category = CharUnicodeInfo.GetUnicodeCategory(c);
@@ -41,7 +41,7 @@ public static class TextNormalizer {
         return normalized.ToLowerInvariant().Replace(" ", "_").Replace("-", "_");
     }
 
-    // Normaliza un nombre de Pokemon para el frontend (minusculas, sin tildes)
+    // Normaliza un nombre de Pokemon para el frontend (minúsculas, sin tildes)
     // Ejemplo: "Pikachu" -> "pikachu", "Farfetch'd" -> "farfetchd"
     public static string NormalizePokemonName(string name) {
         if (string.IsNullOrWhiteSpace(name)) {
@@ -49,7 +49,7 @@ public static class TextNormalizer {
         }
 
         string normalized = RemoveDiacritics(name);
-        // Eliminar apóstrofes y caracteres especiales
+        // Eliminar apóstrofes y carácteres especiales
         normalized = normalized.Replace("'", "").Replace("'", "");
         return normalized.ToLowerInvariant();
     }
