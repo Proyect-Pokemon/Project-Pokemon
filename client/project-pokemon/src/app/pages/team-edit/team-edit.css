@@ -13,10 +13,7 @@
     align-items: center;
     gap: 1.5rem;
     padding: 2rem 0 0;
-    background:
-        repeating-linear-gradient(0deg,   transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
-        repeating-linear-gradient(90deg,  transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
-        linear-gradient(135deg, #0094ae 0%, #002426 100%);
+	background: url('/assets/background.png') repeat, linear-gradient(135deg, #0094ae 0%, #002426 100%);
 }
 
 /* Header */
