@@ -32,7 +32,7 @@ export class Login implements OnInit, OnDestroy {
 
   canSubmit(): boolean {
     return this.nickname.trim().length > 0 &&
-           this.password.trim().length > 0;
+      this.password.trim().length > 0;
   }
 
   async submit() {
@@ -78,8 +78,8 @@ export class Login implements OnInit, OnDestroy {
         typeof err?.error === 'string'
           ? err.error
           : err?.error?.error ||
-            err?.error?.message ||
-            err?.message;
+          err?.error?.message ||
+          err?.message;
 
       this.errorMessage.set(
         backendError || 'Error de conexión con el servidor.'
@@ -99,8 +99,8 @@ export class Login implements OnInit, OnDestroy {
     if (typeof google === 'undefined') return;
 
     const clientId = this.getGoogleClientId();
-    // No inicializar si el client ID no está configurado
-    if (!clientId || clientId.includes('TU_CLIENT_ID')) return;
+
+    if (!clientId) return;
 
     const button = document.getElementById('googleButton');
     if (!button) return;
@@ -118,14 +118,12 @@ export class Login implements OnInit, OnDestroy {
 
       Login.googleInitialized = true;
     } catch {
-      // No rompe login si Google falla
+      // opcional: log
     }
   }
 
   private getGoogleClientId(): string {
-    // Reemplazar este valor con el Client ID real de Google Cloud Console
-    // o configúrarlo en environment.ts cuando esté disponible
-    return 'TU_CLIENT_ID.apps.googleusercontent.com';
+    return environment.GOOGLE_CLIENT_ID;
   }
 
   async handleGoogle(response: any) {

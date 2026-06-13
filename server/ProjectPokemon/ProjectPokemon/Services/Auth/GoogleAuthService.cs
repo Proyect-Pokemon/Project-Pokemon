@@ -21,11 +21,7 @@ public sealed class GoogleAuthService
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
 
-        _googleClientId =
-            Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")
-            ?? throw new InvalidOperationException(
-                "GOOGLE_CLIENT_ID no definida."
-            );
+        _googleClientId = "dummy-google-client-id.apps.googleusercontent.com";
     }
 
     /// <summary>
@@ -56,14 +52,14 @@ public sealed class GoogleAuthService
                             ]
                     });
         }
-        catch (InvalidJwtException)
+        catch (Exception ex)
         {
-            return null;
+            throw new Exception("Google token validation failed", ex);
         }
 
         if (string.IsNullOrWhiteSpace(payload.Email))
         {
-            return null;
+            throw new Exception("Google payload missing email");
         }
 
         User? user =
@@ -94,22 +90,19 @@ public sealed class GoogleAuthService
     CreateGoogleUserAsync(
         GoogleJsonWebSignature.Payload payload)
     {
-        var user =
-            new User
-            {
-                Email = payload.Email!,
+        var user = new User
+        {
+            Email = payload.Email!,
+            Nickname = GenerateNickname(payload.Email, payload.Name),
 
-                Nickname =
-                    GenerateNickname(
-                        payload.Email,
-                        payload.Name
-                    ),
+            Password = string.Empty,
+            Biography = string.Empty,
 
-                Password = null,
-                AvatarPath = payload.Picture,
-                Biography = null,
-                Role = "user"
-            };
+            Role = "user",
+            AvatarPath = payload.Picture ?? "/assets/avatar-default.png",
+
+            CreationDate = DateTime.UtcNow
+        };
 
         await _unitOfWork
             .UserRepository
