@@ -30,5 +30,5 @@ export const routes: Routes = [
     { path: 'team-builder/:id', component: TeamEdit, canActivate: [redirectionGuard] },
     { path: 'team-builder/:teamId/pokemon/:pokemonTeamId/edit', component: PokemonEdit, canActivate: [redirectionGuard] },
     { path: 'landing', component: Landing },
-    { path: '**', redirectTo: 'login', pathMatch: 'full' }
+    { path: '**', redirectTo: 'landing', pathMatch: 'full' }
 ];
