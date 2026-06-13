@@ -16,6 +16,33 @@ public class UsersController : ControllerBase {
         _unitOfWork = unitOfWork;
     }
 
+    // Obtiene el ID del usuario autenticado desde el token JWT
+    private int? GetAuthenticatedUserId() {
+        var userIdClaim = User.FindFirst("id")?.Value;
+        if (int.TryParse(userIdClaim, out int userId)) return userId;
+        return null;
+    }
+
+    // DELETE: api/users/account
+    [Authorize]
+    [HttpDelete("account")]
+    public async Task<IActionResult> DeleteAccount() {
+        int? authenticatedUserId = GetAuthenticatedUserId();
+        if (authenticatedUserId == null)
+            return Unauthorized(new { error = "No se pudo autenticar al usuario." });
+
+        User? user = await _unitOfWork.UserRepository.GetByIdAsync(authenticatedUserId.Value);
+        if (user == null)
+            return NotFound(new { error = "Usuario no encontrado." });
+
+        await _unitOfWork.UserRepository.DeleteAsync(user);
+        bool success = await _unitOfWork.SaveAsync();
+        if (!success)
+            return StatusCode(500, new { error = "No se pudo eliminar la cuenta." });
+
+        return Ok(new { message = "Cuenta eliminada correctamente." });
+    }
+
     // GET: api/users
     [HttpGet]
     public async Task<IEnumerable<GetUserDto>> GetAllUsers() {

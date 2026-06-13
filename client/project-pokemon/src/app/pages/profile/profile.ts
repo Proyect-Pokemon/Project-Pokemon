@@ -290,6 +290,47 @@ export class Profile implements OnInit {
     }
   }
 
+  // Borrar cuenta
+  protected readonly deleteModalOpen = signal(false);
+  protected readonly deleteConfirmInput = signal('');
+  protected readonly deleteLoading = signal(false);
+  protected readonly deleteError = signal('');
+
+  protected readonly canConfirmDelete = computed(() =>
+    this.deleteConfirmInput().trim().toLowerCase() === 'borrar'
+  );
+
+  protected openDeleteModal(): void {
+    this.deleteConfirmInput.set('');
+    this.deleteError.set('');
+    this.deleteModalOpen.set(true);
+  }
+
+  protected closeDeleteModal(): void {
+    if (!this.deleteLoading()) {
+      this.deleteModalOpen.set(false);
+      this.deleteError.set('');
+    }
+  }
+
+  protected async confirmDeleteAccount(): Promise<void> {
+    if (!this.canConfirmDelete() || this.deleteLoading()) return;
+
+    this.deleteLoading.set(true);
+    this.deleteError.set('');
+    try {
+      await this.api.delete('users/account');
+      this.auth.jwt = null;
+      localStorage.removeItem('jwt');
+      this.router.navigate(['/login']);
+    } catch (err: any) {
+      const msg = typeof err?.error === 'string' ? err.error : err?.error?.error ?? null;
+      this.deleteError.set(msg ?? 'No se pudo eliminar la cuenta. Inténtalo de nuevo.');
+    } finally {
+      this.deleteLoading.set(false);
+    }
+  }
+
   // Equipo favorito
 
   protected openFavoriteModal(): void {

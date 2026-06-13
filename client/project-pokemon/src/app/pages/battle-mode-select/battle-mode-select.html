@@ -3,10 +3,12 @@
         <h1 class="title">Elige un modo de combate</h1>
 
         <div class="modes-container" [class.is-leaving]="isLeaving()">
+            <!--
             <button type="button" class="mode-button mode-cpu" [disabled]="isLeaving()" (click)="goToVsMachine()">
                 <span>VS. CPU</span>
             </button>
-
+            -->
+            
             <button type="button" class="mode-button mode-online" [disabled]="isLeaving()" (click)="goToVsOnline()">
                 <span>VS. ONLINE</span>
             </button>
