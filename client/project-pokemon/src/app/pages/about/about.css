@@ -7,7 +7,8 @@
 .about-page {
 	flex: 1;
 	width: 100%;
-	padding: 2.5rem 0;
+	padding: 2.5rem 1rem;
+	box-sizing: border-box;
 	background: url('/assets/background.png') repeat, linear-gradient(135deg, #0094ae 0%, #002426 100%);
 	display: flex;
 	flex-direction: column;
@@ -22,6 +23,7 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
+    box-sizing: border-box;
 }
 
 .hero-card,
@@ -191,11 +193,40 @@
 
 @media (max-width: 720px) {
     .about-page {
-        padding: 20px;
+        padding: 16px;
+    }
+
+    .big-container {
+        padding: 0 4px;
     }
 
     .hero-card,
     .panel {
         padding: 20px;
+    }
+
+    .hero-copy h1 {
+        font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .about-page {
+        padding: 12px;
+    }
+
+    .big-container {
+        padding: 0;
+        gap: 16px;
+    }
+
+    .hero-card,
+    .panel {
+        padding: 16px;
+        border-radius: 8px;
+    }
+
+    .story-grid {
+        grid-template-columns: 1fr;
     }
 }

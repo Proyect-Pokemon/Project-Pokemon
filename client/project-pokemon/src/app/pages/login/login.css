@@ -178,3 +178,36 @@ input[type="password"]:focus {
     justify-content:center;
     margin-top:12px;
 }
+@media (max-width: 480px) {
+    .big-container {
+        padding: 16px;
+        align-items: flex-start;
+        padding-top: 24px;
+    }
+
+    .container {
+        padding: 24px 20px;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .container-header h1 {
+        font-size: 1.3rem;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .error-global {
+        max-width: 100%;
+    }
+}

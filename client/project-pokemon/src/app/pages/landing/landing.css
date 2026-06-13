@@ -400,13 +400,21 @@
     min-height: 80vh;
   }
 
+  .hero-content {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .hero-ctas {
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .cta-primary, .cta-ghost {
     width: 100%;
+    box-sizing: border-box;
     text-align: center;
   }
 }
