@@ -33,7 +33,7 @@ public class AdminController : ControllerBase {
 
     // PUT: api/admin/{id}Role
     [Authorize(Roles = "admin")]
-    [HttpPut("{id}/Role")]
+    [HttpPut("{id}/role")]
     public async Task<IActionResult> UpdateUserRole(int id, [FromBody] PutUserRoleDto dto) {
         User? user = await _unitOfWork.UserRepository.GetByIdAsync(id);
         if (user == null) {

@@ -23,6 +23,37 @@ export class LifeBar {
   @Input() maxHp: number | null = null;
   @Input() showHp: boolean = false;
   @Input() status: string = '';
+  @Input() statStages: Record<string, number> = {};
+
+  private static readonly STAT_LABELS: Record<string, string> = {
+    // El backend envía los stats en español via TranslateStatName.
+    // Tras normalizeName + strip de espacios quedan estas keys:
+    ataque:           'Atq',
+    defensa:          'Def',
+    ataqueespecial:   'AtEsp',
+    defensaespecial:  'DefEsp',
+    velocidad:        'Vel',
+    evasion:          'Eva',
+    precision:        'Pre'
+  };
+
+  get statChips(): { key: string; label: string; stage: number }[] {
+    return Object.entries(this.statStages)
+      .filter(([, stage]) => stage !== 0)
+      .map(([key, stage]) => {
+        // Normalizar la clave por si llega con espacios, guiones o tildes
+        const normalizedKey = key
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[\s_\-]/g, '');
+        return {
+          key,
+          label: LifeBar.STAT_LABELS[normalizedKey] ?? key,
+          stage,
+        };
+      });
+  }
 
   get showGenderBadge(): boolean {
     return this.genderClass !== null;

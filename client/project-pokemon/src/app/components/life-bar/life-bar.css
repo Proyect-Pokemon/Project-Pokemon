@@ -158,3 +158,93 @@
         font-size: 1rem;
     }
 }
+
+/* Stat stages */
+.stat-hp-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.stat-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    flex: 1;
+    justify-content: flex-start;
+}
+
+/* El HP siempre a la derecha, los chips crecen hacia la izquierda */
+.hp-display {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.stat-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 7px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.stat-chip.stat-up {
+    background: rgba(74, 222, 128, 0.18);
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.35);
+}
+
+.stat-chip.stat-down {
+    background: rgba(248, 113, 113, 0.18);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+/* Móvil: life-bar más compacta */
+@media (max-width: 800px) {
+    .pokemon-info {
+        padding: 10px 12px 8px;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .pokemon-name {
+        font-size: 1.1rem;
+    }
+
+    .life-bar {
+        height: 14px;
+    }
+
+    .hp-display {
+        font-size: 0.9rem;
+    }
+
+    .hp-display.subtle {
+        font-size: 0.8rem;
+    }
+
+    .stat-chip {
+        font-size: 0.65rem;
+        padding: 2px 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pokemon-info {
+        padding: 8px 10px 6px;
+    }
+
+    .pokemon-name {
+        font-size: 1rem;
+    }
+
+    .life-bar {
+        height: 12px;
+    }
+}

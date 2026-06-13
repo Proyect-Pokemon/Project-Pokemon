@@ -421,7 +421,7 @@ public class Network {
     }
 
     // Evento que se dispara cuando dos jugadores son emparejados
-    private async void OnPlayersMatched(Client player1, Client player2, int team1Id, int team2Id) {
+    private async Task OnPlayersMatched(Client player1, Client player2, int team1Id, int team2Id) {
         try {
             _logger.LogInformation($"Emparejamiento: {player1.ClientId} vs {player2.ClientId}");
 

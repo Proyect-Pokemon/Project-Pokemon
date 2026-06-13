@@ -27,11 +27,12 @@ export class Login implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private readonly socketService = inject(SocketService);
 
-  private googleInitialized = false;
+  // Estática para que persista aunque el componente se destruya y recree
+  private static googleInitialized = false;
 
   canSubmit(): boolean {
     return this.nickname.trim().length > 0 &&
-      this.password.trim().length > 0;
+           this.password.trim().length > 0;
   }
 
   async submit() {
@@ -77,8 +78,8 @@ export class Login implements OnInit, OnDestroy {
         typeof err?.error === 'string'
           ? err.error
           : err?.error?.error ||
-          err?.error?.message ||
-          err?.message;
+            err?.error?.message ||
+            err?.message;
 
       this.errorMessage.set(
         backendError || 'Error de conexión con el servidor.'
@@ -94,17 +95,19 @@ export class Login implements OnInit, OnDestroy {
   }
 
   private initGoogle(): void {
-
-    if (this.googleInitialized) return;
+    if (Login.googleInitialized) return;
     if (typeof google === 'undefined') return;
+
+    const clientId = this.getGoogleClientId();
+    // No inicializar si el client ID no está configurado
+    if (!clientId || clientId.includes('TU_CLIENT_ID')) return;
 
     const button = document.getElementById('googleButton');
     if (!button) return;
 
     try {
-
       google.accounts.id.initialize({
-        client_id: environment.GOOGLE_CLIENT_ID,
+        client_id: clientId,
         callback: (response: any) => this.handleGoogle(response)
       });
 
@@ -113,11 +116,16 @@ export class Login implements OnInit, OnDestroy {
         size: 'large'
       });
 
-      this.googleInitialized = true;
-
+      Login.googleInitialized = true;
     } catch {
-      this.errorMessage.set('No se pudo inicializar el inicio de sesión con Google.');
+      // silencioso: no rompe login si Google falla
     }
+  }
+
+  private getGoogleClientId(): string {
+    // Reemplazar este valor con el Client ID real de Google Cloud Console
+    // o configúrarlo en environment.ts cuando esté disponible
+    return 'TU_CLIENT_ID.apps.googleusercontent.com';
   }
 
   async handleGoogle(response: any) {

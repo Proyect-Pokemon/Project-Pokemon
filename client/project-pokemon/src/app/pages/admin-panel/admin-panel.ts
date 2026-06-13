@@ -5,11 +5,11 @@ import { AdminUserRow } from '../../models/admin-user-row';
 import { AdminUsersList } from '../../components/admin-users-list/admin-users-list';
 import { AdminDeleteUserModal } from '../../components/admin-delete-user-modal/admin-delete-user-modal';
 import { AdminService } from '../../services/admin-service';
-
+import { AdminSearch } from '../../components/admin-search/admin-search';
 
 @Component({
   selector: 'app-admin-panel',
-  imports: [AdminUsersList, AdminDeleteUserModal],
+  imports: [AdminUsersList, AdminDeleteUserModal, AdminSearch],
   templateUrl: './admin-panel.html',
   styleUrl: './admin-panel.css',
 })
@@ -20,6 +20,7 @@ export class AdminPanel implements OnInit {
   protected readonly loadingUsers = signal(false);
   protected readonly loadError = signal('');
   protected readonly actionMessage = signal('');
+  protected readonly searchQuery = signal('');
 
   protected readonly selectedUserForDeletion = signal<AdminUserRow | null>(null);
   protected readonly deleteNicknameInput = signal('');
@@ -38,6 +39,16 @@ export class AdminPanel implements OnInit {
   protected readonly totalStandardUsers = computed(
     () => this.totalUsers() - this.totalAdmins()
   );
+
+  protected readonly filteredUsers = computed(() => {
+    const query = this.normalize(this.searchQuery());
+    if (!query) return this.users();
+    return this.users().filter(
+      (u) =>
+        this.normalize(u.nickname).includes(query) ||
+        this.normalize(u.email).includes(query)
+    );
+  });
 
   protected readonly canConfirmDeletion = computed(() => {
     const user = this.selectedUserForDeletion();
@@ -59,6 +70,14 @@ export class AdminPanel implements OnInit {
     void this.loadUsers();
   }
 
+  protected onSearchInput(event: Event): void {
+    this.searchQuery.set((event.target as HTMLInputElement).value);
+  }
+
+  protected clearSearch(): void {
+    this.searchQuery.set('');
+  }
+
   protected async onRoleChange(event: { userId: number; role: UserRole }): Promise<void> {
     const { userId, role: selectedRole } = event;
 
@@ -67,15 +86,8 @@ export class AdminPanel implements OnInit {
     const currentUser = this.users().find((u) => u.id === userId);
     if (!currentUser || currentUser.role === selectedRole) return;
 
-    // Impedir que se quite el último admin
-    if (
-      currentUser.role === 'admin' &&
-      selectedRole === 'user' &&
-      this.totalAdmins() === 1
-    ) {
-      this.actionMessage.set(
-        'Debe existir al menos un administrador en el sistema.'
-      );
+    if (currentUser.role === 'admin' && selectedRole === 'user' && this.totalAdmins() === 1) {
+      this.actionMessage.set('Debe existir al menos un administrador en el sistema.');
       return;
     }
 
@@ -117,14 +129,8 @@ export class AdminPanel implements OnInit {
     const user = this.selectedUserForDeletion();
     if (!user || !this.canConfirmDeletion() || this.deletingUserId() !== null) return;
 
-    // Impedir eliminar el último usuario admin
-    if (
-      user.role === 'admin' &&
-      this.totalAdmins() === 1
-    ) {
-      this.actionMessage.set(
-        'No se puede eliminar el único usuario administrador del sistema.'
-      );
+    if (user.role === 'admin' && this.totalAdmins() === 1) {
+      this.actionMessage.set('No se puede eliminar el único usuario administrador del sistema.');
       return;
     }
 
@@ -143,11 +149,8 @@ export class AdminPanel implements OnInit {
   }
 
   protected readonly isLastAdmin = (userId: number): boolean => {
-  const user = this.users().find(u => u.id === userId);
-
-  return !!user &&
-    user.role === 'admin' &&
-    this.totalAdmins() === 1;
+    const user = this.users().find((u) => u.id === userId);
+    return !!user && user.role === 'admin' && this.totalAdmins() === 1;
   };
 
   private async loadUsers(): Promise<void> {
@@ -175,20 +178,43 @@ export class AdminPanel implements OnInit {
     }
   }
 
+  private normalize(value: string): string {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
   private markRoleUpdating(userId: number, inProgress: boolean): void {
     this.updatingRoleIds.update((ids) => {
-      if (inProgress) {
-        return ids.includes(userId) ? ids : [...ids, userId];
-      }
+      if (inProgress) return ids.includes(userId) ? ids : [...ids, userId];
       return ids.filter((id) => id !== userId);
     });
   }
 
   private extractError(err: any, fallback: string): string {
+    const status = err?.status;
+
+    const statusMessages: Record<number, string> = {
+      400: 'Datos inválidos. Comprueba la información e inténtalo de nuevo.',
+      401: 'No tienes permiso para realizar esta acción. Inicia sesión de nuevo.',
+      403: 'Acceso denegado. No tienes permisos suficientes.',
+      404: 'El usuario no fue encontrado.',
+      405: 'Operación no permitida. Contacta con el administrador del sistema.',
+      409: 'Conflicto: el cambio no se pudo aplicar porque hay datos en conflicto.',
+      500: 'Error interno del servidor. Inténtalo de nuevo más tarde.',
+    };
+
+    if (status && statusMessages[status]) {
+      return statusMessages[status];
+    }
+
     const msg =
       typeof err?.error === 'string'
         ? err.error
-        : err?.error?.message || err?.message;
+        : err?.error?.message || err?.error?.error || err?.message;
+
     if (!msg || typeof msg !== 'string') return fallback;
     const clean = msg.trim();
     return clean.length > 0 ? clean : fallback;

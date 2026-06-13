@@ -1,0 +1,19 @@
+<div class="admin-search">
+  <img src="assets/icons/UI/busqueda.svg" alt="" class="admin-search-icon" aria-hidden="true" />
+  <input
+    type="text"
+    class="admin-search-input"
+    placeholder="Buscar por nickname o email..."
+    [value]="query()"
+    (input)="onInput($event)"
+    autocomplete="off"
+  />
+  @if (query()) {
+    <button
+      type="button"
+      class="admin-search-clear"
+      aria-label="Limpiar búsqueda"
+      (click)="clear()"
+    ><img src="assets/icons/UI/cruz.svg" alt="" class="admin-search-clear-icon" aria-hidden="true" /></button>
+  }
+</div>

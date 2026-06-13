@@ -270,7 +270,7 @@ async function processEvent(event: BattleEvent) {
 
 ## Perspectivas por Cliente
 
-⚠️ **Importante**: El backend **remapea automáticamente** las perspectivas (`player`/`opponent`) para cada cliente.
+**Importante**: El backend **remapea automáticamente** las perspectivas (`player`/`opponent`) para cada cliente.
 
 - **Player 1** ve sus Pokémon como `side: "player"`
 - **Player 2** ve sus Pokémon como `side: "player"` (remapeado por el servidor)
@@ -281,7 +281,7 @@ async function processEvent(event: BattleEvent) {
 
 ## Migración desde Sistema Legacy
 
-### ❌ Antes (Sistema Antiguo)
+### Antes (Sistema Antiguo)
 
 ```typescript
 // Frontend tenía que inferir qué mensaje corresponde a qué evento
@@ -300,7 +300,7 @@ function handleBattleUpdate(update: BattleStateUpdate) {
 }
 ```
 
-### ✅ Ahora (Sistema Nuevo)
+### Ahora (Sistema Nuevo)
 
 ```typescript
 async function handleBattleUpdate(update: BattleStateUpdate) {
@@ -328,20 +328,9 @@ async function handleBattleUpdate(update: BattleStateUpdate) {
 
 Durante la Fase 1 de migración:
 
-- ✅ `replaySteps` está **disponible y recomendado**
-- ⚠️ `messages`, `structuredMessages`, `timeline` siguen presentes pero **marcados como obsoletos**
-- 📝 Clientes legacy pueden seguir funcionando temporalmente
-
-### Checklist de Migración Frontend
-
-- [ ] Implementar función de reproducción de `replaySteps`
-- [ ] Eliminar lógica de inferencia entre `messages` y `timeline`
-- [ ] Probar flujos completos: ataque, switch, faint, efectos de estado
-- [ ] Verificar perspectivas correctas en PvP (ambos clientes)
-- [ ] Eliminar dependencias de campos legacy
-- [ ] Notificar al backend cuando la migración esté completa
-
----
+- `replaySteps` está **disponible y recomendado**
+- `messages`, `structuredMessages`, `timeline` siguen presentes pero **marcados como obsoletos**
+- Clientes legacy pueden seguir funcionando temporalmente
 
 ## Tipos de Eventos Soportados
 

@@ -84,3 +84,24 @@
     z-index: 2;
     min-width: 64px;
 }
+
+@media (max-width: 800px) {
+    .move {
+        padding: 6px 10px;
+        margin: 1px;
+    }
+
+    .move img {
+        width: 28px;
+        height: 28px;
+    }
+
+    .move-name {
+        font-size: 0.9rem;
+    }
+
+    .move-pp {
+        font-size: 0.85rem;
+        min-width: 48px;
+    }
+}
