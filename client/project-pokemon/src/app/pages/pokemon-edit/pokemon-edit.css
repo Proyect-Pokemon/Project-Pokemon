@@ -11,10 +11,7 @@
     align-items: center;
     gap: 1.25rem;
     padding: 2rem 1rem;
-    background:
-        repeating-linear-gradient(0deg, transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
-        repeating-linear-gradient(90deg, transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
-        linear-gradient(135deg, #0094ae 0%, #002426 100%);
+    background: url('/assets/background.png') repeat, linear-gradient(135deg, #0094ae 0%, #002426 100%);
 }
 
 .page-header {
@@ -73,7 +70,7 @@
     to { transform: rotate(360deg); }
 }
 
-/* ── Layout ──────────────────────────────────────────────────────────────── */
+/* Layout */
 .editor-layout {
     width: min(1160px, 100%);
     display: grid;
@@ -151,7 +148,7 @@
     pointer-events: none;
 }
 
-/* ── Control block ───────────────────────────────────────────────────────── */
+/* Control block */
 .control-block {
     background: rgba(255, 255, 255, 0.45);
     border: 1px solid rgba(15, 83, 104, 0.15);
@@ -177,7 +174,7 @@
     font-weight: 700;
 }
 
-/* ── Shiny switch ────────────────────────────────────────────────────────── */
+/* Shiny switch */
 .switch {
     display: inline-flex;
     align-items: center;
@@ -222,7 +219,7 @@
     transform: translateX(20px);
 }
 
-/* ── Sex buttons ─────────────────────────────────────────────────────────── */
+/* Gender buttons */
 .sex-buttons {
     display: flex;
     gap: 0.45rem;
@@ -257,7 +254,7 @@
     filter: brightness(0) invert(1);
 }
 
-/* ── Nature / moves blocks ───────────────────────────────────────────────── */
+/* Nature/moves blocks */
 .nature-block {
     display: block;
     width: 100%;
@@ -288,7 +285,7 @@
     padding: 0.2rem 0;
 }
 
-/* ── Actions ─────────────────────────────────────────────────────────────── */
+/* Actions */
 .actions {
     display: flex;
     justify-content: center;
@@ -318,7 +315,7 @@
     font-weight: 700;
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
+/* Responsive */
 @media (max-width: 860px) {
     .editor-layout {
         grid-template-columns: 1fr;
@@ -351,7 +348,7 @@
     }
 }
 
-/* ── Nickname modal ──────────────────────────────────────────────────────── */
+/* Nickname modal */
 .nickname-overlay {
     position: fixed;
     inset: 0;

@@ -42,7 +42,7 @@ export class PokemonEditorPanel {
         } else {
             // Al abrir el panel, cargar y mostrar todos los Pokémon si la búsqueda está vacía
             this.searchPanel?.loadInitialPokemonList();
-            // Hacer focus en el input de búsqueda
+            // Hacer focus en el buscador
             this.searchPanel?.focusSearchInput();
         }
     }
@@ -162,7 +162,7 @@ export class PokemonEditorPanel {
         this.isSlotTransitioning = false;
         this.pendingSlot = null;
         this.animationDirection.set('none');
-        // Reset nature selector
+        // Reiniciar selector de naturaleza
         if (this.natureSelector) {
             this.natureSelector.resetNatureSelection();
         }

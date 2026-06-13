@@ -14,6 +14,7 @@ import { BattleModeSelect } from './pages/battle-mode-select/battle-mode-select'
 import { redirectionGuard } from './guards/redirection-guard';
 import { adminGuard } from './guards/admin-guard';
 import { battleLeaveGuard } from './guards/battle-leave-guard';
+import { Landing } from './pages/landing/landing';
 
 export const routes: Routes = [
     { path: 'about', component: About },
@@ -28,5 +29,6 @@ export const routes: Routes = [
     { path: 'team-builder', component: TeamBuilder, canActivate: [redirectionGuard] },
     { path: 'team-builder/:id', component: TeamEdit, canActivate: [redirectionGuard] },
     { path: 'team-builder/:teamId/pokemon/:pokemonTeamId/edit', component: PokemonEdit, canActivate: [redirectionGuard] },
-    { path: '**', redirectTo: 'login', pathMatch: 'full' }
+    { path: 'landing', component: Landing },
+    { path: '**', redirectTo: 'landing', pathMatch: 'full' }
 ];

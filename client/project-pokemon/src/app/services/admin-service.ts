@@ -21,7 +21,7 @@ export class AdminService {
   }
 
   async updateUserRole(userId: number, dto: PutUserRoleDto): Promise<PutUserRoleDto> {
-    return this.api.put<PutUserRoleDto>(`admin/${userId}Role`, dto);
+    return this.api.put<PutUserRoleDto>(`admin/${userId}/Role`, dto);
   }
 
   async deleteUser(userId: number): Promise<void> {

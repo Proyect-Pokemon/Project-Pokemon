@@ -8,10 +8,7 @@
 	flex: 1;
 	width: 100%;
 	padding: 2.5rem 0;
-	background:
-		repeating-linear-gradient(0deg, transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
-		repeating-linear-gradient(90deg, transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
-		linear-gradient(135deg, #0094ae 0%, #002426 100%);
+	background: url('/assets/background.png') repeat, linear-gradient(135deg, #0094ae 0%, #002426 100%);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -43,7 +40,7 @@
 	padding: 2rem;
 	background: linear-gradient(120deg, #ffffff 0%, #f0eafc 100%);
 	border-radius: 24px;
-	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 	display: flex;
 	flex-direction: row;
 	gap: 2rem;
@@ -77,7 +74,7 @@
 
 .profile-avatar:hover {
 	transform: scale(1.03);
-	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
 
 .profile-meta {
@@ -141,12 +138,12 @@
 .btn-primary {
 	background: linear-gradient(135deg, var(--action-color) 0%, #39757e 100%);
 	color: var(--primary-color);
-	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
 
 .btn-primary:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 	filter: brightness(1.06);
 }
 
@@ -173,12 +170,12 @@
 	transition: all 0.2s ease;
 	font-size: 0.95rem;
 	letter-spacing: 0.5px;
-	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
 
 .btn-logout:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 	filter: brightness(1.08);
 }
 
@@ -220,7 +217,7 @@
 	padding: 24px;
 	background: linear-gradient(120deg, #ffffff 0%, #f0eafc 100%);
 	border-radius: 20px;
-	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 	margin-bottom: 24px;
 	color: #1f2937;
 }
@@ -479,7 +476,7 @@
 .btn-danger:hover {
   background-color: rgb(187, 51, 51);
   transform: translateY(-1px);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
 
 /* Delete account modal */
@@ -499,7 +496,7 @@
   width: min(460px, 100%);
   background: linear-gradient(120deg, #ffffff 0%, #fff1f1 100%);
   border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   padding: 28px;
   display: flex;
   flex-direction: column;
@@ -561,7 +558,7 @@
 
 .delete-modal-input:focus {
   border-color: #dc2626;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
 
 .delete-modal-footer {

@@ -22,7 +22,7 @@ public class BattleSession {
 
     public List<string> BattleLog { get; set; } = new();
 
-    // UserId del ganador de la batalla
+    // UserId del ganador del combate
     public int? WinnerUserId { get; set; } = null;
 
     public object SyncRoot { get; } = new();
@@ -70,7 +70,7 @@ public class BattleSession {
         return null;
     }
 
-    // Verifica si la batalla ha terminado
+    // Verifica si el combate ha terminado
     public bool IsBattleOver() {
         if (PlayerSide.IsDefeated()) {
             WinnerUserId = Player2UserId;

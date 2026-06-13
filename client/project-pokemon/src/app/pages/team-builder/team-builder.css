@@ -1,24 +1,21 @@
-/* ─── Host element ─────────────────────────────────────────────────────────── */
+/* Host element */
 :host {
     display: flex;
     flex-direction: column;
     flex: 1;
 }
 
-/* ─── Page background (teal grid) ─────────────────────────────────────────── */
+/* Page background (teal grid) */
 .page {
     flex: 1;
     padding: 2.5rem 2rem;
-    background:
-        repeating-linear-gradient(0deg, transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
-        repeating-linear-gradient(90deg, transparent, transparent 19px, #0094ae 19px, #0094ae 20px),
-        linear-gradient(135deg, #0094ae 0%, #002426 100%);
+    background: url('/assets/background.png') repeat, linear-gradient(135deg, #0094ae 0%, #002426 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-/* ─── Title ────────────────────────────────────────────────────────────────── */
+/* Title */
 .page-title {
     font-family: 'Satoshi', sans-serif;
     font-size: 1.75rem;
@@ -29,7 +26,7 @@
     letter-spacing: 2px;
 }
 
-/* ─── Teams list ───────────────────────────────────────────────────────────── */
+/* Teams list */
 .teams-list {
     display: flex;
     flex-direction: column;
@@ -38,7 +35,7 @@
     max-width: 1000px;
 }
 
-/* ─── Team card ────────────────────────────────────────────────────────────── */
+/* Team card */
 .team-card {
     display: flex;
     align-items: center;
@@ -49,7 +46,7 @@
     box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.18);
 }
 
-/* ─── Team name ────────────────────────────────────────────────────────────── */
+/* Team name */
 .team-name {
     font-family: 'Satoshi', sans-serif;
     font-size: 1.25rem;
@@ -83,7 +80,7 @@
     padding: 0;
 }
 
-/* ─── Pokemon slots ────────────────────────────────────────────────────────── */
+/* Pokemon slots */
 .pokemon-slots {
     --slot-size: 72px;
     display: grid;
@@ -114,7 +111,7 @@
     object-fit: contain;
 }
 
-/* ─── Action buttons ───────────────────────────────────────────────────────── */
+/* Action buttons */
 .team-actions {
     display: flex;
     gap: 0.6rem;
@@ -162,7 +159,7 @@
     background-color: #d64541;
 }
 
-/* ─── Add team button ───────────────────────────────────────────────────────── */
+/* Add team button */
 .add-team-btn {
     width: 100%;
     min-height: calc(72px + 2 * 1.25rem);
@@ -247,7 +244,7 @@
     background: #d64541;
 }
 
-/* ─── Skeleton loading ─────────────────────────────────────────────────────── */
+/* Skeleton loading */
 .team-card.skeleton {
     pointer-events: none;
 }
@@ -299,7 +296,7 @@
     100% { background-position: -200% 0; }
 }
 
-/* ─── Responsive ────────────────────────────────────────────────────────────── */
+/* Responsive */
 @media (max-width: 600px) {
     .page-title {
         font-size: 0.9rem;

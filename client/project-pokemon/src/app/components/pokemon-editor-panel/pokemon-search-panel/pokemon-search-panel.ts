@@ -38,30 +38,30 @@ export class PokemonSearchPanel {
 
             this.searchError.set(null);
 
-            // Si está vacío, mostrar todos los pokemon
+            // Si está vacío, muestra todos los pokémon
             if (!query || query.trim() === '') {
                 this.searchResults.set([...cache].sort((a, b) => a.id - b.id));
                 return;
             }
 
-            // Intentar convertir a número
+            // Intenta convertir a número
             const numericId = parseInt(query);
             
             if (!isNaN(numericId)) {
-                // Búsqueda por ID
+                // Buscar por ID
                 const found = cache.filter(p => p.id === numericId);
                 if (found.length === 0) {
                     this.searchError.set('No se encontró Pokémon con ese número.');
                     this.searchResults.set([]);
                 } else {
                     this.searchResults.set(found);
-                    // Si solo hay un resultado, seleccionarlo automáticamente
+                    // Si solo hay un resultado, se selecciona el pokémon automáticamente
                     if (found.length === 1) {
                         this.selectedPokemon.set(found[0]);
                     }
                 }
             } else {
-                // Búsqueda por nombre (case-insensitive, contains)
+                // Buscar por nombre (case-insensitive, contains)
                 const normalizedQuery = query.toLowerCase().trim();
                 const found = cache.filter(p => p.name.toLowerCase().includes(normalizedQuery));
                 
@@ -88,7 +88,7 @@ export class PokemonSearchPanel {
     }
 
     async loadInitialPokemonList() {
-        // Asegurar que el cache esté cargado
+        // Asegurar que el caché esté cargado
         await this.loadPokemonCache();
         
         // Si la búsqueda está vacía, mostrar todos los Pokémon
