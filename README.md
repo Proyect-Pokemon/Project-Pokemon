@@ -22,7 +22,7 @@ La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pok�
 - [📄 Readme Back]()
 - [📄 Readme Base de Datos]()
 - [🌐 Bibliografía](#-bibliografía)
-- [⚖️ Licencia](license.md)
+- [⚖️ Licencia](LICENSE.md)
 
 ## 👨‍💻 Autores del proyecto
 - [Jorge González Jiménez](https://github.com/jor2511)
