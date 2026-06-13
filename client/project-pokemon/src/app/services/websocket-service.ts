@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { environment } from '../enviroments/enviroment';
+import { environment } from '../environments/environment';
 
 export interface BattleMatchedEvent {
   battleId: string;

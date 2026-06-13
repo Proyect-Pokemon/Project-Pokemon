@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthRequest } from '../../models/auth-request';
 import { AuthService } from '../../services/auth';
 import { SocketService } from '../../services/websocket-service';
+import { environment } from '../../environments/environment';
 
 declare const google: any;
 
