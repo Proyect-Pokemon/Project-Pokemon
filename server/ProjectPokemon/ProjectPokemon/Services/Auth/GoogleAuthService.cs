@@ -21,7 +21,7 @@ public sealed class GoogleAuthService
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
 
-        _googleClientId = "937735932188-ti6265t6n91ctgu2d2m6okbju1b0p8cb.apps.googleusercontent.com";
+        _googleClientId = "dummy-google-client-id.apps.googleusercontent.com";
     }
 
     /// <summary>
