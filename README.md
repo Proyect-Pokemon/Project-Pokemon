@@ -217,6 +217,12 @@ cd Project-Pokemon
 ```
 
 ---
+## Configuración de secretos
+
+### Project-Pokemon\server\ProjectPokemon\ProjectPokemon\Properties\launchSettings.json
+### Project-Pokemon\client\project-pokemon\src\app\environments\environment.ts
+
+El proyecto está configurado para utilizar MariaDB como base de datos principal. Por este motivo, si no se dispone de una instancia de MariaDB ejecutándose en local, no será posible ejecutar ni probar correctamente todas las funcionalidades, incluso aunque se utilicen valores dummy.
 
 ## Configuración del backend
 
