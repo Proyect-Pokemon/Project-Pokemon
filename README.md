@@ -1,96 +1,77 @@
+![Cabecera con logo](https://raw.githubusercontent.com/Proyect-Pokemon/.github/blob/3c795ecb73cf34392adbf4768336eed1745f5de4/HeaderProjectPokemon.png)
 # Project Pokémon
-
-## Descripción
-
 **Project Pokémon** es una aplicación web multijugador de simulación de combates Pokémon desarrollada como proyecto final del ciclo formativo de Administración de Sistemas Informáticos en Red (ASIR).
 
 La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pokémon, interactuar con otros jugadores y participar en combates en tiempo real. El sistema reproduce las mecánicas de combate de los videojuegos **Pokémon FireRed y Pokémon LeafGreen**, incorporando funcionalidades modernas propias de las aplicaciones web actuales.
 
----
+## 📚 Índice
+- ⭐ Project Pokémon
+- 👨‍💻 Autores del proyecto
+- 🌐 Enlaces
+- 🛠️ Tecnologías utilizadas
+  - Backend
+  - Frontend
+  - Despliegue
+- 🎨 Prototipos en Figma
+- 📗 [Memoria](/docs/MemoriaProjectPokemon.pdf)
+- ✨ Vista previa
+- 📁 Arquitectura de sistemas
+- 📄 Readme Front
+- 📄 Readme Back
+- 📄 Readme Base de Datos
+- 🌐 Bibliografía
+- ⚖️ Licencia
 
-## Características principales
-
-* Registro e inicio de sesión de usuarios.
-* Autenticación mediante JWT y OAuth 2.0.
-* Creación, edición y gestión de equipos Pokémon.
-* Sistema de amigos y desafíos directos.
-* Matchmaking automático entre jugadores.
-* Combates multijugador en tiempo real.
-* Chat integrado durante los combates.
-* Persistencia de datos mediante base de datos relacional.
-* Interfaz web responsive adaptada a distintos dispositivos.
-* Simulación basada exclusivamente en Pokémon de tercera generación.
-
----
-
-## Autores
+## 👨‍💻 Autores
 - [Jorge González Jiménez](https://github.com/jor2511)
 - [Cristina Cabello Rubio](https://github.com/cristycr)
 - [Jesús Felipe Fuentes Trigueros](https://github.com/jffuentes-15)
 
-**Ciclo Formativo:** Administración de Sistemas Informáticos en Red (ASIR)
-
-**Centro Educativo:** IES Miguel Romero Esteo
-
+**Ciclo Formativo:** Administración de Sistemas Informáticos en Red (ASIR)\
+**Centro Educativo:** IES Miguel Romero Esteo\
 **Curso Académico:** 2024 - 2026
 
----
-
-## Enlaces
+## 🌐 Enlaces
 - Versión desplegada: https://projectpokemon.runasp.net
-- Video tutorial: https://youtu.be/cg7Q7EiPu7w
+- Vídeo demostrativo: https://youtu.be/cg7Q7EiPu7w
 
----
-
-## Tecnologías utilizadas
+## 🛠️ Tecnologías utilizadas
 
 ### Backend
-
-* C#
-* ASP.NET Core
-* Entity Framework Core
-* WebSockets
-* JSON Web Tokens (JWT)
+- C#
+- ASP.NET Core
+- Entity Framework Core
+- WebSockets
+- JSON Web Tokens (JWT)
 
 ### Frontend
-
-* Angular
-* TypeScript
-* HTML5
-* CSS3
+- Angular
+- TypeScript
+- HTML5
+- CSS3
 
 ### Base de datos
-
-* SQLite (entorno de desarrollo)
-* MariaDB (entorno de producción)
+- SQLite (entorno de desarrollo)
+- MariaDB (entorno de producción)
 
 ### Infraestructura
-
-* Docker
-* Kubernetes
-* Proxmox VE
-* Debian GNU/Linux
-* Nginx
-* ASP Monster
+- Docker
+- Kubernetes
+- Proxmox VE
+- Debian GNU/Linux
+- Nginx
+- ASP Monster
 
 ### DevOps y Gestión
+- Git
+- GitHub
+- GitHub Projects
+- GitHub Actions
+- CI/CD
+- Web Deploy
 
-* Git
-* GitHub
-* GitHub Projects
-* GitHub Actions
-* CI/CD
-* Web Deploy
+## 🎨 Vista previa
 
----
-
-## Documentación
-* Memoria
-* Vídeo
-
-## Vista previa
-
-Fotos
 
 ## Arquitectura de Producción (ASP Monster)
 ```text
@@ -115,10 +96,7 @@ Fotos
 │        MariaDB           │
 └──────────────────────────┘
 ```
-Descripción:
-
 Los usuarios acceden a la aplicación mediante HTTPS. El servidor web alojado en ASP Monster ejecuta la aplicación Project Pokémon y gestiona tanto las peticiones HTTP como las conexiones WebSocket utilizadas por los combates en tiempo real. La aplicación se comunica internamente con un servidor MariaDB independiente encargado del almacenamiento persistente de los datos.
-
 ---
 
 ## Arquitectura Virtualizada (Proxmox VE)
@@ -156,11 +134,7 @@ Los usuarios acceden a la aplicación mediante HTTPS. El servidor web alojado en
                 │ Usuarios  │
                 └───────────┘
 ```
-
-Descripción:
-
 La infraestructura se encuentra desplegada sobre un único servidor físico gestionado mediante Proxmox VE. Dentro del entorno virtualizado se ejecutan tres máquinas virtuales independientes: una máquina destinada al plano de control de Kubernetes e Ingress, una segunda máquina que actúa como nodo trabajador ejecutando los contenedores Docker de la aplicación y una tercera máquina dedicada exclusivamente al servidor MariaDB. Esta separación permite simular una arquitectura distribuida similar a un entorno productivo real.
-
 
 ## Objetivos del proyecto
 
