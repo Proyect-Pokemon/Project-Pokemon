@@ -146,7 +146,7 @@ Los usuarios acceden a la aplicación mediante HTTPS. El servidor web alojado en
 La infraestructura se encuentra desplegada sobre un único servidor físico gestionado mediante Proxmox VE. Dentro del entorno virtualizado se ejecutan tres máquinas virtuales independientes: una máquina destinada al plano de control de Kubernetes e Ingress, una segunda máquina que actúa como nodo trabajador ejecutando los contenedores Docker de la aplicación y una tercera máquina dedicada exclusivamente al servidor MariaDB. Esta separación permite simular una arquitectura distribuida similar a un entorno productivo real.
 
 ### Diagrama relacional
-![Diagrama relacional](/doc/db/Pokemon_Relacional.png)
+![Diagrama relacional](/docs/db/Pokemon_Relacional.png)
 
 ## 🌐 Bibliografía
 Documentación sobre Pokémon
