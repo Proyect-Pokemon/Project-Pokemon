@@ -26,6 +26,15 @@
                     <input [type]="field === 'password' || field === 'confirmPassword' ? 'password' : 'text'"
                         [formControlName]="field" [placeholder]="getLabel(field)" autocomplete="off">
 
+                    @if (field === 'password' && passwordValue.length > 0) {
+                        <ul class="password-reqs">
+                            <li [class.req-ok]="reqLength">Mínimo 6 caracteres</li>
+                            <li [class.req-ok]="reqUppercase">Al menos una mayúscula</li>
+                            <li [class.req-ok]="reqNumber">Al menos un número</li>
+                            <li [class.req-ok]="reqSpecial">Al menos un carácter especial</li>
+                        </ul>
+                    }
+
                     @if (registerForm.get(field)?.touched && registerForm.get(field)?.invalid) {
                     <div class="error">
                         {{ getAngularError(field) }}
