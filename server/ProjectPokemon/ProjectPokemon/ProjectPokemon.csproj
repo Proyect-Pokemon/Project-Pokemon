@@ -29,7 +29,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
+  <Content Include="wwwroot\**">
+    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </Content>
   </ItemGroup>
-
+  
 </Project>

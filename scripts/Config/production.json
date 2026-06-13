@@ -1,0 +1,12 @@
+{
+  "JWT_KEY": "",
+  "DB_CONNECTION": "",
+  "GOOGLE_CLIENT_ID": "",
+  "API_URL": "",
+  "WS_URL": "",
+
+  "WEBDEPLOY_PROFILE": "",
+  "WEBDEPLOY_PROJECT": "",
+  "WEBDEPLOY_USER": "",
+  "WEBDEPLOY_PASSWORD": ""
+}

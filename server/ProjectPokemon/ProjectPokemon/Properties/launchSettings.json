@@ -19,8 +19,8 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "JWT_KEY": "dev_jwt_key_1234567890_clave_super_larga_para_que_tenga_mas_de_256_bits_si_no_no_funciona",
-        "DB_CONNECTION": "Server=db53671.public.databaseasp.net;Port=3306;Database=db53671;User=db53671_dummy;Password=6An!o5+N%W8z;",
-        "GOOGLE_CLIENT_ID": ""
+        "DB_CONNECTION": "Server=localhost;Port=3306;Database=project_pokemon_dev;User=root;Password=root;",
+        "GOOGLE_CLIENT_ID": "dummy-google-client-id.apps.googleusercontent.com"
       }
     }
   }

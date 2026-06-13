@@ -144,7 +144,7 @@ public class Program {
 
         var app = builder.Build();
 
-        /*
+
          if (app.Environment.IsDevelopment()) {
             app.UseSwagger();
             app.UseSwaggerUI();
@@ -153,7 +153,7 @@ public class Program {
                       .AllowAnyHeader()
                       .AllowAnyMethod());
         }
-        */
+
 
         app.UseForwardedHeaders();
         app.UseHttpsRedirection();   // redirige HTTP a HTTPS
