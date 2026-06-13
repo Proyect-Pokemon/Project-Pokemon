@@ -79,14 +79,14 @@ export class Profile implements OnInit {
     'Rizzo.png', 'Sol.png', 'verde.png', 'verdeRoket.png',
   ];
 
-  // Biografia
+  // Biografía
   protected readonly biographyModalOpen = signal(false);
   protected readonly biography = signal<string | null>(null);
   protected readonly biographyDraft = signal('');
   protected readonly biographyEditLoading = signal(false);
   protected readonly biographyEditError = signal('');
 
-  // Contrasena
+  // Contraseña
   protected readonly passwordModalOpen = signal(false);
   protected readonly currentPassword = signal('');
   protected readonly newPassword = signal('');
@@ -181,7 +181,6 @@ export class Profile implements OnInit {
   }
 
   // Avatar
-
   protected openAvatarModal(): void {
     this.avatarModalOpen.set(true);
     this.avatarActionError.set('');
@@ -211,8 +210,7 @@ export class Profile implements OnInit {
     }
   }
 
-  // Biografia
-
+  // Biografía
   protected openBiographyModal(): void {
     this.biographyDraft.set(this.biography() ?? '');
     this.biographyEditError.set('');
@@ -247,8 +245,7 @@ export class Profile implements OnInit {
     }
   }
 
-  // Contrasena
-
+  // Contraseña
   protected openPasswordModal(): void {
     this.currentPassword.set('');
     this.newPassword.set('');
@@ -332,7 +329,6 @@ export class Profile implements OnInit {
   }
 
   // Equipo favorito
-
   protected openFavoriteModal(): void {
     this.favoriteActionError.set('');
     this.favoriteModalOpen.set(true);
@@ -364,8 +360,7 @@ export class Profile implements OnInit {
     }
   }
 
-  // Navegacion
-
+  // Navegación
   protected navigateToTeamBuilder(): void {
     this.router.navigate(['/team-builder']);
   }

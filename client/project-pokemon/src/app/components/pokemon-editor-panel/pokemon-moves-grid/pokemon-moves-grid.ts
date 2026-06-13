@@ -15,7 +15,7 @@ export class PokemonMovesGrid {
     @Input() movements: (Movement | null)[] = [null, null, null, null];
     @Input() allMovements: Movement[] = [];
 
-    // Ahora emite el array completo de 4 ids tras aplicar deduplicación y compactación
+    // Ahora emite el array completo de 4 IDs tras aplicar deduplicación y compactación
     @Output() movementsChanged = new EventEmitter<(number | null)[]>();
 
     openPickerIndex = signal<number | null>(null);
@@ -45,7 +45,7 @@ export class PokemonMovesGrid {
         const index = this.openPickerIndex();
         if (index === null) return;
 
-        // Array actual de ids (null = vacío)
+        // Array actual de IDs (null = vacío)
         const current = this.movements.map((m) => m?.id ?? null);
         const next: (number | null)[] = [...current];
 
@@ -61,7 +61,7 @@ export class PokemonMovesGrid {
             next[index] = movement.id;
         }
 
-        // Compactar: mover los no-nulos al frente, rellenar el resto con null
+        // Compactar: mover los que no sean nulos al frente, rellenar el resto con null
         const filled = next.filter((id): id is number => id !== null);
         const compacted: (number | null)[] = [
             ...filled,

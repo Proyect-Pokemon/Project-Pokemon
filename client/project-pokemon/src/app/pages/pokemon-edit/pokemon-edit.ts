@@ -155,7 +155,7 @@ export class PokemonEdit {
     this.selectedSex.set(value);
   }
 
-  // ── Nickname ────────────────────────────────────────────────────────────
+  // Nickname
 
   openNicknameModal(): void {
     this.nicknameDraft.set(this.pokemonTeam()?.nickname ?? '');
@@ -196,7 +196,7 @@ export class PokemonEdit {
     }
   }
 
-  // ── Guardar todo ─────────────────────────────────────────────────────────
+  // Guardar todo
 
   async savePokemonSettings() {
     const current = this.pokemonTeam();

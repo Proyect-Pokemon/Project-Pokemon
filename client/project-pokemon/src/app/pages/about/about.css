@@ -9,7 +9,7 @@
     display: flex;
     justify-content: center;
     padding: 24px;
-    background: linear-gradient(135deg, var(--action-color) 0%, var(--secondary-color) 100%);
+    background: url('/assets/background.png') repeat, linear-gradient(135deg, var(--action-color) 0%, var(--secondary-color) 100%);
     box-sizing: border-box;
 }
 

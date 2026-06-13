@@ -26,8 +26,8 @@ export class LifeBar {
   @Input() statStages: Record<string, number> = {};
 
   private static readonly STAT_LABELS: Record<string, string> = {
-    // El backend envía los stats en español via TranslateStatName.
-    // Tras normalizeName + strip de espacios quedan estas keys:
+    // El backend envía los stats en español usando el TranslateStatName.
+    // Después del normalizeName + strip de espacios quedan estos valores:
     ataque:           'Atq',
     defensa:          'Def',
     ataqueespecial:   'AtEsp',
@@ -41,7 +41,7 @@ export class LifeBar {
     return Object.entries(this.statStages)
       .filter(([, stage]) => stage !== 0)
       .map(([key, stage]) => {
-        // Normalizar la clave por si llega con espacios, guiones o tildes
+        // Normalizar los valores por si llegaran con espacios, guiones o tildes
         const normalizedKey = key
           .toLowerCase()
           .normalize('NFD')

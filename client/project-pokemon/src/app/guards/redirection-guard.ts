@@ -7,7 +7,7 @@ export const redirectionGuard: CanActivateFn = (_route, state) => {
   const authService = inject(AuthService);
   const isOnlineBattleRoute = state.url.startsWith('/battle/fight');
 
-  // Verificamos si existe el token JWT en el servicio o en localStorage
+  // Verificar si existe el token JWT en el servicio o en localStorage
   if (authService.jwt) {
     return true;
   } else {
@@ -17,7 +17,7 @@ export const redirectionGuard: CanActivateFn = (_route, state) => {
       return false;
     }
 
-    // Si no hay token, redirigimos a login con queryParam para volver después.
+    // Si no hay token, se redirige a login con queryParam para volver después.
     router.navigate(['/login'], { queryParams: { redirectTo: state.url } });
     return false;
   }

@@ -377,7 +377,7 @@ export class TeamEdit {
       return '—';
     }
 
-    // HP is not modified by nature in Pokemon games.
+    // La vida no se modifica
     if (key === 'hp') {
       return baseValue;
     }
@@ -581,7 +581,7 @@ export class TeamEdit {
     const source = this.dragSourceSlot();
     if (source === null || source === slotNumber) return;
     const targetSlot = this.slots()[slotNumber - 1];
-    if (!targetSlot) return; // solo se puede soltar sobre slots con pokemon
+    if (!targetSlot) return; // sólo se puede soltar sobre slots con pokémon
     event.preventDefault();
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
     this.dragOverSlot.set(slotNumber);
@@ -626,7 +626,7 @@ export class TeamEdit {
       // Mover el foco al slot destino
       this.selectedSlot.set(targetSlotNumber);
 
-      // Persistir: intercambiamos usando un slot temporal (999) para evitar conflicto unique
+      // Persistir: se intercambia usando un slot temporal (999) para evitar conflicto unique
       await this.pokemonTeamService.updatePokemonTeam(sourceEntry.id, {
         nickname: sourceEntry.nickname,
         shiny: sourceEntry.shiny,
