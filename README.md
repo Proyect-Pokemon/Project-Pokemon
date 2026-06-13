@@ -17,11 +17,12 @@ La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pok�
 - [📗 Memoria](/docs/MemoriaProjectPokemon.pdf)
 - [✨ Vista previa](#-vista-previa)
 - [📁 Arquitectura de sistemas](#-arquitectura-de-sistemas)
+- [⚙️ Guía de ejecución](#/docs/guía-de-ejecución.md)
 - [📄 Readme Front]()
 - [📄 Readme Back]()
 - [📄 Readme Base de Datos]()
 - [🌐 Bibliografía](#-bibliografía)
-- [⚖️ Licencia](#-licencia)
+- [⚖️ Licencia](#license.md)
 
 ## 👨‍💻 Autores del proyecto
 - [Jorge González Jiménez](https://github.com/jor2511)
@@ -144,120 +145,6 @@ Los usuarios acceden a la aplicación mediante HTTPS. El servidor web alojado en
 ```
 La infraestructura se encuentra desplegada sobre un único servidor físico gestionado mediante Proxmox VE. Dentro del entorno virtualizado se ejecutan tres máquinas virtuales independientes: una máquina destinada al plano de control de Kubernetes e Ingress, una segunda máquina que actúa como nodo trabajador ejecutando los contenedores Docker de la aplicación y una tercera máquina dedicada exclusivamente al servidor MariaDB. Esta separación permite simular una arquitectura distribuida similar a un entorno productivo real.
 
-## Objetivos del proyecto
-
-El objetivo principal de Project Pokémon es desarrollar una plataforma web moderna que permita realizar combates Pokémon multijugador en tiempo real mediante una arquitectura escalable, segura y mantenible.
-
-Además de ofrecer una experiencia de usuario completa, el proyecto sirve como demostración práctica de los conocimientos adquiridos durante el ciclo formativo en áreas como:
-
-* Desarrollo de aplicaciones web.
-* Administración de sistemas.
-* Bases de datos relacionales.
-* Seguridad informática.
-* Redes y comunicaciones.
-* Virtualización y contenedores.
-* Automatización y despliegue continuo.
-
----
-
-# Guía de ejecución en entorno de desarrollo
-
-Esta sección describe el procedimiento necesario para descargar, configurar y ejecutar el proyecto en un entorno local.
-
-## Requisitos previos
-
-### Software necesario
-
-| Herramienta                   | Requisito                          |
-| ----------------------------- | ---------------------------------- |
-| .NET SDK                      | Versión utilizada por el proyecto  |
-| Node.js                       | Versión LTS compatible             |
-| pnpm                          | Última versión estable             |
-| Angular CLI                   | Versión compatible con el proyecto |
-| Git                           | Última versión estable             |
-| Visual Studio 2022 o superior | Recomendado para el backend        |
-
-### Comprobación de versiones
-
-```bash
-dotnet --version
-node --version
-pnpm --version
-ng version
-git --version
-```
-
----
-
-## Obtención del código fuente
-
-Clonar el repositorio oficial:
-
-```bash
-git clone https://github.com/Project-Pokemon/Project-Pokemon.git
-cd Project-Pokemon
-```
-
----
-
-## Configuración del backend
-
-### Abrir la solución
-
-Abrir la solución del proyecto:
-
-```text
-backend/ProjectPokemon.slnx
-```
-
-### Restaurar dependencias
-
-```bash
-dotnet restore
-```
-
-### Ejecutar la aplicación
-
-```bash
-dotnet run
-```
----
-
-## Configuración del frontend
-
-Acceder al directorio del frontend:
-
-```bash
-cd frontend
-```
-
-Instalar dependencias:
-
-```bash
-pnpm install
-```
-
-Iniciar el servidor de desarrollo:
-
-```bash
-pnpm start
-```
-
-o
-
-```bash
-ng serve
-```
----
-
-## Despliegue
-
-La versión pública de la aplicación se encuentra disponible en:
-
-```text
-https://projectpokemon.runasp.net
-```
-
 ## 🌐 Bibliografía
 Documentación sobre Pokémon
 Wikidex, la Enciclopedia Pokémon. Cálculo de características.
@@ -352,6 +239,3 @@ https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-a
 
 ISO/IEC 27001:2022, Information security, cybersecurity and privacy protection.
 Ley Orgánica 3/2018, de 5 de diciembre, de Protección de Datos Personales y garantía de los derechos digitales.
-
-## ⚖️ Licencia
-Proyecto desarrollado con fines educativos como Trabajo Final del Ciclo Formativo de Grado Superior de Administración de Sistemas Informáticos en Red (ASIR).
