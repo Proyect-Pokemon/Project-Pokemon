@@ -35,6 +35,14 @@ public class UsersController : ControllerBase {
         if (user == null)
             return NotFound(new { error = "Usuario no encontrado." });
 
+        // Si el usuario es admin, comprobar que no es el único
+        if (user.Role == "admin") {
+            var allUsers = await _unitOfWork.UserRepository.GetAllAsync();
+            int adminCount = allUsers.Count(u => u.Role == "admin");
+            if (adminCount <= 1)
+                return BadRequest(new { error = "No puedes eliminar tu cuenta porque eres el único administrador del sistema." });
+        }
+
         await _unitOfWork.UserRepository.DeleteAsync(user);
         bool success = await _unitOfWork.SaveAsync();
         if (!success)
