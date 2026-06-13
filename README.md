@@ -1,56 +1,278 @@
-# Proyect-Pokemon
-## Proyecto Intermodular 2025/2026 IES Miguel Romero Esteo
+# Project Pokémon
 
-## Guía de Ejecución en Entorno de Desarrollo
+## Descripción
 
-Este documento describe el procedimiento para descargar, configurar y ejecutar el proyecto **Project Pokémon** en un entorno local.
+**Project Pokémon** es una aplicación web multijugador de simulación de combates Pokémon desarrollada como proyecto final del ciclo formativo de Administración de Sistemas Informáticos en Red (ASIR).
+
+La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pokémon, interactuar con otros jugadores y participar en combates en tiempo real. El sistema reproduce las mecánicas de combate de los videojuegos **Pokémon FireRed y Pokémon LeafGreen**, incorporando funcionalidades modernas propias de las aplicaciones web actuales.
 
 ---
 
-## 1. Requisitos Previos
+## Características principales
 
-### 1.1 Software necesario
+* Registro e inicio de sesión de usuarios.
+* Autenticación mediante JWT y OAuth 2.0.
+* Creación, edición y gestión de equipos Pokémon.
+* Sistema de amigos y desafíos directos.
+* Matchmaking automático entre jugadores.
+* Combates multijugador en tiempo real.
+* Chat integrado durante los combates.
+* Persistencia de datos mediante base de datos relacional.
+* Interfaz web responsive adaptada a distintos dispositivos.
+* Simulación basada exclusivamente en Pokémon de tercera generación.
 
-| Herramienta        | Versión recomendada      |
-|--------------------|--------------------------|
-| Sistema Operativo  | Windows 11               |
-| .NET SDK?          | 10                       |
-| Visual Studio      | 2026                     |
-| Node.js            | 24                       |
-| Angular CLI        | 21                       |
-| Git                | latest                   |
-| ???                | ???                      |
+---
 
-### 1.2 Comprobación de versiones
+## Autores
+- [Jorge González Jiménez](https://github.com/jor2511)
+- [Cristina Cabello Rubio](https://github.com/cristycr)
+- [Jesús Felipe Fuentes Trigueros](https://github.com/jffuentes-15)
 
-```powershell
+**Ciclo Formativo:** Administración de Sistemas Informáticos en Red (ASIR)
+
+**Centro Educativo:** IES Miguel Romero Esteo
+
+**Curso Académico:** 2024 - 2026
+
+---
+
+## Tecnologías utilizadas
+
+### Backend
+
+* C#
+* ASP.NET Core
+* Entity Framework Core
+* WebSockets
+* JSON Web Tokens (JWT)
+* OAuth 2.0
+
+### Frontend
+
+* Angular
+* TypeScript
+* HTML5
+* CSS3
+
+### Base de datos
+
+* SQLite (entorno de desarrollo)
+* MariaDB (entorno de producción)
+
+### Infraestructura
+
+* Docker
+* Kubernetes
+* Proxmox VE
+* Debian GNU/Linux
+* Nginx
+* ASP Monster
+
+### DevOps y Gestión
+
+* Git
+* GitHub
+* GitHub Projects
+* GitHub Actions
+* CI/CD
+* Web Deploy
+
+---
+
+## Documentación
+* Memoria
+* Vídeo
+
+## Vista previa
+
+Fotos
+
+## Arquitectura de Producción (ASP Monster)
+```text
+┌─────────────────┐
+│     Usuario     │
+│ Navegador Web   │
+└────────┬────────┘
+         │ HTTPS
+         ▼
+┌──────────────────────────┐
+│      ASP Monster         │
+│                          │
+│  Project Pokémon         │
+│  ASP.NET + Angular       │
+│  WebSockets              │
+└────────┬─────────────────┘
+         │ Conexión interna
+         │
+         ▼
+┌──────────────────────────┐
+│ Servidor de Base de Datos│
+│        MariaDB           │
+└──────────────────────────┘
+```
+Descripción:
+
+Los usuarios acceden a la aplicación mediante HTTPS. El servidor web alojado en ASP Monster ejecuta la aplicación Project Pokémon y gestiona tanto las peticiones HTTP como las conexiones WebSocket utilizadas por los combates en tiempo real. La aplicación se comunica internamente con un servidor MariaDB independiente encargado del almacenamiento persistente de los datos.
+
+---
+
+## Arquitectura Virtualizada (Proxmox VE)
+```text
+┌─────────────────────────────────────────────────────┐
+│                Servidor Físico                      │
+│                  Proxmox VE                         │
+│                                                     │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ VM1K8S                                          │ │
+│ │ Kubernetes Control Plane                        │ │
+│ │ Ingress Controller                              │ │
+│ └───────────────────┬─────────────────────────────┘ │
+│                     │                               │
+│                     ▼                               │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ VM2DWN                                          │ │
+│ │ Kubernetes Worker Node                          │ │
+│ │ Docker Engine                                   │ │
+│ │ Pods Project Pokémon                            │ │
+│ │ Frontend Angular                                │ │
+│ │ Backend ASP.NET                                 │ │
+│ └───────────────────┬─────────────────────────────┘ │
+│                     │                               │
+│                     ▼                               │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ VM3DB                                           │ │
+│ │ MariaDB                                         │ │
+│ └─────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────┘
+                      ▲
+                      │ HTTPS
+                      │
+                ┌───────────┐
+                │ Usuarios  │
+                └───────────┘
+```
+
+Descripción:
+
+La infraestructura se encuentra desplegada sobre un único servidor físico gestionado mediante Proxmox VE. Dentro del entorno virtualizado se ejecutan tres máquinas virtuales independientes: una máquina destinada al plano de control de Kubernetes e Ingress, una segunda máquina que actúa como nodo trabajador ejecutando los contenedores Docker de la aplicación y una tercera máquina dedicada exclusivamente al servidor MariaDB. Esta separación permite simular una arquitectura distribuida similar a un entorno productivo real.
+
+
+## Objetivos del proyecto
+
+El objetivo principal de Project Pokémon es desarrollar una plataforma web moderna que permita realizar combates Pokémon multijugador en tiempo real mediante una arquitectura escalable, segura y mantenible.
+
+Además de ofrecer una experiencia de usuario completa, el proyecto sirve como demostración práctica de los conocimientos adquiridos durante el ciclo formativo en áreas como:
+
+* Desarrollo de aplicaciones web.
+* Administración de sistemas.
+* Bases de datos relacionales.
+* Seguridad informática.
+* Redes y comunicaciones.
+* Virtualización y contenedores.
+* Automatización y despliegue continuo.
+
+---
+
+# Guía de ejecución en entorno de desarrollo
+
+Esta sección describe el procedimiento necesario para descargar, configurar y ejecutar el proyecto en un entorno local.
+
+## Requisitos previos
+
+### Software necesario
+
+| Herramienta                   | Requisito                          |
+| ----------------------------- | ---------------------------------- |
+| .NET SDK                      | Versión utilizada por el proyecto  |
+| Node.js                       | Versión LTS compatible             |
+| pnpm                          | Última versión estable             |
+| Angular CLI                   | Versión compatible con el proyecto |
+| Git                           | Última versión estable             |
+| Visual Studio 2022 o superior | Recomendado para el backend        |
+
+### Comprobación de versiones
+
+```bash
 dotnet --version
 node --version
+pnpm --version
 ng version
 git --version
 ```
+
 ---
 
-## 2. Descarga del repositorio
-```powershell
-git clone https://github.com/Proyect-Pokemon/Project-Pokemon.git
-cd project-pokemon
+## Obtención del código fuente
+
+Clonar el repositorio oficial:
+
+```bash
+git clone https://github.com/Project-Pokemon/Project-Pokemon.git
+cd Project-Pokemon
 ```
+
 ---
 
-## 3. Ejecución del Backend (ASP.NET)
-### 3.1 Abrir la solución
-Abrir el fichero:
-```powershell
+## Configuración del backend
+
+### Abrir la solución
+
+Abrir la solución del proyecto:
+
+```text
 backend/ProjectPokemon.slnx
 ```
-con Visual Studio 2026
+
+### Restaurar dependencias
+
+```bash
+dotnet restore
+```
+
+### Ejecutar la aplicación
+
+```bash
+dotnet run
+```
+---
+
+## Configuración del frontend
+
+Acceder al directorio del frontend:
+
+```bash
+cd frontend
+```
+
+Instalar dependencias:
+
+```bash
+pnpm install
+```
+
+Iniciar el servidor de desarrollo:
+
+```bash
+pnpm start
+```
+
+o
+
+```bash
+ng serve
+```
+---
+
+## Despliegue
+
+La versión pública de la aplicación se encuentra disponible en:
+
+```text
+https://projectpokemon.runasp.net
+```
 
 ---
 
-## 4. Ejecución del Frontend (Angular)
-```powershell
-cd frontend
-npm install
-ng serve
-```
+## Licencia
+
+Proyecto desarrollado con fines educativos como Trabajo Final del Ciclo Formativo de Grado Superior de Administración de Sistemas Informáticos en Red (ASIR).
