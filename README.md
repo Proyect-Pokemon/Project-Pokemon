@@ -6,9 +6,9 @@ La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pok�
 
 ## 📚 Índice
 - [⭐ Project Pokémon](#project-pokémon)
-- [👨‍💻 Autores del proyecto](#-autores-del-proyecto)
+- [👨‍💻 Autores del proyecto](#autores-del-proyecto)
 - [🌐 Enlaces](#-enlaces)
-- [🛠️ Tecnologías utilizadas](#-tecnologías-utilizadas)
+- [🛠️ Tecnologías utilizadas](#tecnologías-utilizadas)
   - [Backend](#backend)
   - [Frontend](#frontend)
   - [Base de datos](#base-de-datos)
@@ -24,7 +24,7 @@ La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pok�
 - [🌐 Bibliografía](#-bibliografía)
 - [⚖️ Licencia](LICENSE.md)
 
-## 👨‍💻 Autores del proyecto
+## Autores del proyecto
 - [Jorge González Jiménez](https://github.com/jor2511)
 - [Cristina Cabello Rubio](https://github.com/cristycr)
 - [Jesús Felipe Fuentes Trigueros](https://github.com/jffuentes-15)
@@ -37,7 +37,7 @@ La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pok�
 - Versión desplegada: https://projectpokemon.runasp.net
 - Vídeo demostrativo: https://youtu.be/cg7Q7EiPu7w
 
-## 🛠️ Tecnologías utilizadas
+## Tecnologías utilizadas
 
 ### Backend
 - C#
