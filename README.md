@@ -106,7 +106,6 @@ La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pok�
 └──────────────────────────┘
 ```
 Los usuarios acceden a la aplicación mediante HTTPS. El servidor web alojado en ASP Monster ejecuta la aplicación Project Pokémon y gestiona tanto las peticiones HTTP como las conexiones WebSocket utilizadas por los combates en tiempo real. La aplicación se comunica internamente con un servidor MariaDB independiente encargado del almacenamiento persistente de los datos.
----
 
 ### Arquitectura Virtualizada (Proxmox VE)
 ```text
