@@ -86,6 +86,10 @@ export class Battle {
   currentUsername = this.authService.nickname;
   currentUserId = this.authService.currentUserId;
 
+  // Estado de pokeballs — se actualiza al FINALIZAR el playback, no al llegar el snapshot
+  playerTeamStatus = signal<boolean[]>(Array(6).fill(false));
+  opponentTeamStatus = signal<boolean[]>(Array(6).fill(false));
+
   switchOptions = computed(() => {
     const snapshot = this.latestBattleSnapshot();
     const team = snapshot?.playerSide?.team;
@@ -156,6 +160,8 @@ export class Battle {
       this.syncActivePokemonAfterFaint(battleEvent.battle);
       const waitingNoPlayback = !(battleEvent.turnResolved ?? false) || (battleEvent.opponentRequiresSwitch ?? false);
       this.applyBattleEventState(battleEvent, waitingNoPlayback);
+      // Actualizar pokeballs también en path sin playback
+      this.updateTeamStatus(battleEvent.battle);
     });
   }
 
@@ -214,6 +220,17 @@ export class Battle {
     this.isWaitingForOpponent.set(false);
     this.actionPanel.set('root');
     this.startOnlineBattleBootstrapTimeout();
+  }
+
+  private updateTeamStatus(snapshot: any): void {
+    const extractStatus = (team: any[]): boolean[] => {
+      if (!Array.isArray(team)) return Array(6).fill(false);
+      const statuses = team.map((p: any) => !!p?.isFainted);
+      while (statuses.length < 6) statuses.push(true);
+      return statuses;
+    };
+    this.playerTeamStatus.set(extractStatus(snapshot?.playerSide?.team));
+    this.opponentTeamStatus.set(extractStatus(snapshot?.opponentSide?.team));
   }
 
   private initBattleMusic(): void {
@@ -484,6 +501,8 @@ export class Battle {
           // o si el rival tiene switch forzoso pendiente
           const waitingAfterPlayback = !(event.turnResolved ?? false) || (event.opponentRequiresSwitch ?? false);
           this.applyBattleEventState(event, waitingAfterPlayback);
+          // Actualizar pokeballs al FINALIZAR el playback
+          this.updateTeamStatus(event.battle);
         }
       }
     });

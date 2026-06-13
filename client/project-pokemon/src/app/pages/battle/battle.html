@@ -44,6 +44,24 @@
                     </app-life-bar>
                 }
             </div>
+            <div class="team-status-bar">
+                <div class="team-status-group">
+                    <span class="team-status-label">Equipo rival</span>
+                    <div class="team-status-balls">
+                        @for (fainted of opponentTeamStatus(); track $index) {
+                            <img src="assets/icons/UI/pokeball.png" alt="" class="pokeball-icon" [class.fainted]="fainted" />
+                        }
+                    </div>
+                </div>
+                <div class="team-status-group team-status-group--right">
+                    <span class="team-status-label">Tu equipo</span>
+                    <div class="team-status-balls">
+                        @for (fainted of playerTeamStatus(); track $index) {
+                            <img src="assets/icons/UI/pokeball.png" alt="" class="pokeball-icon" [class.fainted]="fainted" />
+                        }
+                    </div>
+                </div>
+            </div>
             <div id="moves">
                 @if (actionPanel() === 'root') {
                     @if (requiresSwitchSelection()) {
