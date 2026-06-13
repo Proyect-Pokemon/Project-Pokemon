@@ -70,7 +70,13 @@ La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pok�
 - Web Deploy
 
 ## 🎨 Vista previa
-
+<img width="1901" height="911" alt="image" src="https://github.com/user-attachments/assets/2f4ee11f-2ab0-4d4e-9ef4-37132746078a" />
+<img width="1901" height="882" alt="image" src="https://github.com/user-attachments/assets/2e2b663e-5b48-45f1-9f24-7a752f59667f" />
+<img width="1897" height="916" alt="image" src="https://github.com/user-attachments/assets/836abbdc-ae35-49f2-abf8-e4827adf6341" />
+<img width="1901" height="852" alt="image" src="https://github.com/user-attachments/assets/731df3e3-757a-41d4-8da2-2d484ab705f5" />
+<img width="1918" height="851" alt="image" src="https://github.com/user-attachments/assets/fceaf5d3-2f55-4841-b972-d100b65795b6" />
+<img width="1892" height="917" alt="image" src="https://github.com/user-attachments/assets/fe68add5-01e8-46c9-a441-7688aa396a05" />
+<img width="1897" height="912" alt="image" src="https://github.com/user-attachments/assets/61db6db5-5b03-442a-aad0-fddf56409eec" />
 
 ## Arquitectura de Producción (ASP Monster)
 ```text
