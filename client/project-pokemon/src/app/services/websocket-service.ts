@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { environment } from '../enviroments/enviroment';
 
 export interface BattleMatchedEvent {
   battleId: string;
@@ -92,10 +93,10 @@ export class SocketService {
   private handleLobbyMessage(message: any): void {
     if (message.action === 5) {
       if (typeof message.battleId === 'string') {
-        console.info('[WS] Rival encontrado', {
+        /*console.info('[WS] Rival encontrado', {
           battleId: message.battleId,
           opponentUsername: message.opponentUsername,
-        });
+        });*/
         this.matchmakingState.set('matched');
         this.matchmakingMessage.set('Rival encontrado');
         this.activeBattleId.set(message.battleId);
@@ -105,7 +106,7 @@ export class SocketService {
           opponentUserId: message.opponentUserId ?? 0,
         });
       } else {
-        console.info('[WS] Matchmaking', message.message ?? 'Buscando rival...');
+        //console.info('[WS] Matchmaking', message.message ?? 'Buscando rival...');
         this.matchmakingState.set('searching');
         this.matchmakingMessage.set(message.message ?? 'Buscando rival...');
       }
@@ -113,21 +114,22 @@ export class SocketService {
     }
 
     if (message.action === 6) {
-      console.info('[WS] Búsqueda cancelada');
+      //console.info('[WS] Búsqueda cancelada');
       this.matchmakingState.set('idle');
       this.matchmakingMessage.set('Búsqueda cancelada');
     }
   }
 
   private handleBattleMessage(message: any): void {
-    console.info('[WS][Battle] Update', {
+    /*console.info('[WS][Battle] Update', {
       action: message.action,
       battleId: message.battle?.battleId,
       requiresSwitchSelection: message.requiresSwitchSelection ?? false,
       availableSlotsForSwitch: message.availableSlotsForSwitch ?? [],
       winnerUserId: message.winnerUserId ?? null,
-      replaySteps: message.replaySteps ?? [],
-    });
+      messages: message.messages ?? [],
+      replaySteps: message.replaySteps ?? []
+    });*/
 
     this.onBattleState.set({
       action: message.action ?? 0,
@@ -157,12 +159,12 @@ export class SocketService {
       return;
     }
 
-    const wsUrl = `wss://${location.hostname}:7277/ws?access_token=${encodeURIComponent(jwt)}`;
-    console.info('[WS] Intentando conectar', wsUrl);
+    const wsUrl =`${environment.wsUrl}?access_token=${encodeURIComponent(jwt)}`;
+    //console.info('[WS] Intentando conectar', wsUrl);
     this.socket = new WebSocket(wsUrl);
 
     this.socket.onopen = () => {
-      console.info('[WS] Conexión establecida');
+      //console.info('[WS] Conexión establecida');
       this.isConnected.set(true);
       this.reconnectAttempts = 0;
       this.joinLobby();
@@ -184,19 +186,19 @@ export class SocketService {
             break;
         }
       } catch (err) {
-        console.error('Error parsing WS message', err);
+        //console.error('Error parsing WS message', err);
       }
     };
 
     this.socket.onclose = () => {
-      console.info('[WS] Conexión cerrada');
+      //console.info('[WS] Conexión cerrada');
       this.isConnected.set(false);
       this.socket = null;
       this.attemptReconnect();
     };
 
     this.socket.onerror = (event) => {
-      console.error('[WS] Error de conexión', event);
+      //console.error('[WS] Error de conexión', event);
       this.isConnected.set(false);
     };
   }
@@ -232,7 +234,7 @@ export class SocketService {
   }
 
   attack(battleId: string, moveName: string): void {
-    console.info('[WS][Battle] Send Attack', { battleId, moveName });
+    //console.info('[WS][Battle] Send Attack', { battleId, moveName });
 
     this.sendMessage({
       type: 1,
@@ -243,7 +245,7 @@ export class SocketService {
   }
 
   switchPokemon(battleId: string, targetSlot: number): void {
-    console.info('[WS][Battle] Send Switch', { battleId, targetSlot });
+    //console.info('[WS][Battle] Send Switch', { battleId, targetSlot });
 
     this.sendMessage({
       type: 1,
