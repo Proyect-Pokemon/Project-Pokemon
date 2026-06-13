@@ -118,7 +118,7 @@ export class Login implements OnInit, OnDestroy {
 
       Login.googleInitialized = true;
     } catch {
-      // silencioso: no rompe login si Google falla
+      // No rompe login si Google falla
     }
   }
 
