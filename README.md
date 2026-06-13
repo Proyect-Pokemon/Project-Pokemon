@@ -13,7 +13,7 @@ La plataforma permite a los usuarios registrarse, crear y gestionar equipos Pok�
   - [Frontend](#frontend)
   - [Base de datos](#base-de-datos)
   - [Infraestructura](#infraestructura)
-  - [DevOps y Gestión](devops-y-gestión)
+  - [DevOps y Gestión](#devops-y-gestión)
 - [📗 Memoria](/docs/MemoriaProjectPokemon.pdf)
 - [✨ Vista previa](#-vista-previa)
 - [📁 Arquitectura de sistemas](#-arquitectura-de-sistemas)
