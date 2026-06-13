@@ -204,3 +204,47 @@
     color: #f87171;
     border: 1px solid rgba(248, 113, 113, 0.35);
 }
+
+/* Móvil: life-bar más compacta */
+@media (max-width: 800px) {
+    .pokemon-info {
+        padding: 10px 12px 8px;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .pokemon-name {
+        font-size: 1.1rem;
+    }
+
+    .life-bar {
+        height: 14px;
+    }
+
+    .hp-display {
+        font-size: 0.9rem;
+    }
+
+    .hp-display.subtle {
+        font-size: 0.8rem;
+    }
+
+    .stat-chip {
+        font-size: 0.65rem;
+        padding: 2px 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pokemon-info {
+        padding: 8px 10px 6px;
+    }
+
+    .pokemon-name {
+        font-size: 1rem;
+    }
+
+    .life-bar {
+        height: 12px;
+    }
+}
