@@ -21,6 +21,11 @@
           <span class="kpi-label">Con rol user</span>
         </article>
       </div>
+
+      <app-admin-search
+        [query]="searchQuery()"
+        (queryChange)="searchQuery.set($event)"
+      />
     </header>
 
     @if (actionMessage()) {
@@ -45,9 +50,14 @@
         <h2>No hay usuarios</h2>
         <p>El servidor ha devuelto una lista vacía.</p>
       </div>
+    } @else if (filteredUsers().length === 0) {
+      <div class="admin-empty-state">
+        <h2>Sin resultados</h2>
+        <p>Ningún usuario coincide con "<strong>{{ searchQuery() }}</strong>".</p>
+      </div>
     } @else {
       <app-admin-users-list
-        [users]="users()"
+        [users]="filteredUsers()"
         [isRoleUpdating]="isRoleUpdatingFn"
         [isDeletingUser]="isDeletingUserFn"
         [isLastAdmin]="isLastAdmin"

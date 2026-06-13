@@ -97,7 +97,8 @@ public class Network {
                     _logger.LogWarning($"Mensaje no reconocido de cliente {client.ClientId}");
                     break;
             }
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             _logger.LogError(ex, $"Error procesando mensaje de cliente {client.ClientId}");
         }
     }
@@ -139,7 +140,8 @@ public class Network {
 
             // Unir al cliente a la batalla
             JoinBattle(client.ClientId, response.BattleId);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             _logger.LogError(ex, "Error iniciando batalla");
 
             var errorResponse = new StartBattleResponse {
@@ -221,13 +223,16 @@ public class Network {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle, userId.Value),
                 ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, userId.Value),
+                TurnResolved = false,
                 RequiresSwitch = result.RequiresSwitchSelection,
                 WinnerUserId = battle.WinnerUserId
             });
             return;
         }
 
-        // Si sólo uno eligió acción, notificar sólo al emisor.
+        // Si sólo uno eligió acción, notificar al emisor.
+        // Si el emisor acaba de completar un switch forzoso, notificar también al oponente
+        // para que actualice el sprite y sepa que puede actuar.
         if (!result.TurnResolved) {
             _logger.LogInformation(
                 "Batalla {BattleId}: accion guardada para userId={UserId}, esperando rival.",
@@ -235,13 +240,54 @@ public class Network {
                 userId.Value
             );
 
+            // Notificar al emisor
+            int? opponentId = battle.GetOpponentUserId(userId.Value);
+            // El emisor completó un switch forzoso si la acción fue Switch,
+            // ya no está en RequiredSwitchByUserId, y el resultado tiene steps (el switch se ejecutó)
+            bool emitterJustCompletedForcedSwitch =
+                actionRequest.Action == BattleAction.Switch
+                && !battle.RequiredSwitchByUserId.Contains(userId.Value)
+                && result.ReplaySteps.Count > 0;
+
+            // Si el emisor completó un switch forzoso, para él también es TurnResolved = true
+            // porque el switch forzoso no es una acción de turno — ya puede elegir acción libremente.
+            bool emitterTurnResolved = emitterJustCompletedForcedSwitch;
             await client.SendAsync(new BattleStateUpdate {
                 Action = actionRequest.Action,
                 Battle = CreateBattleSnapshot(battle, userId.Value),
                 ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, userId.Value),
+                TurnResolved = emitterTurnResolved,
                 RequiresSwitch = result.RequiresSwitchSelection,
+                OpponentRequiresSwitch = opponentId.HasValue && battle.RequiredSwitchByUserId.Contains(opponentId.Value),
                 WinnerUserId = battle.WinnerUserId
             });
+
+            // Si el emisor acaba de completar su switch forzoso, notificar al oponente
+            // para que deje de esperar y vea el nuevo Pokémon
+            if (emitterJustCompletedForcedSwitch && opponentId.HasValue && _battleClients.TryGetValue(actionRequest.BattleId, out var switchBroadcastIds)) {
+                var opponentTasks = switchBroadcastIds
+                    .Where(id => _clients.ContainsKey(id) && _clients[id].UserId == opponentId.Value)
+                    .Select(id => {
+                        int perspectiveUserId = opponentId.Value;
+                        bool opponentStillNeedsSwitch = battle.RequiredSwitchByUserId.Contains(perspectiveUserId);
+                        // Para el oponente del que hizo switch forzoso:
+                        // TurnResolved = true porque puede elegir acción libremente.
+                        // Para el que hizo el switch: TurnResolved = false, su acción ya está
+                        // registrada como switch y espera al turno siguiente.
+                        bool isOpponentClient = _clients[id].UserId == opponentId.Value;
+                        return _clients[id].SendAsync(new BattleStateUpdate {
+                            Action = actionRequest.Action,
+                            Battle = CreateBattleSnapshot(battle, perspectiveUserId),
+                            ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, perspectiveUserId),
+                            TurnResolved = isOpponentClient,
+                            RequiresSwitch = opponentStillNeedsSwitch,
+                            OpponentRequiresSwitch = battle.RequiredSwitchByUserId.Contains(userId.Value),
+                            WinnerUserId = battle.WinnerUserId
+                        });
+                    });
+                await Task.WhenAll(opponentTasks);
+            }
+
             return;
         }
 
@@ -259,11 +305,34 @@ public class Network {
                 .Where(id => _clients.ContainsKey(id))
                 .Select(id => {
                     int perspectiveUserId = _clients[id].UserId ?? battle.PlayerUserId;
+                    // Calcular RequiresSwitch para cada jugador individualmente:
+                    // no depende de quién envió la última acción, sino de si ese
+                    // jugador específico tiene un cambio forzoso pendiente.
+                    bool requiresSwitchForThisClient = battle.RequiredSwitchByUserId.Contains(perspectiveUserId);
+                    List<int> switchSlotsForThisClient = new List<int>();
+                    if (requiresSwitchForThisClient) {
+                        var clientSide = battle.GetSideForUser(perspectiveUserId);
+                        if (clientSide != null) {
+                            for (int i = 0; i < clientSide.Team.Count; i++) {
+                                if (i != clientSide.ActiveSlot && !clientSide.Team[i].IsFainted()) {
+                                    switchSlotsForThisClient.Add(i);
+                                }
+                            }
+                        }
+                    }
+
+                    // El rival necesita switch si el oponente de este cliente tiene switch pendiente
+                    int opponentOfThisClient = battle.GetOpponentUserId(perspectiveUserId) ?? 0;
+                    bool opponentRequiresSwitchForThisClient = opponentOfThisClient != 0
+                        && battle.RequiredSwitchByUserId.Contains(opponentOfThisClient);
+
                     var update = new BattleStateUpdate {
                         Action = actionRequest.Action,
                         Battle = CreateBattleSnapshot(battle, perspectiveUserId),
                         ReplaySteps = RemapReplayStepPerspectives(result.ReplaySteps, battle, perspectiveUserId),
-                        RequiresSwitch = result.RequiresSwitchSelection && perspectiveUserId == userId.Value,
+                        TurnResolved = true,
+                        RequiresSwitch = requiresSwitchForThisClient,
+                        OpponentRequiresSwitch = opponentRequiresSwitchForThisClient,
                         WinnerUserId = battle.WinnerUserId
                     };
                     return _clients[id].SendAsync(update);
@@ -352,7 +421,7 @@ public class Network {
     }
 
     // Evento que se dispara cuando dos jugadores son emparejados
-    private async void OnPlayersMatched(Client player1, Client player2, int team1Id, int team2Id) {
+    private async Task OnPlayersMatched(Client player1, Client player2, int team1Id, int team2Id) {
         try {
             _logger.LogInformation($"Emparejamiento: {player1.ClientId} vs {player2.ClientId}");
 
@@ -404,6 +473,7 @@ public class Network {
                         Message = "¡La batalla comienza!"
                     }
                 },
+                TurnResolved = true,
                 RequiresSwitch = false,
                 WinnerUserId = null
             };
@@ -417,13 +487,15 @@ public class Network {
                         Message = "¡La batalla comienza!"
                     }
                 },
+                TurnResolved = true,
                 RequiresSwitch = false,
                 WinnerUserId = null
             };
 
             await player1.SendAsync(stateForPlayer1);
             await player2.SendAsync(stateForPlayer2);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             _logger.LogError(ex, "Error en emparejamiento de jugadores");
         }
     }

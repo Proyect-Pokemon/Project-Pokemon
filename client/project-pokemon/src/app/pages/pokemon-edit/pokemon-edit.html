@@ -15,9 +15,12 @@
                 <div class="control-block">
                     <div class="option-row">
                         <span class="option-label">Shiny</span>
-                        <button class="toggle-btn" [class.active]="isShiny()" (click)="isShiny.set(!isShiny())">
-                            {{ isShiny() ? 'Si' : 'No' }}
-                        </button>
+                        <label class="switch">
+                            <input type="checkbox" [checked]="isShiny()" (change)="isShiny.set(!isShiny())" />
+                            <span class="switch-track">
+                                <span class="switch-thumb"></span>
+                            </span>
+                        </label>
                     </div>
 
                     <div class="option-row">
@@ -44,7 +47,7 @@
                     <app-pokemon-moves-grid
                         [movements]="selectedMovements()"
                         [allMovements]="allMovements()"
-                        (movementChanged)="onMovementChanged($event)">
+                        (movementsChanged)="onMovementsChanged($event)">
                     </app-pokemon-moves-grid>
                 </div>
 
@@ -61,7 +64,13 @@
 
             <div class="right-preview">
                 <div class="pokemon-preview">
-                    <span class="pokemon-name">{{ displayName() }}</span>
+                    <div class="pokemon-name-container" (click)="openNicknameModal()" title="Cambiar apodo">
+                        <span class="pokemon-name">{{ displayName() }}</span>
+                        <img
+                            src="assets/icons/UI/lapiz.svg"
+                            alt="Editar apodo"
+                            class="nickname-edit-icon" />
+                    </div>
                     <div class="sprite-container">
                         @if (spriteUrl(); as sprite) {
                             <img [src]="sprite" [alt]="displayName()" class="sprite" />
@@ -75,3 +84,55 @@
         </div>
     }
 </div>
+
+@if (nicknameModalOpen()) {
+    <div class="nickname-overlay" (click)="closeNicknameModal()">
+        <div class="nickname-card" (click)="$event.stopPropagation()">
+            <header class="nickname-card-header">
+                <h3>Cambiar apodo</h3>
+                <button
+                    type="button"
+                    class="nickname-close-btn"
+                    [disabled]="nicknameSaving()"
+                    (click)="closeNicknameModal()">✕</button>
+            </header>
+
+            <p class="nickname-hint">
+                Máx. {{ MAX_NICKNAME_LENGTH }} caracteres. Déjalo vacío para usar el nombre original.
+            </p>
+
+            @if (nicknameError()) {
+                <p class="nickname-error">{{ nicknameError() }}</p>
+            }
+
+            <input
+                type="text"
+                class="nickname-input"
+                [value]="nicknameDraft()"
+                [disabled]="nicknameSaving()"
+                [attr.maxlength]="MAX_NICKNAME_LENGTH"
+                [attr.placeholder]="selectedPokemon()?.name ?? 'Apodo'"
+                (input)="onNicknameDraftInput($event)"
+                autofocus
+            />
+            <p class="nickname-counter">{{ nicknameDraft().length }} / {{ MAX_NICKNAME_LENGTH }}</p>
+
+            <footer class="nickname-card-footer">
+                <button
+                    type="button"
+                    class="nickname-btn-secondary"
+                    [disabled]="nicknameSaving()"
+                    (click)="closeNicknameModal()">
+                    Cancelar
+                </button>
+                <button
+                    type="button"
+                    class="nickname-btn-primary"
+                    [disabled]="nicknameSaving()"
+                    (click)="saveNickname()">
+                    {{ nicknameSaving() ? 'Guardando...' : 'Guardar' }}
+                </button>
+            </footer>
+        </div>
+    </div>
+}

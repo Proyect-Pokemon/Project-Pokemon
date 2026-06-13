@@ -332,8 +332,6 @@ Durante la Fase 1 de migración:
 - `messages`, `structuredMessages`, `timeline` siguen presentes pero **marcados como obsoletos**
 - Clientes legacy pueden seguir funcionando temporalmente
 
----
-
 ## Tipos de Eventos Soportados
 
 | EventType | Clase | Propiedades Clave |

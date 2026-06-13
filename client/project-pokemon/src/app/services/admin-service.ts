@@ -9,20 +9,11 @@ import { PutUserRoleDto } from '../models/put-user-role-dto';
 export class AdminService {
   private readonly api = inject(ApiService);
 
-  private readonly API_ORIGIN = 'https://localhost:7277';
-
   buildAvatarUrl(avatarPath: string | null | undefined): string {
-    const clean = avatarPath?.trim();
-    if (!clean) {
-      return '/assets/images/avatar-default.png';
-    }
-    if (clean.startsWith('/assets/')) {
-      return clean;
-    }
-    const fileName = clean
-      .replace(/^https?:\/\/localhost:7277\/uploads\//i, '')
-      .replace(/^\/?uploads\//i, '');
-    return `${this.API_ORIGIN}/uploads/${fileName}`;
+    const name = avatarPath?.trim();
+    if (!name) return '/assets/Images/avatar-default.jpg';
+    if (name.startsWith('/assets/')) return name;
+    return `/assets/Images/${name}`;
   }
 
   async getAllUsers(): Promise<GetAdminUserDto[]> {

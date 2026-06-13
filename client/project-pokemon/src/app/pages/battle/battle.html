@@ -8,6 +8,9 @@
 } @else {
     <div class="battle-container">
         <div id="canvas">
+            <button class="music-toggle-btn" (click)="toggleMusic()" [attr.aria-label]="isMusicPlaying() ? 'Silenciar música' : 'Reproducir música'" type="button">
+                <img [src]="isMusicPlaying() ? 'assets/icons/UI/unmuted.svg' : 'assets/icons/UI/muted.svg'" alt="" />
+            </button>
             <div class="enemy">
                 @if ((hpB() ?? 0) > 0) {
                     <app-life-bar
@@ -15,15 +18,13 @@
                         [pokemonSex]="battleInfo()!.pokemonB.sex ?? null"
                         [currentHp]="hpB()"
                         [maxHp]="battleInfo()!.pokemonB.maxHp"
-                        [status]="battleInfo()!.pokemonB.statusCondition ?? ''">
+                        [status]="battleInfo()!.pokemonB.statusCondition ?? ''"
+                        [statStages]="opponentStatStages()">
                     </app-life-bar>
                     <img
                         class="battle-sprite enemy-sprite"
                         [class.attack-dash-left]="opponentAttackAnimating()"
                         [src]="battleInfo()!.pokemonB.sprite">
-                }
-                @if (opponentStatStageIndicator()) {
-                    <span class="stat-stage-indicator opponent-indicator">{{ opponentStatStageIndicator() }}</span>
                 }
             </div>
             <div class="ally">
@@ -38,12 +39,28 @@
                         [currentHp]="hpA()"
                         [maxHp]="battleInfo()!.pokemonA.maxHp"
                         [status]="battleInfo()!.pokemonA.statusCondition ?? ''"
-                        [showHp]="true">
+                        [showHp]="true"
+                        [statStages]="playerStatStages()">
                     </app-life-bar>
                 }
-                @if (playerStatStageIndicator()) {
-                    <span class="stat-stage-indicator player-indicator">{{ playerStatStageIndicator() }}</span>
-                }
+            </div>
+            <div class="team-status-bar">
+                <div class="team-status-group">
+                    <span class="team-status-label">Equipo rival</span>
+                    <div class="team-status-balls">
+                        @for (fainted of opponentTeamStatus(); track $index) {
+                            <img src="assets/icons/UI/pokeball.png" alt="" class="pokeball-icon" [class.fainted]="fainted" />
+                        }
+                    </div>
+                </div>
+                <div class="team-status-group team-status-group--right">
+                    <span class="team-status-label">Tu equipo</span>
+                    <div class="team-status-balls">
+                        @for (fainted of playerTeamStatus(); track $index) {
+                            <img src="assets/icons/UI/pokeball.png" alt="" class="pokeball-icon" [class.fainted]="fainted" />
+                        }
+                    </div>
+                </div>
             </div>
             <div id="moves">
                 @if (actionPanel() === 'root') {

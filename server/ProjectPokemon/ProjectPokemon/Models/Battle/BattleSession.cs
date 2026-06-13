@@ -149,6 +149,10 @@ public class BattleSide {
             previousPokemon.BoundSource = null;
         }
 
+        // Resetear stages del Pokémon que sale — los cambios de estadísticas
+        // no persisten entre salidas y entradas al campo.
+        GetActivePokemon()?.ResetStages();
+
         ActiveSlot = newSlot;
         return true;
     }

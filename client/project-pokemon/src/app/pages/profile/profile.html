@@ -89,6 +89,11 @@
       }
     </div>
 
+    <!-- Zona de peligro -->
+    <div class="danger-zone">
+      <button class="btn-danger" (click)="openDeleteModal()">Borrar cuenta</button>
+    </div>
+
   }
 </div>
 
@@ -137,4 +142,44 @@
     (select)="onFavoriteSelect($event)"
     (close)="closeFavoriteModal()"
   />
+}
+
+@if (deleteModalOpen()) {
+  <div class="delete-modal-overlay" (click)="closeDeleteModal()">
+    <div class="delete-modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <header class="delete-modal-header">
+        <h3>Borrar cuenta</h3>
+      </header>
+      <p class="delete-modal-warning">
+        Esta acción es <strong>irreversible</strong>. Se eliminarán todos tus datos, equipos y Pokémon.
+      </p>
+      <p class="delete-modal-instruction">
+        Escribe <strong>borrar</strong> para confirmar:
+      </p>
+      @if (deleteError()) {
+        <p class="delete-modal-error">{{ deleteError() }}</p>
+      }
+      <input
+        type="text"
+        class="delete-modal-input"
+        placeholder="borrar"
+        [value]="deleteConfirmInput()"
+        [disabled]="deleteLoading()"
+        (input)="deleteConfirmInput.set($any($event.target).value)"
+      />
+      <footer class="delete-modal-footer">
+        <button type="button" class="btn-secondary" [disabled]="deleteLoading()" (click)="closeDeleteModal()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn-danger-confirm"
+          [disabled]="!canConfirmDelete() || deleteLoading()"
+          (click)="confirmDeleteAccount()"
+        >
+          {{ deleteLoading() ? 'Borrando...' : 'Confirmar borrado' }}
+        </button>
+      </footer>
+    </div>
+  </div>
 }

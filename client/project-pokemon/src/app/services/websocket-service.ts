@@ -18,8 +18,10 @@ export interface BattleStateEvent {
     delayMs?: number | null;
     metadata?: Record<string, any> | null;
   }>;
+  turnResolved: boolean;
   requiresSwitchSelection: boolean;
   availableSlotsForSwitch: number[];
+  opponentRequiresSwitch: boolean;
   winnerUserId: number | null;
 }
 
@@ -133,8 +135,10 @@ export class SocketService {
       action: message.action ?? 0,
       battle: message.battle,
       replaySteps: message.replaySteps ?? [],
+      turnResolved: message.turnResolved ?? false,
       requiresSwitchSelection: message.requiresSwitchSelection ?? message.requiresSwitch ?? false,
       availableSlotsForSwitch: message.availableSlotsForSwitch ?? [],
+      opponentRequiresSwitch: message.opponentRequiresSwitch ?? false,
       winnerUserId: message.winnerUserId ?? null,
     });
   }

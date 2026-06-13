@@ -12,6 +12,8 @@ import { Nature } from '../../models/nature';
 import { PokemonMovesGrid } from '../../components/pokemon-editor-panel/pokemon-moves-grid/pokemon-moves-grid';
 import { PokemonNatureSelector } from '../../components/pokemon-editor-panel/pokemon-nature-selector/pokemon-nature-selector';
 
+const MAX_NICKNAME_LENGTH = 12;
+
 @Component({
   selector: 'app-pokemon-edit',
   standalone: true,
@@ -27,6 +29,8 @@ export class PokemonEdit {
   private movementService = inject(MovementService);
   private natureService = inject(NatureService);
 
+  readonly MAX_NICKNAME_LENGTH = MAX_NICKNAME_LENGTH;
+
   teamId = signal<number | null>(null);
   pokemonTeam = signal<PokemonTeam | null>(null);
   allMovements = signal<Movement[]>([]);
@@ -40,6 +44,12 @@ export class PokemonEdit {
   isShiny = signal(false);
   movementIds = signal<(number | null)[]>([null, null, null, null]);
 
+  // Nickname
+  nicknameModalOpen = signal(false);
+  nicknameDraft = signal('');
+  nicknameSaving = signal(false);
+  nicknameError = signal('');
+
   selectedPokemon = computed<Pokemon | null>(() => this.pokemonTeam()?.pokemon ?? null);
 
   selectedMovements = computed<(Movement | null)[]>(() => {
@@ -52,21 +62,12 @@ export class PokemonEdit {
   spriteUrl = computed<string | null>(() => {
     const pokemon = this.selectedPokemon();
     if (!pokemon) return null;
-
     const isFemale = this.selectedSex() === 'H';
-
     if (this.isShiny()) {
-      if (isFemale && pokemon.spriteFrontFemShiny) {
-        return pokemon.spriteFrontFemShiny;
-      }
-
+      if (isFemale && pokemon.spriteFrontFemShiny) return pokemon.spriteFrontFemShiny;
       return pokemon.spriteFrontShiny ?? pokemon.spriteFront;
     }
-
-    if (isFemale && pokemon.spriteFrontFem) {
-      return pokemon.spriteFrontFem;
-    }
-
+    if (isFemale && pokemon.spriteFrontFem) return pokemon.spriteFrontFem;
     return pokemon.spriteFront;
   });
 
@@ -101,7 +102,9 @@ export class PokemonEdit {
       this.natureService.getAllNatures(),
     ]);
 
-    const dto = allPokemonTeams.find((pt: GetAllPokemonTeamDto) => pt.id === pokemonTeamId && pt.teamId === teamId);
+    const dto = allPokemonTeams.find(
+      (pt: GetAllPokemonTeamDto) => pt.id === pokemonTeamId && pt.teamId === teamId
+    );
 
     if (!dto) {
       this.router.navigate(['/team-builder', teamId]);
@@ -127,7 +130,6 @@ export class PokemonEdit {
 
     this.pokemonTeam.set(mapped);
     this.allMovements.set(movements);
-
     this.selectedNatureId.set(mapped.natureId || 1);
     this.selectedSex.set(mapped.sex === 'M' || mapped.sex === 'H' ? mapped.sex : null);
     this.isShiny.set(mapped.shiny);
@@ -145,21 +147,60 @@ export class PokemonEdit {
     this.selectedNatureId.set(nature.id);
   }
 
-  onMovementChanged(change: { index: number; movementId: number | null }) {
-    const next = [...this.movementIds()];
-    next[change.index] = change.movementId;
-    this.movementIds.set(next);
+  onMovementsChanged(ids: (number | null)[]): void {
+    this.movementIds.set(ids);
   }
 
   setSex(value: 'M' | 'H' | null) {
     this.selectedSex.set(value);
   }
 
+  // ── Nickname ────────────────────────────────────────────────────────────
+
+  openNicknameModal(): void {
+    this.nicknameDraft.set(this.pokemonTeam()?.nickname ?? '');
+    this.nicknameError.set('');
+    this.nicknameModalOpen.set(true);
+  }
+
+  closeNicknameModal(): void {
+    if (this.nicknameSaving()) return;
+    this.nicknameModalOpen.set(false);
+    this.nicknameError.set('');
+  }
+
+  onNicknameDraftInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value.substring(0, MAX_NICKNAME_LENGTH);
+    (event.target as HTMLInputElement).value = value;
+    this.nicknameDraft.set(value);
+  }
+
+  async saveNickname(): Promise<void> {
+    const current = this.pokemonTeam();
+    if (!current || this.nicknameSaving()) return;
+
+    const nickname = this.nicknameDraft().trim() || null;
+
+    this.nicknameSaving.set(true);
+    this.nicknameError.set('');
+
+    try {
+      await this.pokemonTeamService.updateNickname(current.id, { nickname });
+      // Actualizar el estado local sin recargar
+      this.pokemonTeam.set({ ...current, nickname });
+      this.nicknameModalOpen.set(false);
+    } catch {
+      this.nicknameError.set('No se pudo guardar el apodo. Inténtalo de nuevo.');
+    } finally {
+      this.nicknameSaving.set(false);
+    }
+  }
+
+  // ── Guardar todo ─────────────────────────────────────────────────────────
+
   async savePokemonSettings() {
     const current = this.pokemonTeam();
-    if (!current || this.isSaving()) {
-      return;
-    }
+    if (!current || this.isSaving()) return;
 
     const ids = this.movementIds();
     const movementId1 = ids[0] ?? 1;
@@ -167,36 +208,29 @@ export class PokemonEdit {
     this.isSaving.set(true);
     this.saveMessage.set(null);
 
-  try {
-    await this.pokemonTeamService.updatePokemonTeam(current.id, {
-      nickname: current.nickname,
-      shiny: this.isShiny(),
-      sex: this.selectedSex(),
-      slot: current.slot,
-      teamId: current.teamId,
-      pokemonId: current.pokemonId,
-      natureId: this.selectedNatureId(),
-      movementId1,
-      movementId2: ids[1],
-      movementId3: ids[2],
-      movementId4: ids[3],
-    });
+    try {
+      await this.pokemonTeamService.updatePokemonTeam(current.id, {
+        nickname: current.nickname,
+        shiny: this.isShiny(),
+        sex: this.selectedSex(),
+        slot: current.slot,
+        teamId: current.teamId,
+        pokemonId: current.pokemonId,
+        natureId: this.selectedNatureId(),
+        movementId1,
+        movementId2: ids[1],
+        movementId3: ids[2],
+        movementId4: ids[3],
+      });
 
-    this.router.navigate(['/team-builder', current.teamId], {
-      queryParams: { slot: current.slot },
-    });
-
-    } catch (error) {
+      this.router.navigate(['/team-builder', current.teamId], {
+        queryParams: { slot: current.slot },
+      });
+    } catch {
       this.saveMessage.set('No se pudieron guardar los cambios.');
-      console.error(error);
-
     } finally {
       this.isSaving.set(false);
     }
-
-    this.router.navigate(['/team-builder', current.teamId], {
-      queryParams: { slot: current.slot },
-    });
   }
 
   goBack() {

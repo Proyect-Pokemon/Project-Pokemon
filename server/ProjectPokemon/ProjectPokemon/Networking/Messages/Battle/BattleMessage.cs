@@ -38,7 +38,10 @@ public class BattleStateUpdate : BattleMessage {
     /// </summary>
     public List<ReplayStep> ReplaySteps { get; set; } = new();
 
+    public bool TurnResolved { get; set; } = false;
     public bool RequiresSwitch { get; set; } = false;
+    // true cuando el RIVAL (no el receptor) necesita elegir Pokémon de reemplazo
+    public bool OpponentRequiresSwitch { get; set; } = false;
     public int? WinnerUserId { get; set; }
 }
 

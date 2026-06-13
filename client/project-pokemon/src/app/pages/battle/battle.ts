@@ -23,8 +23,10 @@ interface BattleStateEventPayload {
     events: any[];
     delayMs?: number | null;
   }>;
+  turnResolved: boolean;
   requiresSwitchSelection: boolean;
   availableSlotsForSwitch: number[];
+  opponentRequiresSwitch: boolean;
   winnerUserId: number | null;
 }
 
@@ -45,6 +47,8 @@ export class Battle {
   private playbackChain: Promise<void> = Promise.resolve();
   private readonly playbackTimeouts = new Set<ReturnType<typeof setTimeout>>();
   private isDestroyed = false;
+  private battleMusic: HTMLAudioElement | null = null;
+  readonly isMusicPlaying = signal(false);
 
   mode = signal<'cpu' | 'online'>('cpu');
   battleId = signal<string | null>(null);
@@ -66,8 +70,9 @@ export class Battle {
   showLeaveConfirmation = signal(false);
   playerAttackAnimating = signal(false);
   opponentAttackAnimating = signal(false);
-  playerStatStageIndicator = signal<string | null>(null);
-  opponentStatStageIndicator = signal<string | null>(null);
+  // Stages acumulados por stat para cada lado. Clave = stat key, valor = stage (-6..+6)
+  playerStatStages = signal<Record<string, number>>({});
+  opponentStatStages = signal<Record<string, number>>({});
 
   private leaveDecisionResolver: ((decision: boolean) => void) | null = null;
   private leaveDecisionPromise: Promise<boolean> | null = null;
@@ -80,6 +85,10 @@ export class Battle {
 
   currentUsername = this.authService.nickname;
   currentUserId = this.authService.currentUserId;
+
+  // Estado de pokeballs — se actualiza al FINALIZAR el playback, no al llegar el snapshot
+  playerTeamStatus = signal<boolean[]>(Array(6).fill(false));
+  opponentTeamStatus = signal<boolean[]>(Array(6).fill(false));
 
   switchOptions = computed(() => {
     const snapshot = this.latestBattleSnapshot();
@@ -138,8 +147,10 @@ export class Battle {
         this.enqueueBattlePlayback({
           battle: battleEvent.battle,
           replaySteps,
+          turnResolved: battleEvent.turnResolved ?? false,
           requiresSwitchSelection: battleEvent.requiresSwitchSelection ?? false,
           availableSlotsForSwitch: (battleEvent.availableSlotsForSwitch ?? []).filter((slot: unknown) => Number.isInteger(slot)) as number[],
+          opponentRequiresSwitch: battleEvent.opponentRequiresSwitch ?? false,
           winnerUserId: battleEvent.winnerUserId ?? null,
         });
         return;
@@ -147,7 +158,10 @@ export class Battle {
 
       this.applySnapshotToView(battleEvent.battle);
       this.syncActivePokemonAfterFaint(battleEvent.battle);
-      this.applyBattleEventState(battleEvent, false);
+      const waitingNoPlayback = !(battleEvent.turnResolved ?? false) || (battleEvent.opponentRequiresSwitch ?? false);
+      this.applyBattleEventState(battleEvent, waitingNoPlayback);
+      // Actualizar pokeballs también en path sin playback
+      this.updateTeamStatus(battleEvent.battle);
     });
   }
 
@@ -208,8 +222,52 @@ export class Battle {
     this.startOnlineBattleBootstrapTimeout();
   }
 
+  private updateTeamStatus(snapshot: any): void {
+    const extractStatus = (team: any[]): boolean[] => {
+      if (!Array.isArray(team)) return Array(6).fill(false);
+      const statuses = team.map((p: any) => !!p?.isFainted);
+      while (statuses.length < 6) statuses.push(true);
+      return statuses;
+    };
+    this.playerTeamStatus.set(extractStatus(snapshot?.playerSide?.team));
+    this.opponentTeamStatus.set(extractStatus(snapshot?.opponentSide?.team));
+  }
+
+  private initBattleMusic(): void {
+    if (this.battleMusic) return;
+    try {
+      this.battleMusic = new Audio('assets/music/battle.mp3');
+      this.battleMusic.loop = true;
+      this.battleMusic.volume = 0.4;
+    } catch {
+      // Audio no disponible
+    }
+  }
+
+  protected toggleMusic(): void {
+    this.initBattleMusic();
+    if (!this.battleMusic) return;
+
+    if (this.isMusicPlaying()) {
+      this.battleMusic.pause();
+      this.isMusicPlaying.set(false);
+    } else {
+      this.battleMusic.play().catch(() => {});
+      this.isMusicPlaying.set(true);
+    }
+  }
+
+  private stopBattleMusic(): void {
+    if (!this.battleMusic) return;
+    this.battleMusic.pause();
+    this.battleMusic.currentTime = 0;
+    this.battleMusic = null;
+    this.isMusicPlaying.set(false);
+  }
+
   ngOnDestroy(): void {
     this.isDestroyed = true;
+    this.stopBattleMusic();
     this.clearPlaybackTimeouts();
     this.clearOnlineBattleBootstrapTimeout();
     this.socketService.resetBattleContext();
@@ -410,27 +468,24 @@ export class Battle {
       this.isWaitingForOpponent.set(false);
       this.syncActivePokemonAfterFaint(event.battle);
 
-      let replayIsWaitingForOpponent = false;
-
       try {
-        for (const step of playbackSteps) {
+        for (let stepIndex = 0; stepIndex < playbackSteps.length; stepIndex++) {
+          const step = playbackSteps[stepIndex];
           if (this.isDestroyed) {
             return;
           }
 
+          // Steps futuros (para que switch pueda leer el beforeHp del siguiente hp_change)
+          const futureSteps: any[] = playbackSteps.slice(stepIndex + 1);
+
           const stepMessage = step.message?.trim();
-          if (stepMessage && this.isWaitingOpponentMessage(stepMessage)) {
-            replayIsWaitingForOpponent = true;
-            this.isWaitingForOpponent.set(true);
-            this.attacksDisabled.set(true);
-            this.actionPanel.set('root');
-          } else if (stepMessage) {
+          if (stepMessage) {
             this.combatChatMessages.update((current) => [...current, stepMessage]);
           }
 
           const stepEvents = Array.isArray(step.events) ? step.events : [];
           for (const stepEvent of stepEvents) {
-            await this.processReplayEvent(stepEvent, event.battle);
+            await this.processReplayEvent(stepEvent, event.battle, futureSteps);
           }
 
           const stepDelay = Number(step.delayMs);
@@ -442,7 +497,12 @@ export class Battle {
       } finally {
         if (!this.isDestroyed) {
           this.applySnapshotToView(event.battle);
-          this.applyBattleEventState(event, replayIsWaitingForOpponent);
+          // Bloquear si el turno no se resolvió (acción guardada, esperando rival)
+          // o si el rival tiene switch forzoso pendiente
+          const waitingAfterPlayback = !(event.turnResolved ?? false) || (event.opponentRequiresSwitch ?? false);
+          this.applyBattleEventState(event, waitingAfterPlayback);
+          // Actualizar pokeballs al FINALIZAR el playback
+          this.updateTeamStatus(event.battle);
         }
       }
     });
@@ -453,7 +513,8 @@ export class Battle {
 
     if (isFinished) {
       this.battleResult.set(this.resolveBattleResult(event.winnerUserId));
-      this.showFinishDialog.set(true);
+      this.stopBattleMusic();
+    this.showFinishDialog.set(true);
       this.isWaitingForOpponent.set(false);
       this.attacksDisabled.set(true);
       this.requiresSwitchSelection.set(false);
@@ -476,8 +537,11 @@ export class Battle {
       return;
     }
 
-    this.isWaitingForOpponent.set(waitingForOpponent);
-    this.attacksDisabled.set(waitingForOpponent);
+    // Si el rival aún necesita elegir Pokémon, mantener bloqueado aunque el turno se haya resuelto
+    const opponentStillSwitching = (event as any).opponentRequiresSwitch ?? false;
+    const effectiveWaiting = waitingForOpponent || opponentStillSwitching;
+    this.isWaitingForOpponent.set(effectiveWaiting);
+    this.attacksDisabled.set(effectiveWaiting);
 
     this.actionPanel.set('root');
   }
@@ -553,14 +617,14 @@ export class Battle {
     this.hpB.set(mapped.pokemonB.currentHp ?? mapped.pokemonB.hp ?? 0);
   }
 
-  private async processReplayEvent(event: any, finalSnapshot: any): Promise<void> {
+  private async processReplayEvent(event: any, finalSnapshot: any, futureSteps?: any[]): Promise<void> {
     const eventType = event?.eventType ?? event?.EventType;
     if (eventType === 'hp_change') {
       await this.animateHpChange(event);
       return;
     }
 
-    this.applyTimelineEvent(event, finalSnapshot);
+    this.applyTimelineEvent(event, finalSnapshot, futureSteps);
 
     if (eventType === 'attack' && !this.attackEventDidMiss(event)) {
       await this.wait(this.ATTACK_DASH_DURATION_MS);
@@ -614,7 +678,7 @@ export class Battle {
     });
   }
 
-  private applyTimelineEvent(event: any, finalSnapshot: any): void {
+  private applyTimelineEvent(event: any, finalSnapshot: any, futureSteps?: any[]): void {
     const eventType = event?.eventType ?? event?.EventType;
     switch (eventType) {
       case 'attack': {
@@ -681,14 +745,19 @@ export class Battle {
         const winnerUserId = event?.winnerUserId ?? event?.WinnerUserId ?? null;
         if (winnerUserId !== null && winnerUserId !== undefined) {
           this.battleResult.set(this.resolveBattleResult(Number(winnerUserId)));
-          this.showFinishDialog.set(true);
+          this.stopBattleMusic();
+    this.showFinishDialog.set(true);
         }
         return;
       }
 
       case 'switch':
-        if (this.resolveEventSide(event) === 'player' || this.resolveEventSide(event) === 'opponent') {
-          this.applySwitchFromTimeline(event, finalSnapshot);
+        {
+          const switchSide = this.resolveEventSide(event);
+          if (switchSide === 'player' || switchSide === 'opponent') {
+            this.resetStatStages(switchSide);
+            this.applySwitchFromTimeline(event, finalSnapshot, futureSteps);
+          }
         }
         return;
 
@@ -743,23 +812,31 @@ export class Battle {
   }
 
   private showStatStageIndicator(side: BattleSideKey, event: any): void {
-    const stat = this.formatStatLabel(event?.stat ?? event?.Stat ?? 'stat');
-    const change = Number(event?.change ?? event?.Change ?? event?.stages ?? event?.Stages ?? event?.delta ?? event?.Delta ?? 0);
-    const direction = change >= 0 ? '↑' : '↓';
-    const amount = Math.max(1, Math.abs(Math.trunc(change || 1)));
+    const rawStat = String(event?.stat ?? event?.Stat ?? '');
+    const statKey = this.normalizeName(rawStat).replace(/[\s_\-]/g, '');
+    if (!statKey) return;
+
     const newStage = Number(event?.newStage ?? event?.NewStage ?? NaN);
-    const stageSuffix = Number.isFinite(newStage) ? ` (${newStage > 0 ? '+' : ''}${Math.trunc(newStage)})` : '';
-    const label = `${direction}${amount} ${stat}${stageSuffix}`;
+    if (!Number.isFinite(newStage)) return;
 
-    const signalRef = side === 'player' ? this.playerStatStageIndicator : this.opponentStatStageIndicator;
-    signalRef.set(label);
+    const signalRef = side === 'player' ? this.playerStatStages : this.opponentStatStages;
+    signalRef.update(stages => {
+      const updated = { ...stages };
+      if (newStage === 0) {
+        delete updated[statKey];
+      } else {
+        updated[statKey] = Math.max(-6, Math.min(6, newStage));
+      }
+      return updated;
+    });
+  }
 
-    const clearTimeoutId = setTimeout(() => {
-      signalRef.set(null);
-      this.playbackTimeouts.delete(clearTimeoutId);
-    }, 900);
-
-    this.playbackTimeouts.add(clearTimeoutId);
+  private resetStatStages(side: BattleSideKey): void {
+    if (side === 'player') {
+      this.playerStatStages.set({});
+    } else {
+      this.opponentStatStages.set({});
+    }
   }
 
   private formatStatLabel(rawStat: string): string {
@@ -807,7 +884,7 @@ export class Battle {
     });
   }
 
-  private applySwitchFromTimeline(event: any, finalSnapshot: any): void {
+  private applySwitchFromTimeline(event: any, finalSnapshot: any, remainingSteps?: any[]): void {
     const newPokemonName = event?.newPokemonName ?? event?.NewPokemonName ?? '';
     const newActiveSlot = event?.newActiveSlot ?? event?.NewActiveSlot;
     const side = this.resolveEventSide(event);
@@ -821,19 +898,43 @@ export class Battle {
     }
 
     const nextPokemonView = this.mapSnapshotPokemonToView(switchedPokemon, side === 'player');
+
+    // El snapshot tiene el HP final (después de recibir daño en este turno).
+    // Si hay un evento hp_change posterior para este lado, usamos su beforeHp
+    // para que la barra arranque desde el HP correcto antes de la animación de daño.
+    let initialHp = nextPokemonView.currentHp ?? 0;
+    if (remainingSteps && remainingSteps.length > 0) {
+      for (const futureStep of remainingSteps) {
+        const futureEvents = Array.isArray(futureStep.events) ? futureStep.events : [];
+        for (const futureEvent of futureEvents) {
+          if ((futureEvent?.eventType ?? futureEvent?.EventType) === 'hp_change') {
+            const targetSide = this.resolveEventSide(futureEvent?.target ?? futureEvent?.Target);
+            if (targetSide === side) {
+              const beforeHp = Number(futureEvent?.beforeHp ?? futureEvent?.BeforeHp);
+              if (Number.isFinite(beforeHp) && beforeHp > 0) {
+                initialHp = beforeHp;
+              }
+              break;
+            }
+          }
+        }
+        if (initialHp !== (nextPokemonView.currentHp ?? 0)) break;
+      }
+    }
+
     const current = this.battleInfo();
     if (!current) {
       return;
     }
 
     if (side === 'player') {
-      this.battleInfo.set({ ...current, pokemonA: nextPokemonView });
-      this.hpA.set(nextPokemonView.currentHp ?? 0);
+      this.battleInfo.set({ ...current, pokemonA: { ...nextPokemonView, currentHp: initialHp } });
+      this.hpA.set(initialHp);
       return;
     }
 
-    this.battleInfo.set({ ...current, pokemonB: nextPokemonView });
-    this.hpB.set(nextPokemonView.currentHp ?? 0);
+    this.battleInfo.set({ ...current, pokemonB: { ...nextPokemonView, currentHp: initialHp } });
+    this.hpB.set(initialHp);
   }
 
   private syncActivePokemonAfterFaint(snapshot: any): void {
