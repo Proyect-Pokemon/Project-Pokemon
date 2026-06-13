@@ -149,96 +149,96 @@ La infraestructura se encuentra desplegada sobre un único servidor físico gest
 ![Diagrama relacional](/docs/db/Pokemon_Relacional.png)
 
 ## 🌐 Bibliografía
-Documentación sobre Pokémon
-Wikidex, la Enciclopedia Pokémon. Cálculo de características.
+### Documentación sobre Pokémon
+Wikidex, la Enciclopedia Pokémon. Cálculo de características.\
 https://www.wikidex.net/wiki/Caracter%C3%ADsticas#C%C3%A1lculo_de_caracter%C3%ADsticas
 
-Wikidex, la Enciclopedia Pokémon. Cambios en características.
+Wikidex, la Enciclopedia Pokémon. Cambios en características.\
 https://www.wikidex.net/wiki/Caracter%C3%ADsticas#Cambios_en_caracter%C3%ADsticas
 
-Wikidex, la Enciclopedia Pokémon. Tiempo atmosférico.
+Wikidex, la Enciclopedia Pokémon. Tiempo atmosférico.\
 https://www.wikidex.net/wiki/Tiempo_atmosf%C3%A9rico
 
-Wikidex, la Enciclopedia Pokémon. Lista de Pokémon de la primera generación.
+Wikidex, la Enciclopedia Pokémon. Lista de Pokémon de la primera generación.\
 https://www.wikidex.net/wiki/Lista_de_Pok%C3%A9mon_de_la_primera_generaci%C3%B3n
 
-Wikidex, la Enciclopedia Pokémon. Lista de movimientos.
+Wikidex, la Enciclopedia Pokémon. Lista de movimientos.\
 https://www.wikidex.net/wiki/Lista_de_movimientos#Lista_de_movimientos 
 
-Wikidex, la Enciclopedia Pokémon. Lista de movimientos por alteración de estado.
+Wikidex, la Enciclopedia Pokémon. Lista de movimientos por alteración de estado.\
 https://www.wikidex.net/wiki/Lista_de_movimientos_por_alteraci%C3%B3n_de_estado 
 
-Wikidex, la Enciclopedia Pokémon. Estados.
+Wikidex, la Enciclopedia Pokémon. Estados.\
 https://www.wikidex.net/wiki/Estado 
 
-Wikidex, la Enciclopedia Pokémon. Índice de golpe crítico.
+Wikidex, la Enciclopedia Pokémon. Índice de golpe crítico.\
 https://www.wikidex.net/wiki/Golpe_cr%C3%ADtico#%C3%8Dndice_de_golpe_cr%C3%ADtico 
 
-Wikidex, la Enciclopedia Pokémon. Cálculo del poder oculto.
+Wikidex, la Enciclopedia Pokémon. Cálculo del poder oculto.\
 https://www.wikidex.net/wiki/C%C3%A1lculo_del_poder_oculto 
 
-Wikidex, la Enciclopedia Pokémon. Características de los movimientos.
+Wikidex, la Enciclopedia Pokémon. Características de los movimientos.\
 https://www.wikidex.net/wiki/Movimiento#Caracter%C3%ADsticas 
 
-Wikidex, la Enciclopedia Pokémon. Lista de objetos de tercera generación.
+Wikidex, la Enciclopedia Pokémon. Lista de objetos de tercera generación.\
 https://www.wikidex.net/wiki/Lista_de_objetos_por_n%C3%BAmero_de_%C3%ADndice_de_la_tercera_generaci%C3%B3n
 
-Bulbapedia, la Enciclopedia Pokémon Movida por la Comunidad. Lista de Pokémon por estadísticas base en generaciones II-V.
+Bulbapedia, la Enciclopedia Pokémon Movida por la Comunidad. Lista de Pokémon por estadísticas base en generaciones II-V.\
 https://bulbapedia.bulbagarden.net/wiki/List_of_Pok%C3%A9mon_by_base_stats_in_Generations_II-V 
 
-PokéAPI, la API de Pokémon RESTful. Documentación.
+PokéAPI, la API de Pokémon RESTful. Documentación.\
 https://pokeapi.co/docs/v2 
 
-Pokémon Showdown, Simulador de Combates Pokémon. Repositorio de GitHub de Pokémon Showdown.
+Pokémon Showdown, Simulador de Combates Pokémon. Repositorio de GitHub de Pokémon Showdown.\
 https://github.com/smogon/Pokémon-showdown/tree/master 
 
-Otra Documentación
+### Otra Documentación
+---
 
-W3schools, la Página de Aprendizaje de Tecnologías Web Más Completa. Documentación sobre HTML5.
+W3schools, la Página de Aprendizaje de Tecnologías Web Más Completa. Documentación sobre HTML5.\
 https://www.w3schools.com/html/default.asp
 
-W3schools, la Página de Aprendizaje de Tecnologías Web Más 
-Completa. Documentación sobre CSS3.
+W3schools, la Página de Aprendizaje de Tecnologías Web Más Completa. Documentación sobre CSS3.\
 https://www.w3schools.com/css/default.asp
 
-W3schools, la Página de Aprendizaje de Tecnologías Web Más Completa. Documentación sobre JS.
+W3schools, la Página de Aprendizaje de Tecnologías Web Más Completa. Documentación sobre JS.\
 https://www.w3schools.com/js/default.asp
 
-W3schools, la Página de Aprendizaje de Tecnologías Web Más Completa. Documentación sobre C#.
+W3schools, la Página de Aprendizaje de Tecnologías Web Más Completa. Documentación sobre C#.\
 https://www.w3schools.com/cs/index.php
 
-W3schools, la Página de Aprendizaje de Tecnologías Web Más Completa. Documentación sobre ASP.
+W3schools, la Página de Aprendizaje de Tecnologías Web Más Completa. Documentación sobre ASP.\
 https://www.w3schools.com/asp/default.asp 
 
-W3schools, la Página de Aprendizaje de Tecnologías Web Más Completa. Ciberseguridad.
+W3schools, la Página de Aprendizaje de Tecnologías Web Más Completa. Ciberseguridad.\
 https://www.w3schools.com/cybersecurity/index.php 
 
-Microsoft, Empresa Tecnológica Multinacional. Documentación sobre ASP oficial.
+Microsoft, Empresa Tecnológica Multinacional. Documentación sobre ASP oficial.\
 https://dotnet.microsoft.com/es-es/ 
 
-Microsoft, Empresa Tecnológica Multinacional. Documentación sobre C# oficial.
+Microsoft, Empresa Tecnológica Multinacional. Documentación sobre C# oficial.\
 https://learn.microsoft.com/es-es/dotnet/csharp/ 
 
-WebSocket, Comunicación Bidireccional y Full-Duplex. Documentación oficial sobre WebSockets.
+WebSocket, Comunicación Bidireccional y Full-Duplex. Documentación oficial sobre WebSockets.\
 https://websockets.spec.whatwg.org/ 
 
-Wikipedia, la Enciclopedia Libre. WebSocket.
+Wikipedia, la Enciclopedia Libre. WebSocket.\
 https://en.wikipedia.org/wiki/WebSocket 
 
-SockJS, Librería de JavaScript. Perfil oficial de GitHub de SockJS.
+SockJS, Librería de JavaScript. Perfil oficial de GitHub de SockJS.\
 https://github.com/sockjs 
 
-GitHub, la Plataforma de Proyectos con Git. Sobre los repositorios.
+GitHub, la Plataforma de Proyectos con Git. Sobre los repositorios.\
 https://docs.github.com/en/repositories/creating-and-managing-repositories/about-repositories 
 
-GitHub, la Plataforma de Proyectos con Git. Sobre Projects.
+GitHub, la Plataforma de Proyectos con Git. Sobre Projects.\
 https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects
 
-GitHub, la Plataforma de Proyectos con Git. Empezando con Projects.
+GitHub, la Plataforma de Proyectos con Git. Empezando con Projects.\
 https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/quickstart-for-projects 
 
-GitHub,  la Plataforma de Proyectos con Git. Buenas prácticas con Projects.
+GitHub,  la Plataforma de Proyectos con Git. Buenas prácticas con Projects.\
 https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/best-practices-for-projects 
 
-ISO/IEC 27001:2022, Information security, cybersecurity and privacy protection.
+ISO/IEC 27001:2022, Information security, cybersecurity and privacy protection.\
 Ley Orgánica 3/2018, de 5 de diciembre, de Protección de Datos Personales y garantía de los derechos digitales.
